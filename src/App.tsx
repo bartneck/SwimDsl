@@ -4,6 +4,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import CodeMirror from '@uiw/react-codemirror';
+import { swimdsl } from 'codemirror-lang-swimdsl';
 
 import './App.css';
 
@@ -28,7 +29,14 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <CodeMirror value={value} height="200px" onChange={onChange} />;
+      <CodeMirror
+        value={value}
+        height="850px"
+        width="900px"
+        theme={prefersDarkMode ? "dark" : "light"}
+        extensions={[swimdsl()]}
+        onChange={onChange}
+      />;
     </ThemeProvider>
   );
 
