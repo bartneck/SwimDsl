@@ -23,9 +23,9 @@ function App() {
   );
 
   const onChange = React.useCallback((val: string, _viewUpdate: any) => {
-    console.log('val:', val);
     setValue(val);
   }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
