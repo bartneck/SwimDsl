@@ -7,9 +7,10 @@ import CodeMirror from '@uiw/react-codemirror';
 import { swimdsl } from 'codemirror-lang-swimdsl';
 
 import './App.css';
+import { example_programme } from "./example_programme";
 
 function App() {
-  const [value, setValue] = React.useState("console.log('hello world!');");
+  const [value, setValue] = React.useState(example_programme);
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
   const theme = React.useMemo(
