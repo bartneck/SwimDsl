@@ -11,11 +11,11 @@ Pace max = 100%
 
 200 Freestyle @ easy -> hard
 
-8 x 25 Freestyle @ max
+8 x 25 Freestyle + Fins @ max
 
 2 x {
     50 Backstroke
     2 x 100 Freestyle
     50 Breaststroke
     0:30 rest
-} @ 70%`;
+} Pull + Board @ 70%`;
