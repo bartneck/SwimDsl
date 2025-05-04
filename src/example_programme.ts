@@ -7,6 +7,7 @@ Pace max = 100%
 100 Backstroke @ 1:30
 100 Breaststroke @ 60%
 50 Butterfly @ 55% -> 75%
+1:00 rest
 
 200 Freestyle @ easy -> hard
 
@@ -16,4 +17,5 @@ Pace max = 100%
     50 Backstroke
     2 x 100 Freestyle
     50 Breaststroke
+    0:30 rest
 }`;
