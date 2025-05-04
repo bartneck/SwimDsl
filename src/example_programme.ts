@@ -18,4 +18,4 @@ Pace max = 100%
     2 x 100 Freestyle
     50 Breaststroke
     0:30 rest
-}`;
+} @ 70%`;
