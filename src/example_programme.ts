@@ -1,4 +1,7 @@
 export const example_programme = `\
+set PoolLength 25 metres
+set DistanceUnit metres
+
 Pace easy = 45%
 Pace hard = 90%
 Pace max = 100%
