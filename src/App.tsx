@@ -25,7 +25,7 @@ function App() {
     [prefersDarkMode],
   );
 
-  const onChange = React.useCallback((val: string, _viewUpdate: any) => {
+  const onChange = React.useCallback((val: string) => {
     setValue(val);
   }, []);
 
