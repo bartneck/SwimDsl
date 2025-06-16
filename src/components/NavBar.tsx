@@ -1,15 +1,15 @@
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import React, { SetStateAction } from 'react';
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
+import React, { SetStateAction } from "react";
 
 interface NavBarProps {
-  fileContent: string,
-  setFileContent: React.Dispatch<SetStateAction<string>>,
+  fileContent: string;
+  setFileContent: React.Dispatch<SetStateAction<string>>;
 }
 
 function NavBar({ fileContent, setFileContent }: NavBarProps) {
@@ -53,7 +53,7 @@ function NavBar({ fileContent, setFileContent }: NavBarProps) {
 
     // Programmatically click the input to open the file dialog
     input.click();
-  };
+  }
 
   return (
     <AppBar position="static">
