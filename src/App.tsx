@@ -7,7 +7,6 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import CodeMirror from "@uiw/react-codemirror";
 import { swimdsl } from "codemirror-lang-swimdsl";
 
-import "./App.css";
 import NavBar from "./components/NavBar";
 import { example_programme } from "./example_programme";
 
