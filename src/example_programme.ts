@@ -1,3 +1,7 @@
+/**
+ * The default swim programme loaded into the textbox when the page initially
+ * loads.
+ */
 export const example_programme = `\
 # Writing your first swim instruction:
 # Basic swim instructions are written using a distance and a stroke name.

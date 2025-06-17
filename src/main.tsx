@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import App from "./App.tsx";
 
+// Render the react application into HTML element with ID "root"
 const root = document.getElementById("root");
 if (root !== null) {
   createRoot(root).render(

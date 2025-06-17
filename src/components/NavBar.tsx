@@ -5,33 +5,42 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import React, { SetStateAction } from "react";
+import React from "react";
 
 interface NavBarProps {
   fileContent: string;
-  setFileContent: React.Dispatch<SetStateAction<string>>;
+  setFileContent: React.Dispatch<React.SetStateAction<string>>;
 }
 
-function NavBar({ fileContent, setFileContent }: NavBarProps) {
+/**
+ * The NavBar component sits at the top of the viewport to provide additional
+ * functionality such as file export and file import.
+ *
+ * @param fileContent The UTF-8 text contents of the code editor.
+ * @param setFileContent A function which takes UTF-8 text and replaces the
+ *    contents of the code editor with the given text.
+ *
+ * @returns The react element used to render the Navigation bar.
+ */
+function NavBar({
+  fileContent,
+  setFileContent,
+}: NavBarProps): React.ReactElement {
   function downloadFile() {
-    // Make URL for text content of the code editor.
     const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
 
-    // Create temporary <a> element to download the file.
     const link = document.createElement("a");
     link.href = url;
     link.download = "SwimProgramme.swim";
     document.body.appendChild(link);
     link.click();
 
-    // Remove temporary <a> element
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }
 
   function uploadFile() {
-    // Create a hidden input element
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".swim";
@@ -51,7 +60,6 @@ function NavBar({ fileContent, setFileContent }: NavBarProps) {
       }
     };
 
-    // Programmatically click the input to open the file dialog
     input.click();
   }
 
