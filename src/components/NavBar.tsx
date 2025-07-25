@@ -67,33 +67,15 @@ function NavBar({
     <AppBar position="static">
       <Toolbar>
         <Typography variant="h6" component="div">
-          App Bar
+          SwimDSL
         </Typography>
         <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
-          <Button
-            onClick={downloadFile}
-            variant="contained"
-            size="small"
-            sx={{
-              ml: "auto",
-              minWidth: "40px",
-              minHeight: "40px",
-              padding: 0,
-            }}
-          >
+          <Button onClick={downloadFile} variant="contained" size="small">
+            Export
             <FileDownloadIcon />
           </Button>
-          <Button
-            onClick={uploadFile}
-            variant="contained"
-            size="small"
-            sx={{
-              ml: "auto",
-              minWidth: "40px",
-              minHeight: "40px",
-              padding: 0,
-            }}
-          >
+          <Button onClick={uploadFile} variant="contained" size="small">
+            Import
             <FileUploadIcon />
           </Button>
         </Box>
