@@ -8,6 +8,7 @@ import React from "react";
 
 import NavBar from "./components/NavBar";
 import { example_programme } from "./example_programme";
+import ProgrammeRender from "./components/ProgrammeRender";
 
 /**
  * The App compoent is the primary component of the SwimDSL web editor.
@@ -49,7 +50,9 @@ function App(): React.ReactElement {
             onChange={onChange}
           />
         </Box>
-        <Box sx={{ width: "50%", height: "100%" }}>Right Half</Box>
+        <Box sx={{ width: "50%", height: "100%" }}>
+          <ProgrammeRender />
+        </Box>
       </Box>
     </ThemeProvider>
   );
