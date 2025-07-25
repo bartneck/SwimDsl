@@ -14,7 +14,7 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
-    "@uiw/react-codemirror": "^4.23.11",
+    "@uiw/react-codemirror": "^4.24.1",
     "codemirror-lang-swimdsl": "file:codemirror-swimdsl",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
