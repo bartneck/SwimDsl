@@ -1,3 +1,4 @@
+import AddIcon from "@mui/icons-material/Add";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import AppBar from "@mui/material/AppBar";
@@ -63,12 +64,24 @@ function NavBar({
     input.click();
   }
 
+  function newProgramme() {
+    window.open("/", "_blank").focus();
+  }
+
   return (
     <AppBar position="static">
       <Toolbar>
         <Typography variant="h6" component="div">
           SwimDSL
         </Typography>
+        <Button
+          onClick={newProgramme}
+          variant="contained"
+          sx={{ marginLeft: "2em" }}
+        >
+          <AddIcon />
+          New Programme
+        </Button>
         <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
           <Button onClick={downloadFile} variant="contained" size="small">
             Export
