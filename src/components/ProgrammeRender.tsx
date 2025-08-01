@@ -38,7 +38,7 @@ function ProgrammeRender(): React.ReactElement {
       <Fab
         onClick={downloadPdf}
         color="primary"
-        sx={{ position: "absolute", right: 50, bottom: 50 }}
+        sx={{ position: "fixed", right: 50, bottom: 50 }}
       >
         <PictureAsPdfIcon fontSize="large" />
       </Fab>
