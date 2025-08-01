@@ -83,11 +83,11 @@ function NavBar({
           New Programme
         </Button>
         <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
-          <Button onClick={downloadFile} variant="contained" size="small">
+          <Button onClick={downloadFile} variant="contained">
             Export
             <FileDownloadIcon />
           </Button>
-          <Button onClick={uploadFile} variant="contained" size="small">
+          <Button onClick={uploadFile} variant="contained">
             Import
             <FileUploadIcon />
           </Button>
