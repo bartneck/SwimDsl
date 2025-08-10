@@ -32,6 +32,16 @@ export const example_programme = `\
 100 Fly
 100 Fl
 
+# Please note that SwimDSL is case-sensitive, so the following is
+# considered an error!
+100 butterfly
+
+# Pay attention to the red underline. The SwimDSL editor will provide
+# these underlines whenever there is a mistake in your programme.
+# Try hovering your cursor over the underlined text. The editor will
+# provide you with an error message and often button to correct your
+# mistake too.
+
 
 ### Stroke Modifiers ###########################################################
 
@@ -74,6 +84,9 @@ Pace hard = 90%
 
 150 Backstroke @ medium
 200 Freestyle @ easy -> hard
+
+# Pace names must only contain letters. Numbers, spaces, and other
+# symbols are not allowed.
 
 
 ### Resting ####################################################################
