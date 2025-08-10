@@ -75,12 +75,12 @@ export const example_programme = `\
 100 Freestyle @ 80% -> 50%
 
 # Sometimes its nice to use words rather than numbers to specify pace.
-# Pace names can be defined using the Pace keyword and a specific
+# Pace names can be defined using the pace keyword and a specific
 # percentage. I recomend placing these definitions close to the top of
 # the file before the first instruction.
-Pace easy = 45%
-Pace medium = 65%
-Pace hard = 90%
+pace easy = 45%
+pace medium = 65%
+pace hard = 90%
 
 150 Backstroke @ medium
 200 Freestyle @ easy -> hard
