@@ -3,6 +3,8 @@
  * loads.
  */
 export const example_programme = `\
+### Basic Instructions ########################################################
+
 # Writing your first swim instruction:
 # Basic swim instructions are written using a distance and a stroke name.
 200 Freestyle
@@ -30,6 +32,9 @@ export const example_programme = `\
 100 Fly
 100 Fl
 
+
+### Stroke Modifiers ###########################################################
+
 # One can specify stroke types (kick, pull, or drill) after the stroke name.
 100 Backstroke Kick
 50 Breaststroke Pull
@@ -42,6 +47,9 @@ export const example_programme = `\
 100 Backstroke Kick + Fins Board
 200 Freestyle + Fins
 50 Freestyle Pull + Buoy Paddles
+
+
+### Swimming Pace ##############################################################
 
 # To specify the pace for a particular instruction, use the @ symbol.
 # Pace can be specified using a fixed time, such as 1:00 for one minute
@@ -67,14 +75,23 @@ Pace hard = 90%
 150 Backstroke @ medium
 200 Freestyle @ easy -> hard
 
+
+### Resting ####################################################################
+
 # Swimmers often need to take breaks, use the rest keyword to specify
 # a fixed duration of resting.
 1:00 rest
 0:30 rest
 
+
+### Repeition ##################################################################
+
 # To repeat an instruction multiple times, use the x symbol.
 8 x 25 Freestyle @ 0:30
 4 x 75 Backstroke
+
+
+### Grouping Instructions ######################################################
 
 # Instructions can be grouped together to apply a repition, pace, stroke
 # type, or gear to many different instructions at once.
@@ -110,6 +127,9 @@ Pace hard = 90%
     }
   }
 }
+
+
+### Extras #####################################################################
 
 # The earlier instruction of 25 butterfly, backstroke, breaststroke,
 # and freestyle make up an individual medely and can be written more
