@@ -39,7 +39,7 @@ export const example_programme = `\
 # Pay attention to the red underline. The SwimDSL editor will provide
 # these underlines whenever there is a mistake in your programme.
 # Try hovering your cursor over the underlined text. The editor will
-# provide you with an error message and often button to correct your
+# provide you with an error message and often a button to correct your
 # mistake too.
 
 
