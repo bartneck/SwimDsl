@@ -41,7 +41,7 @@ export const example_programme = `\
 # for the specified stroke type.
 100 Backstroke Kick + Fins Board
 200 Freestyle + Fins
-50 Freestyle Pull + Bouy Paddles
+50 Freestyle Pull + Buoy Paddles
 
 # To specify the pace for a particular instruction, use the @ symbol.
 # Pace can be specified using a fixed time, such as 1:00 for one minute
@@ -83,7 +83,7 @@ Pace hard = 90%
     100 Freestyle
     50 Breaststroke
     0:30 rest
-} Pull + Bouy @ 70%
+} Pull + Buoy @ 70%
 
 # When using a fixed time pace on a grouped isntruction, the pace applies to
 # the whole group as a single item, meaning the following medely should be
