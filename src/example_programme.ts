@@ -90,27 +90,50 @@ Pace hard = 90%
 8 x 25 Freestyle @ 0:30
 4 x 75 Backstroke
 
+# When using repitition and pace together on an individual instruction,
+# the time applies to each individual repitition, rather than grouping
+# them all into a single item.
+
+# The following should take a total of four minutes, rather than just one.
+4 x 75 Freestyle @ 1:00
+
+# The following instruction builds pace six times, over each 100 rather
+# than once over the full 600
+6 x 100 Freestyle @ 60% -> 80%
+
 
 ### Grouping Instructions ######################################################
 
 # Instructions can be grouped together to apply a repition, pace, stroke
-# type, or gear to many different instructions at once.
+# type, or gear to many different instructions as a sinle one.
 2 x {
-    50 Backstroke
-    100 Freestyle
-    50 Breaststroke
-    0:30 rest
+  50 Backstroke
+  100 Freestyle
+  50 Breaststroke
+  0:30 rest
 } Pull + Buoy @ 70%
 
-# When using a fixed time pace on a grouped isntruction, the pace applies to
-# the whole group as a single item, meaning the following medely should be
-# swim in under two minutes, rather than having 2 minutes for each length.
+# When specifying a pace on a grouped isntruction, the pace applies to
+# the whole group as a single item.
+
+# The following medely should be swum in under two minutes, rather than
+# having 2 minutes for each length.
 {
   25 Butterfly
   25 Backstroke
   25 Breaststroke
   25 Freestyle
 } @ 2:00
+
+# The following instruction builds pace slowly over the 500 total,
+# rather than five times over each 100
+{
+  100 Freestyle
+  100 Backstroke
+  100 Freestyle
+  100 Breaststroke
+  100 Freestyle
+} @ 70% -> 90%
 
 # Groups and repitition can be infinitely nested. The following is perfectly
 # valid SwimDSL.
@@ -135,12 +158,6 @@ Pace hard = 90%
 # and freestyle make up an individual medely and can be written more
 # concisely using the IndividualMedley stroke.
 100 IndividualMedley @ 4:00
-
-# When using fixed time pace and repitition, the time applies to each
-# individual repitition, rather than grouping them all into a single
-# item. The following should take a total of four minutes, rather than
-# just one.
-4 x 75 Freestyle @ 1:00
 
 # It is very usefull for SwimDSL to know information such as the length
 # of the pool the programme is being swum in, and the unit that all
