@@ -67,9 +67,8 @@ function NavBar({
   function newProgramme() {
     window.open("/", "_blank").focus();
   }
-
   return (
-    <AppBar position="static">
+    <AppBar sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar>
         <Typography variant="h6" component="div">
           SwimDSL

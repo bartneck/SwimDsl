@@ -5,10 +5,12 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import CodeMirror from "@uiw/react-codemirror";
 import { swimdsl } from "codemirror-lang-swimdsl";
 import React from "react";
+import { Toolbar } from "@mui/material";
 
 import NavBar from "./components/NavBar";
-import { example_programme } from "./example_programme";
 import ProgrammeRender from "./components/ProgrammeRender";
+import SideBar from "./components/SideBar";
+import { example_programme } from "./example_programme";
 
 /**
  * The App compoent is the primary component of the SwimDSL web editor.
@@ -39,21 +41,23 @@ function App(): React.ReactElement {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <NavBar fileContent={value} setFileContent={setValue} />
-      <Box sx={{ display: "flex", height: "100vh" }}>
-        <Box sx={{ width: "50%", height: "100%" }}>
+      <Toolbar />
+      <Box sx={{ display: "flex" }}>
+        <Box sx={{ width: "50%" }}>
           <CodeMirror
             value={value}
-            height="100vh"
+            maxHeight={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
             width="100%"
             theme={prefersDarkMode ? "dark" : "light"}
             extensions={[swimdsl()]}
             onChange={onChange}
           />
         </Box>
-        <Box sx={{ width: "50%", height: "100%" }}>
+        <Box sx={{ width: "50%" }}>
           <ProgrammeRender />
         </Box>
       </Box>
+      <SideBar />
     </ThemeProvider>
   );
 }
