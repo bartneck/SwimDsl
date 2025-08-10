@@ -92,7 +92,7 @@ pace hard = 90%
 ### Resting ####################################################################
 
 # Swimmers often need to take breaks, use the rest keyword to specify
-# a fixed duration of resting.
+# a fixed duration of resting. Durations are in minutes and seconds.
 1:00 rest
 0:30 rest
 
@@ -165,12 +165,26 @@ pace hard = 90%
 }
 
 
-### Extras #####################################################################
+### Additional Strokes #########################################################
 
 # The earlier instruction of 25 butterfly, backstroke, breaststroke,
 # and freestyle make up an individual medely and can be written more
 # concisely using the IndividualMedley stroke.
-100 IndividualMedley @ 4:00
+100 IndividualMedley @ 2:00
+
+# To specify that the swimmer has the freedom to choose any stroke of
+# their liking, use the Choice stroke.
+100 Choice
+
+# Number strokes indicate the swimmer should swim their first, second,
+# third, or fourth favourite stoke.
+100 NumberOne
+100 NumberTwo
+100 NumberThree
+100 NumberFour
+
+
+### Extras #####################################################################
 
 # It is very usefull for SwimDSL to know information such as the length
 # of the pool the programme is being swum in, and the unit that all
