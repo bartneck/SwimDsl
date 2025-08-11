@@ -62,7 +62,7 @@ function App(): React.ReactElement {
         <Box sx={{ width: "50%" }}>
           <CodeMirror
             value={value}
-            maxHeight={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
+            height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
             width="100%"
             theme={prefersDarkMode ? "dark" : "light"}
             extensions={[swimdsl()]}
