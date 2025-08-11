@@ -8,20 +8,26 @@ import React from "react";
 import { Toolbar } from "@mui/material";
 
 import NavBar from "./components/NavBar";
-import ProgrammeRender from "./components/ProgrammeRender";
 import SideBar from "./components/SideBar";
-import { example_programme } from "./example_programme";
+import TutorialPane from "./components/TutorialPane";
+import ProgrammeRender from "./components/ProgrammeRender";
+
+enum PanelPage {
+  TUTORIAL,
+  RENDER,
+}
 
 /**
  * The App compoent is the primary component of the SwimDSL web editor.
- * It contains all of the NavBar, the code editor, and the live rener
+ * It contains all of the NavBar, SideBar, code editor, and the live render
  * (coming soon).
  *
  * @returns The react element used to render the application.
  */
 function App(): React.ReactElement {
-  const [value, setValue] = React.useState(example_programme);
+  const [value, setValue] = React.useState("");
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const [panelPage, setPanelPage] = React.useState(PanelPage.RENDER);
 
   const theme = React.useMemo(
     () =>
@@ -36,6 +42,16 @@ function App(): React.ReactElement {
   const onChange = React.useCallback((val: string) => {
     setValue(val);
   }, []);
+
+  function showPanel() {
+    switch (panelPage) {
+      case PanelPage.TUTORIAL:
+        return <TutorialPane />;
+
+      case PanelPage.RENDER:
+        return <ProgrammeRender />;
+    }
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -53,13 +69,11 @@ function App(): React.ReactElement {
             onChange={onChange}
           />
         </Box>
-        <Box sx={{ width: "50%" }}>
-          <ProgrammeRender />
-        </Box>
+        <Box sx={{ width: "50%" }}>{showPanel()}</Box>
       </Box>
-      <SideBar />
+      <SideBar setPanelPage={setPanelPage} activePanelPage={panelPage} />
     </ThemeProvider>
   );
 }
 
-export default App;
+export { App as default, PanelPage };
