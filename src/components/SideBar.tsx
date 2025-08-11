@@ -7,7 +7,27 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ImageIcon from "@mui/icons-material/Image";
 import { Toolbar } from "@mui/material";
-import { PanelPage } from "../App";
+
+import PanelPage from "../types/PanelPage";
+
+interface SideBarItem {
+  page: PanelPage;
+  icon: React.ReactElement;
+  label: string;
+}
+
+const sideBarItems: SideBarItem[] = [
+  {
+    page: PanelPage.RENDER,
+    icon: <ImageIcon />,
+    label: "Render",
+  },
+  {
+    page: PanelPage.TUTORIAL,
+    icon: <HelpIcon />,
+    label: "Tutorial",
+  },
+];
 
 interface SideBarProps {
   activePanelPage: PanelPage;
@@ -18,27 +38,22 @@ function SideBar({
   activePanelPage,
   setPanelPage,
 }: SideBarProps): React.ReactElement {
-  function showTutorialPane() {
-    setPanelPage(PanelPage.TUTORIAL);
-  }
-
-  function showRenderPane() {
-    setPanelPage(PanelPage.RENDER);
-  }
-
   return (
     <Box sx={{ display: "flex" }}>
       <Drawer variant="permanent" anchor="right">
         <Toolbar />
         <List>
-          {[
-            [<HelpIcon />, showTutorialPane],
-            [<ImageIcon />, showRenderPane],
-          ].map(([listIcon, callback], index) => (
+          {sideBarItems.map(({ icon, page, label }, index) => (
             <ListItem key={index} disablePadding sx={{ display: "block" }}>
-              <ListItemButton onClick={callback} sx={{ minHeight: 48 }}>
+              <ListItemButton
+                onClick={() => {
+                  setPanelPage(page);
+                }}
+                selected={activePanelPage === page}
+                sx={{ minHeight: 48 }}
+              >
                 <ListItemIcon sx={{ minWidth: 0, justifyContent: "center" }}>
-                  {listIcon}
+                  {icon}
                 </ListItemIcon>
               </ListItemButton>
             </ListItem>

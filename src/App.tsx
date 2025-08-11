@@ -11,12 +11,7 @@ import NavBar from "./components/NavBar";
 import SideBar from "./components/SideBar";
 import TutorialPane from "./components/TutorialPane";
 import ProgrammeRender from "./components/ProgrammeRender";
-
-enum PanelPage {
-  TUTORIAL,
-  RENDER,
-}
-
+import PanelPage from "./types/PanelPage";
 /**
  * The App compoent is the primary component of the SwimDSL web editor.
  * It contains all of the NavBar, SideBar, code editor, and the live render
@@ -76,4 +71,4 @@ function App(): React.ReactElement {
   );
 }
 
-export { App as default, PanelPage };
+export { App as default };
