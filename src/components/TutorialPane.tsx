@@ -1,10 +1,10 @@
 import CodeMirror from "@uiw/react-codemirror";
+import { useTheme } from "@emotion/react";
 import React from "react";
 
 import { swimdsl } from "codemirror-lang-swimdsl";
 
 import { example_programme } from "../example_programme";
-import { useTheme } from "@emotion/react";
 
 function TutorialPane(): React.ReactElement {
   const [value, setValue] = React.useState(example_programme);

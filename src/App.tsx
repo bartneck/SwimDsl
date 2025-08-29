@@ -1,3 +1,4 @@
+import { Toolbar } from "@mui/material";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -5,13 +6,14 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import CodeMirror from "@uiw/react-codemirror";
 import { swimdsl } from "codemirror-lang-swimdsl";
 import React from "react";
-import { Toolbar } from "@mui/material";
 
 import NavBar from "./components/NavBar";
-import SideBar from "./components/SideBar";
-import TutorialPane from "./components/TutorialPane";
 import ProgrammeRender from "./components/ProgrammeRender";
+import SidePaneSwitcher from "./components/SidePanelSwitcher";
+import SwimlDisplay from "./components/SwimlDisplay";
+import TutorialPane from "./components/TutorialPane";
 import PanelPage from "./types/PanelPage";
+
 /**
  * The App compoent is the primary component of the SwimDSL web editor.
  * It contains all of the NavBar, SideBar, code editor, and the live render
@@ -45,16 +47,29 @@ function App(): React.ReactElement {
 
       case PanelPage.RENDER:
         return <ProgrammeRender />;
+
+      case PanelPage.SWIML_XML:
+        return <SwimlDisplay />;
     }
   }
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <NavBar fileContent={value} setFileContent={setValue} />
+      <NavBar fileContent={value} setFileContent={setValue}>
+        <SidePaneSwitcher
+          activePanelPage={panelPage}
+          setPanelPage={setPanelPage}
+        />
+      </NavBar>
       <Toolbar />
-      <Box sx={{ display: "flex" }}>
-        <Box sx={{ width: "50%" }}>
+      <Box
+        sx={{
+          display: "flex",
+          maxHeight: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
+        }}
+      >
+        <Box sx={{ width: panelPage !== PanelPage.NONE ? "50%" : "100%" }}>
           <CodeMirror
             value={value}
             height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
@@ -64,9 +79,10 @@ function App(): React.ReactElement {
             onChange={onChange}
           />
         </Box>
-        <Box sx={{ width: "50%" }}>{showPanel()}</Box>
+        {panelPage !== PanelPage.NONE && (
+          <Box sx={{ width: "50%" }}>{showPanel()}</Box>
+        )}
       </Box>
-      <SideBar setPanelPage={setPanelPage} activePanelPage={panelPage} />
     </ThemeProvider>
   );
 }
