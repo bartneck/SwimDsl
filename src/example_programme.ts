@@ -64,8 +64,8 @@ export const example_programme = `\
 # To specify the pace for a particular instruction, use the @ symbol.
 # Pace can be specified using a fixed time, such as 1:00 for one minute
 # or a percentage of perceived rate of excertion, such as 75%.
-125 Breaststroke @ 2:30
-25 Freestyle @ 0:20
+125 Breaststroke on 2:30
+25 Freestyle on 0:20
 100 Backstroke @ 60%
 50 Backstroke @ 90%
 
@@ -100,7 +100,7 @@ pace hard = 90%
 ### Repeition ##################################################################
 
 # To repeat an instruction multiple times, use the x symbol.
-8 x 25 Freestyle @ 0:30
+8 x 25 Freestyle on 0:30
 4 x 75 Backstroke
 
 # When using repitition and pace together on an individual instruction,
@@ -108,7 +108,7 @@ pace hard = 90%
 # them all into a single item.
 
 # The following should take a total of four minutes, rather than just one.
-4 x 75 Freestyle @ 1:00
+4 x 75 Freestyle on 1:00
 
 # The following instruction builds pace six times, over each 100 rather
 # than once over the full 600
@@ -136,7 +136,7 @@ pace hard = 90%
   25 Backstroke
   25 Breaststroke
   25 Freestyle
-} @ 2:00
+} on 2:00
 
 # The following instruction builds pace slowly over the 500 total,
 # rather than five times over each 100
@@ -170,7 +170,7 @@ pace hard = 90%
 # The earlier instruction of 25 butterfly, backstroke, breaststroke,
 # and freestyle make up an individual medely and can be written more
 # concisely using the IndividualMedley stroke.
-100 IndividualMedley @ 2:00
+100 IndividualMedley on 2:00
 
 # To specify that the swimmer has the freedom to choose any stroke of
 # their liking, use the Choice stroke.
@@ -191,7 +191,7 @@ pace hard = 90%
 # distances are specified in. This allows for the rendered output to show
 # the total distance in the programme. This should always be specified at
 # the very top of the file, at not appear more than once!
-set PoolLength 25 metres
+set PoolLength 25
 set DistanceUnit metres
 
 # You can write arbitrary text to help describe a particular instruction
