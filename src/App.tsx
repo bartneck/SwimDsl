@@ -69,7 +69,10 @@ function App(): React.ReactElement {
           maxHeight: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
         }}
       >
-        <Box sx={{ width: panelPage !== PanelPage.NONE ? "50%" : "100%" }}>
+        <Box
+          sx={{ width: panelPage !== PanelPage.NONE ? "50%" : "100%" }}
+          borderRight="1px solid"
+        >
           <CodeMirror
             value={value}
             height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}

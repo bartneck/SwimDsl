@@ -21,7 +21,7 @@ function ProgrammeRender(): React.ReactElement {
   }, []);
 
   return (
-    <Box maxHeight="100vh" overflow="auto" borderLeft="1px solid">
+    <Box maxHeight="100vh" overflow="auto">
       <RawHtml rawHtml={htmlContent} />
     </Box>
   );
