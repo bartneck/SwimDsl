@@ -40,6 +40,16 @@ interface SidePaneSwitcherProps {
   setPanelPage: React.Dispatch<React.SetStateAction<PanelPage>>;
 }
 
+/**
+ * A GUI element to change the page shown in the side panel.
+ *
+ * @param setPanelPage - A function which takes a PanelPage enumeration and sets
+ *    the side panel to show the corresponding page.
+ * @param activePanelPage - The PanelPage enumeration of the currently active
+ *    side panel page.
+ *
+ * @returns A React element used to switch the currently active side panel page.
+ */
 function SidePaneSwitcher({
   setPanelPage,
   activePanelPage,

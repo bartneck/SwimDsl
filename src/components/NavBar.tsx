@@ -25,9 +25,11 @@ interface NavBarProps {
  * The NavBar component sits at the top of the viewport to provide additional
  * functionality such as file export and file import.
  *
- * @param fileContent The UTF-8 text contents of the code editor.
- * @param setFileContent A function which takes UTF-8 text and replaces the
+ * @param fileContent - The UTF-8 text contents of the code editor.
+ * @param setFileContent - A function which takes UTF-8 text and replaces the
  *    contents of the code editor with the given text.
+ * @param children - React nodes to place on the right hand side of the NavBar.
+ *    Currently used to display the SidePanelSwitcher.
  *
  * @returns The react element used to render the Navigation bar.
  */

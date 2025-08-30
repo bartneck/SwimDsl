@@ -6,6 +6,13 @@ import { swimdsl } from "codemirror-lang-swimdsl";
 
 import { example_programme } from "../example_programme";
 
+/**
+ * The TutorialPane component is a SidePanel page which displays a second
+ * CodeMirror editor, pre-filled with a tutorial swim programme explaining
+ * to users how to use the SwimDSL language.
+ *
+ * @returns A React emelemnt used to render the tutorial programme.
+ */
 function TutorialPane(): React.ReactElement {
   const [value, setValue] = React.useState(example_programme);
 
