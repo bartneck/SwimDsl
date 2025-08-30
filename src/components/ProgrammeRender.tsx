@@ -1,8 +1,8 @@
 import Box from "@mui/material/Box";
 import { useEffect, useState } from "react";
 
-import RawHtml from "./RawHtml";
 import "../resources/swiml.css";
+import RawHtml from "./RawHtml";
 
 /**
  * The ProgrammeRender component is a SidePanel page which renders the HTML

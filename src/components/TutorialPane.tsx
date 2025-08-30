@@ -1,5 +1,5 @@
-import CodeMirror from "@uiw/react-codemirror";
 import { useTheme } from "@emotion/react";
+import CodeMirror from "@uiw/react-codemirror";
 import React from "react";
 
 import { swimdsl } from "codemirror-lang-swimdsl";
