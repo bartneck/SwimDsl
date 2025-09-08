@@ -16,6 +16,7 @@
     "@mui/material": "^7.0.2",
     "@uiw/react-codemirror": "^4.24.2",
     "codemirror-lang-swimdsl": "file:codemirror-swimdsl",
+    "@codemirror/lang-xml": "^6.1.0",
     "dompurify": "^3.2.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

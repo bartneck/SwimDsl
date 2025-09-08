@@ -4,7 +4,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import CodeMirror from "@uiw/react-codemirror";
-import { swimdsl } from "codemirror-lang-swimdsl";
+import { swimdsl, compileSwimDsl } from "codemirror-lang-swimdsl";
 import React from "react";
 
 import NavBar from "./components/NavBar";
@@ -25,7 +25,7 @@ function App(): React.ReactElement {
   const [value, setValue] = React.useState("");
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [panelPage, setPanelPage] = React.useState(PanelPage.RENDER);
-
+  const [swimlXml, setSwimlXml] = React.useState("");
   const theme = React.useMemo(
     () =>
       createTheme({
@@ -49,7 +49,7 @@ function App(): React.ReactElement {
         return <ProgrammeRender />;
 
       case PanelPage.SWIML_XML:
-        return <SwimlDisplay />;
+        return <SwimlDisplay xmlContent={swimlXml} />;
     }
   }
 
@@ -78,7 +78,7 @@ function App(): React.ReactElement {
             height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
             width="100%"
             theme={prefersDarkMode ? "dark" : "light"}
-            extensions={[swimdsl()]}
+            extensions={[swimdsl(), compileSwimDsl(setSwimlXml)]}
             onChange={onChange}
           />
         </Box>

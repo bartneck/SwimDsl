@@ -1,7 +1,12 @@
-import Box from "@mui/material/Box";
-import { useEffect, useState } from "react";
+import { xml } from "@codemirror/lang-xml";
+import { useTheme } from "@emotion/react";
+import CodeMirror from "@uiw/react-codemirror";
 
 import "../resources/swiml.css";
+
+interface SwimlDisplayProps {
+  xmlContent: string;
+}
 
 /**
  * The SwimlDisplay component is a SidePanel page which displays the raw swiML
@@ -9,17 +14,18 @@ import "../resources/swiml.css";
  *
  * @returns A React element used to show generated swiML XML.
  */
-function SwimlDisplay(): React.ReactElement {
-  const [xmlContent, setXmlContent] = useState("");
-
-  useEffect(() => {
-    fetch("/example.html")
-      .then((response) => response.text())
-      .then(setXmlContent)
-      .catch(console.error);
-  }, []);
-
-  return <Box overflow="clip">{xmlContent}</Box>;
+function SwimlDisplay({ xmlContent }: SwimlDisplayProps): React.ReactElement {
+  const theme = useTheme();
+  return (
+    <CodeMirror
+      readOnly
+      value={xmlContent}
+      height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
+      width="100%"
+      theme={theme.palette.mode}
+      extensions={[xml()]}
+    />
+  );
 }
 
 export default SwimlDisplay;
