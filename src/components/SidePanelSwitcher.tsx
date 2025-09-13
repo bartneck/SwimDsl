@@ -57,17 +57,18 @@ function SidePaneSwitcher({
   return (
     <Paper>
       {sideBarItems.map(({ icon, page, label }, index) => (
-        <Tooltip title={label}>
-          <Button
-            key={index}
-            onClick={() => {
-              setPanelPage(page);
-            }}
-            disabled={activePanelPage === page}
-            color="inherit"
-          >
-            {icon}
-          </Button>
+        <Tooltip title={label} key={index}>
+          <span>
+            <Button
+              onClick={() => {
+                setPanelPage(page);
+              }}
+              disabled={activePanelPage === page}
+              color="inherit"
+            >
+              {icon}
+            </Button>
+          </span>
         </Tooltip>
       ))}
     </Paper>
