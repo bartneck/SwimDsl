@@ -127,6 +127,13 @@ function NavBar({
 
           <Divider />
 
+          <MenuItem onClick={uploadFile}>
+            <ListItemIcon>
+              <UploadFileIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Open</ListItemText>
+          </MenuItem>
+
           <MenuItem onClick={downloadFile}>
             <ListItemIcon>
               <SaveAsIcon fontSize="small" />
@@ -139,13 +146,6 @@ function NavBar({
               <PictureAsPdfIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>Export as PDF</ListItemText>
-          </MenuItem>
-
-          <MenuItem onClick={uploadFile}>
-            <ListItemIcon>
-              <UploadFileIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Load</ListItemText>
           </MenuItem>
         </Menu>
         <Box sx={{ ml: "auto" }}>{children}</Box>
