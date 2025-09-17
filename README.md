@@ -30,6 +30,19 @@ Once the Vite development server has started, type `o` and press `Enter` to
 open the web app in a new tab in your default browser. Alternatively,
 navigate to `https://localhost:5173`.
 
+### I did something wrong and it doesn't run
+
+If `npm run dev` runs without error, but you get a blank page in your browser,
+with a console message "Uncaught Error: Unrecognized extension value in
+extension set" then npm has managed to download two separate copies of one of
+the `@codemirror/*` dependencies. This is caused because the
+`codemirror-swimdsl` submodule is its own npm package, living inside another
+npm package which it shares dependencies with. We ideally should never run `npm
+i` inside the `codemirror-swimdsl` subdirectory as this seems to create the
+issue. The solution is to remove both the `codemirror-swimdsl/node_modules` and
+`node_modules/codemirror-lang-swimdsl` directories. Then run `npm i` inside the
+top level directory.
+
 ## How can I learn SwimDSL?
 
 The SwimDSL editor has a tutorial swim programme, which shows off how to use
