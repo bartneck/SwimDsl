@@ -32,9 +32,11 @@ navigate to `https://localhost:5173`.
 
 ## How can I learn SwimDSL?
 
-The SwimDSL editor currently opens up with a tutorial swim programme, showing
-off how to use the language. Reading through this tutorial should show you all
-you need to know about writing swim programmes with SwimDSL.
+The SwimDSL editor has a tutorial swim programme, which shows off how to use
+the language. You can access this programme by clicking the question mark icon
+in the top right-hand corner of the screen. Reading through this tutorial
+should show you all you need to know about writing swim programmes with
+SwimDSL.
 
 ## How does SwimDSL work?
 
@@ -42,7 +44,7 @@ The SwimDSL editor is powered by a JavaScript package called
 [CodeMirror](https://codemirror.net/). CodeMirror provides SwimDSL with a code
 editor capable of generating a syntax tree which it can use to provide syntax
 highlighting, code completions, and linting. The `codemirror-swimdsl`
-sub-directory provides language support for SwimDSL inside of CodeMirror,
+subdirectory provides language support for SwimDSL inside CodeMirror,
 enabling all of SwimDSL's intelligent lint rules and auto-completions.
 
 ## What can be modelled with the SwimDSL language?
@@ -51,9 +53,10 @@ The SwimDSL language is currently capable of modelling the following concepts:
 
 - Stroke name in full, short, and abbreviated form (e.g. Freestyle, Free, and
   FR)
-- Swimming pace using a fixed duration (e.g. 1:00) or a percentage of perceived
-  rate of exertion
-- Named paces, e.g. easy, medium, and max
+- Swimming intensity with a percentage of perceived rate of exertion
+- Rest from start of instruction (e.g. on 0:40)
+- Rest from end of instruction (e.g. rest 1:00)
+- Named intensities, e.g. easy, medium, and max
 - Stroke types (pull, kick, and drill)
 - Usage of gear such as fins or kick-boards
 - Repeating an instruction an arbitrary number of times
@@ -69,7 +72,7 @@ grow as the project develops.
 
 - Syntax highlighting
 - Linting of syntax and semantic errors.
-- Auto completion of some keywords and defined paces
+- Auto-completion of some keywords and defined paces
 - Source file export
 - Source file import
 
