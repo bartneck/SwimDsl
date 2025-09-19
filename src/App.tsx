@@ -26,6 +26,8 @@ function App(): React.ReactElement {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [panelPage, setPanelPage] = React.useState(PanelPage.RENDER);
   const [swimlXml, setSwimlXml] = React.useState("");
+  const compiler = React.useMemo(() => compileSwimDsl(setSwimlXml), []);
+  const languageSupport = React.useMemo(() => swimdsl(), []);
   const theme = React.useMemo(
     () =>
       createTheme({
@@ -78,7 +80,7 @@ function App(): React.ReactElement {
             height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
             width="100%"
             theme={prefersDarkMode ? "dark" : "light"}
-            extensions={[swimdsl(), compileSwimDsl(setSwimlXml)]}
+            extensions={[languageSupport, compiler]}
             onChange={onChange}
           />
         </Box>
