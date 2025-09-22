@@ -30,5 +30,9 @@ export default tseslint.config({
       "warn",
       { allowConstantExport: true },
     ],
+    "@typescript-eslint/restrict-template-expressions": [
+      "warn",
+      { allowNumber: true },
+    ],
   },
 });

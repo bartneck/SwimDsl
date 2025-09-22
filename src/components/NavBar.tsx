@@ -1,8 +1,17 @@
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import FileUploadIcon from "@mui/icons-material/FileUpload";
+import AddIcon from "@mui/icons-material/Add";
+import CodeIcon from "@mui/icons-material/Code";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import SaveAsIcon from "@mui/icons-material/SaveAs";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import React from "react";
@@ -10,34 +19,53 @@ import React from "react";
 interface NavBarProps {
   fileContent: string;
   setFileContent: React.Dispatch<React.SetStateAction<string>>;
+  swimlXml: string;
+  children?: React.ReactNode;
 }
 
 /**
  * The NavBar component sits at the top of the viewport to provide additional
  * functionality such as file export and file import.
  *
- * @param fileContent The UTF-8 text contents of the code editor.
- * @param setFileContent A function which takes UTF-8 text and replaces the
+ * @param fileContent - The UTF-8 text contents of the code editor.
+ * @param setFileContent - A function which takes UTF-8 text and replaces the
  *    contents of the code editor with the given text.
+ * @param children - React nodes to place on the right hand side of the NavBar.
+ *    Currently used to display the SidePanelSwitcher.
  *
  * @returns The react element used to render the Navigation bar.
  */
 function NavBar({
   fileContent,
   setFileContent,
+  swimlXml,
+  children,
 }: NavBarProps): React.ReactElement {
-  function downloadFile() {
-    const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  function exportBlob(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = "SwimProgramme.swim";
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
 
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  function downloadFile() {
+    const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+    exportBlob(blob, "SwimProgramme.swim");
   }
 
   function uploadFile() {
@@ -63,40 +91,76 @@ function NavBar({
     input.click();
   }
 
+  function downloadPdf() {
+    const blob = new Blob(["This is a PDF file"], {
+      type: "text/plain;charset=utf-8",
+    });
+    exportBlob(blob, "SwimProgramme.pdf");
+  }
+
+  function downloadXml() {
+    const blob = new Blob([swimlXml], { type: "text/plain;charset=utf-8" });
+    exportBlob(blob, "SwimProgramme.xml");
+  }
+
+  function newProgramme() {
+    window.open("/", "_blank").focus();
+  }
+
   return (
-    <AppBar position="static">
+    <AppBar sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar>
-        <Typography variant="h6" component="div">
-          App Bar
-        </Typography>
-        <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
-          <Button
-            onClick={downloadFile}
-            variant="contained"
-            size="small"
-            sx={{
-              ml: "auto",
-              minWidth: "40px",
-              minHeight: "40px",
-              padding: 0,
-            }}
-          >
-            <FileDownloadIcon />
-          </Button>
-          <Button
-            onClick={uploadFile}
-            variant="contained"
-            size="small"
-            sx={{
-              ml: "auto",
-              minWidth: "40px",
-              minHeight: "40px",
-              padding: 0,
-            }}
-          >
-            <FileUploadIcon />
-          </Button>
-        </Box>
+        <Paper sx={{ paddingX: "1em" }}>
+          <Typography variant="h6" component="div">
+            SwimDSL
+          </Typography>
+        </Paper>
+
+        <Button id="basic-button" onClick={handleClick} color="inherit">
+          File
+        </Button>
+
+        <Menu open={open} anchorEl={anchorEl} onClose={handleClose}>
+          <MenuItem onClick={newProgramme}>
+            <ListItemIcon>
+              <AddIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>New Programme</ListItemText>
+          </MenuItem>
+
+          <Divider />
+
+          <MenuItem onClick={uploadFile}>
+            <ListItemIcon>
+              <UploadFileIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Open</ListItemText>
+          </MenuItem>
+
+          <MenuItem onClick={downloadFile}>
+            <ListItemIcon>
+              <SaveAsIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Save As</ListItemText>
+          </MenuItem>
+
+          <Divider />
+
+          <MenuItem onClick={downloadXml}>
+            <ListItemIcon>
+              <CodeIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Export swiML XML</ListItemText>
+          </MenuItem>
+
+          <MenuItem onClick={downloadPdf}>
+            <ListItemIcon>
+              <PictureAsPdfIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Export as PDF</ListItemText>
+          </MenuItem>
+        </Menu>
+        <Box sx={{ ml: "auto" }}>{children}</Box>
       </Toolbar>
     </AppBar>
   );
