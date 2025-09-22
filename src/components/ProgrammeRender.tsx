@@ -1,7 +1,6 @@
 import Box from "@mui/material/Box";
 import { useEffect, useState } from "react";
 
-import "../resources/swiml.css";
 import RawHtml from "./RawHtml";
 
 interface ProgrammeRenderProps {
@@ -62,7 +61,7 @@ function ProgrammeRender({
   }, [sefData, xmlString]);
 
   return (
-    <Box maxHeight="100vh" overflow="auto">
+    <Box maxHeight="100vh" overflow="scroll">
       <RawHtml rawHtml={htmlContent} />
     </Box>
   );
