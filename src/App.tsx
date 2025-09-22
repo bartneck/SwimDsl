@@ -58,7 +58,7 @@ function App(): React.ReactElement {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <NavBar fileContent={value} setFileContent={setValue}>
+      <NavBar fileContent={value} setFileContent={setValue} swimlXml={swimlXml}>
         <SidePaneSwitcher
           activePanelPage={panelPage}
           setPanelPage={setPanelPage}

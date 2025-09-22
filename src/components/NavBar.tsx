@@ -1,4 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
+import CodeIcon from "@mui/icons-material/Code";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import SaveAsIcon from "@mui/icons-material/SaveAs";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -18,6 +19,7 @@ import React from "react";
 interface NavBarProps {
   fileContent: string;
   setFileContent: React.Dispatch<React.SetStateAction<string>>;
+  swimlXml: string;
   children?: React.ReactNode;
 }
 
@@ -36,6 +38,7 @@ interface NavBarProps {
 function NavBar({
   fileContent,
   setFileContent,
+  swimlXml,
   children,
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -47,18 +50,22 @@ function NavBar({
     setAnchorEl(null);
   };
 
-  function downloadFile() {
-    const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+  function exportBlob(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = "SwimProgramme.swim";
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
 
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  function downloadFile() {
+    const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+    exportBlob(blob, "SwimProgramme.swim");
   }
 
   function uploadFile() {
@@ -88,16 +95,12 @@ function NavBar({
     const blob = new Blob(["This is a PDF file"], {
       type: "text/plain;charset=utf-8",
     });
-    const url = URL.createObjectURL(blob);
+    exportBlob(blob, "SwimProgramme.pdf");
+  }
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "SwimProgramme.pdf";
-    document.body.appendChild(link);
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  function downloadXml() {
+    const blob = new Blob([swimlXml], { type: "text/plain;charset=utf-8" });
+    exportBlob(blob, "SwimProgramme.xml");
   }
 
   function newProgramme() {
@@ -139,6 +142,15 @@ function NavBar({
               <SaveAsIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>Save As</ListItemText>
+          </MenuItem>
+
+          <Divider />
+
+          <MenuItem onClick={downloadXml}>
+            <ListItemIcon>
+              <CodeIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Export swiML XML</ListItemText>
           </MenuItem>
 
           <MenuItem onClick={downloadPdf}>
