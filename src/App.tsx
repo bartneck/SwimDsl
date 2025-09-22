@@ -48,7 +48,7 @@ function App(): React.ReactElement {
         return <TutorialPane />;
 
       case PanelPage.RENDER:
-        return <ProgrammeRender />;
+        return <ProgrammeRender xmlString={swimlXml} />;
 
       case PanelPage.SWIML_XML:
         return <SwimlDisplay xmlContent={swimlXml} />;
