@@ -189,10 +189,30 @@ pace hard = 90%
 # It is very usefull for SwimDSL to know information such as the length
 # of the pool the programme is being swum in, and the unit that all
 # distances are specified in. This allows for the rendered output to show
-# the total distance in the programme. This should always be specified at
-# the very top of the file, at not appear more than once!
+# the total distance and number of laps in the programme. These are best
+# specified at the very top of the file, and should not appear more than once!
+
 set PoolLength 25
-set DistanceUnit metres
+set LegnthUnit "metres"
+
+
+# As well as specifying pool length and the unit used for length, one can
+# specify information about the programme itself, when it was written, and
+# who it was written by.
+
+set Title "Programme Title"
+set Author "Programme Author"
+set Description "Programme description"
+set Date "2025-09-22"  # Must conform to YYY-MM-DD
+
+
+# Additional information can be added to configure the programme render. These
+# options are shown below with their default values.
+
+set Align True
+set NumeralSystem "decimal"
+set HideIntro False
+set LayoutWidth 50
 
 # You can write arbitrary text to help describe a particular instruction
 # or provide section headers using the > symbol
