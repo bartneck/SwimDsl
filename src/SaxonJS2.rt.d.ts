@@ -1,5 +1,5 @@
 // https://github.com/infojunkie/musicxml-player/blob/993dfce6b894ee25c521c06847b67332b75f147f/src/saxon-js/SaxonJS2.rt.d.ts
-declare module "saxon-js" {
+declare namespace SaxonJS {
   export class XdmAtomicValue {
     type: string;
     toString(): string;
