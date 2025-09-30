@@ -1,5 +1,5 @@
 import { xml } from "@codemirror/lang-xml";
-import { useTheme } from "@emotion/react";
+import { useTheme } from "@mui/material/styles";
 import CodeMirror from "@uiw/react-codemirror";
 
 import "../resources/swiml.css";
