@@ -189,6 +189,17 @@ pace hard = 90%
 100 NumberFour
 
 
+### Set Headers ################################################################
+
+# You can create section headings using the > symbol. The text you specify will
+# be copied verbatim into the document in a bold font.
+> Warm up
+100 Freestyle
+
+> Set One
+4 x 200 Backstroke
+
+
 ### Extras #####################################################################
 
 # It is very usefull for SwimDSL to know information such as the length
@@ -219,10 +230,6 @@ set NumeralSystem "decimal"
 set HideIntro False
 set LayoutWidth 50
 
-# You can write arbitrary text to help describe a particular instruction
-# or provide section headers using the > symbol
-> This text shows verbatim in the rendered document
-
 # Finally, you should have noticed already, any text preceeded by a
 # hash symbol (#) is a comment, and completely ignored when rendering.
 
@@ -231,5 +238,5 @@ set LayoutWidth 50
 # stroke name, stroke type, required gear, and finally pace. If your use
 # these in the wrong order, the editor will show you an error message.
 
-# Go fourth! 
+# Go fourth!
 `;
