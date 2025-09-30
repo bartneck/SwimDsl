@@ -198,7 +198,7 @@ pace hard = 90%
 # specified at the very top of the file, and should not appear more than once!
 
 set PoolLength 25
-set LegnthUnit "metres"
+set LengthUnit "metres"
 
 
 # As well as specifying pool length and the unit used for length, one can
