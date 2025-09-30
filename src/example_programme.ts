@@ -5,8 +5,8 @@
 export const example_programme = `\
 ### Welcome ###################################################################
 
-swiDSL is part of a larger project, swiML! Information about the swiML project
-can be found online at https://swiml.org
+# swimDSL is part of a larger project, swiML! Information about the swiML
+# project can be found online at https://swiml.org
 
 ### Basic Instructions ########################################################
 
