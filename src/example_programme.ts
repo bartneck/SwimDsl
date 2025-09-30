@@ -64,18 +64,16 @@ export const example_programme = `\
 50 Freestyle Pull + Buoy Paddles
 
 
-### Swimming Pace ##############################################################
+### Swimming Intensity #########################################################
 
-# To specify the pace for a particular instruction, use the @ symbol.
-# Pace can be specified using a fixed time, such as 1:00 for one minute
-# or a percentage of perceived rate of excertion, such as 75%.
-125 Breaststroke on 2:30
-25 Freestyle on 0:20
+# To specify intensity for a particular instruction, use the @ symbol.
+# Intensity is specified as a percentage of the swimmer's perceived rate of
+# excertion.
 100 Backstroke @ 60%
 50 Backstroke @ 90%
 
-# When using percentage pace specification, we can specify increasing or
-# decreasing effort using a hyphen and a greater-than symbol (->).
+# We can slo specify increasing or decreasing effort using a hyphen and a
+# greater-than symbol (->).
 50 Butterfly @ 55% -> 75%
 100 Freestyle @ 80% -> 50%
 
@@ -90,14 +88,32 @@ pace hard = 90%
 150 Backstroke @ medium
 200 Freestyle @ easy -> hard
 
+# Note that it is an error to use a pace name that isn't defined
+50 Butterfly @ max
+
 # Pace names must only contain letters. Numbers, spaces, and other
 # symbols are not allowed.
 
 
 ### Resting ####################################################################
 
-# Swimmers often need to take breaks, use the rest keyword to specify
-# a fixed duration of resting. Durations are in minutes and seconds.
+# There are multiple ways to specify rest in swimDSL. Currently, these are rest
+# since the start of the instruction, and rest after the end of the instruction.
+# These are both written as durations, in minutes and seconds, for example, 1:00
+# specifies one minute.
+
+# Rest since start indicates that the instruction should be completed in less
+# time than the duration specified, and any remaining time is rest time. To
+# specify rest since start, use the on keyword.
+2 x 125 Breaststroke on 2:30
+4 x 25 Freestyle on 0:25
+
+# In the above example, the swimmer should not start the second 125 breaststroke
+# until two and a half minutes have passed since they started the first 125.
+# Similarly, they should not start their next 25 Freestyle until twenty five
+# seconds since they started their previous length.
+
+# To specify a fixed duration of rest (rest after finish), use the rest keyword
 1:00 rest
 0:30 rest
 
