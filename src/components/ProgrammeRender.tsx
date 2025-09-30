@@ -25,7 +25,7 @@ function ProgrammeRender({
   const [htmlContent, setHtmlContent] = useState("");
 
   useEffect(() => {
-    fetch("/swiML.sef.json")
+    fetch("./swiML.sef.json")
       .then((response) => response.text())
       .then((response) => {
         SaxonJS.transform(
