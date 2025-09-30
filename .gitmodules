@@ -1,0 +1,3 @@
+[submodule "codemirror-swimdsl"]
+	path = codemirror-swimdsl
+	url = ../codemirror-swimdsl.git
