@@ -235,7 +235,7 @@ set LengthUnit "metres"
 set Title "Programme Title"
 set Author "Programme Author"
 set Description "Programme description"
-set Date "2025-09-22"  # Must conform to YYY-MM-DD
+set Date "2025-09-22"  # Must conform to YYYY-MM-DD
 
 
 # Additional information can be added to configure the programme render. These
