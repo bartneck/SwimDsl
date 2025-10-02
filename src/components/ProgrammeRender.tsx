@@ -2,13 +2,11 @@ import Box from "@mui/material/Box";
 import { useEffect, useState } from "react";
 
 import RawHtml from "./RawHtml";
+import { processSefJson, transformXML } from "../logic/xslTransformation";
 
 interface ProgrammeRenderProps {
   xmlString: string;
 }
-
-const emptyXml =
-  '<?xml version="1.0" encoding="UTF-8"?><program xmlns="https://github.com/bartneck/swiML"/>';
 
 /**
  * The ProgrammeRender component is a SidePanel page which renders the HTML
@@ -27,37 +25,15 @@ function ProgrammeRender({
   useEffect(() => {
     fetch("./swiML.sef.json")
       .then((response) => response.text())
-      .then((response) => {
-        SaxonJS.transform(
-          {
-            stylesheetText: response,
-            sourceText: emptyXml,
-          },
-          "async",
-        )
-          .then((result) => {
-            setSefData(result.stylesheetInternal);
-          })
-          .catch(console.error);
-      })
+      .then(processSefJson)
+      .then(setSefData)
       .catch(console.error);
   }, []);
 
   useEffect(() => {
     if (Object.keys(sefData).length === 0) return;
 
-    SaxonJS.transform(
-      {
-        stylesheetInternal: sefData,
-        sourceText: xmlString,
-        destination: "serialized",
-      },
-      "async",
-    )
-      .then((result) => {
-        setHtmlContent(result.principalResult);
-      })
-      .catch(console.error);
+    transformXML(xmlString, sefData).then(setHtmlContent).catch(console.error);
   }, [sefData, xmlString]);
 
   return (
