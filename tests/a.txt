@@ -1,0 +1,50 @@
+pace easy = 50%
+pace medium = 70%
+pace hard = 90%
+pace max = 100%
+pace race = 110%
+
+> Warm Up
+100 Free @ 50% -> 80%
+50 Backstroke on 1:00
+75 Breastroke Pull + Buoy
+25 Butterfly
+100 Free @ 50% -> 80%
+50 Backstroke on 1:00
+75 Breastroke Pull + Buoy
+25 Butterfly
+100 Free @ easy% -> 80%
+50 Backstroke on 1:00
+75 Breastroke Pull + Buoy
+25 Butterfly Kick
+100 Free @ 50% -> 80%
+50 Backstroke on 1:00
+75 Breastroke Pull + Buoy
+25 Butterfly
+
+> Set One
+12 x 25 Freestyle @ max
+3 x 50 Backstroke @ hard
+8 x {
+  50 Butterfly @ max
+  100 Freestyle Kick + Fins
+  50 Backstroke @ easy -> medium
+}
+4 x 50 Backstroke on 1:00
+25 Butterfly Drill
+
+> Set Two
+3 x {
+    4 x 100 IndividualMedley @ 80%
+    100 Freestyle Kick + Board
+}
+10 x {
+    25 Backstroke Pull + Paddles
+    25 Breastroke Kick + Fins
+}
+
+> Warm Down
+2 x {
+    2 x 50 Freestyle Kick + Fins Board
+    2 x 50 Freestyle Pull + Paddles Buoy
+} @ 55% -> 40%
