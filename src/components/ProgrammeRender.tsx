@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import { useEffect, useState } from "react";
 
 import RawHtml from "./RawHtml";
-import { processSefJson, transformXML } from "../logic/xslTransformation";
+import { processSefJson, transformXml } from "../logic/xslTransformation";
 
 interface ProgrammeRenderProps {
   xmlString: string;
@@ -33,7 +33,7 @@ function ProgrammeRender({
   useEffect(() => {
     if (Object.keys(sefData).length === 0) return;
 
-    transformXML(xmlString, sefData).then(setHtmlContent).catch(console.error);
+    transformXml(xmlString, sefData).then(setHtmlContent).catch(console.error);
   }, [sefData, xmlString]);
 
   return (

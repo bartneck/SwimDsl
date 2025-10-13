@@ -13,7 +13,7 @@ async function processSefJson(sefJson: string): Promise<object> {
   return result.stylesheetInternal;
 }
 
-async function transformXML(
+async function transformXml(
   xmlString: string,
   compiledStylesheet: object,
 ): Promise<string> {
@@ -29,4 +29,4 @@ async function transformXML(
   return result.principalResult;
 }
 
-export { processSefJson, transformXML };
+export { processSefJson, transformXml };
