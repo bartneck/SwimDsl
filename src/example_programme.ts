@@ -61,7 +61,7 @@ export const example_programme = `\
 # for the specified stroke type.
 100 Backstroke Kick + Fins Board
 200 Freestyle + Fins
-50 Freestyle Pull + Buoy Paddles
+50 Freestyle Pull + PullBuoy Pads
 
 
 ### Swimming Intensity #########################################################
@@ -145,7 +145,7 @@ pace hard = 90%
   100 Freestyle
   50 Breaststroke
   0:30 rest
-} Pull + Buoy @ 70%
+} Pull + PullBuoy @ 70%
 
 # When specifying a pace on a grouped isntruction, the pace applies to
 # the whole group as a single item.
