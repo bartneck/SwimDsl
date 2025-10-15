@@ -104,7 +104,7 @@ function NavBar({
   }
 
   function newProgramme() {
-    window.open("/", "_blank")?.focus();
+    window.open("./", "_blank")?.focus();
   }
 
   return (
