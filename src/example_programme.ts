@@ -72,7 +72,7 @@ export const example_programme = `\
 100 Backstroke @ 60%
 50 Backstroke @ 90%
 
-# We can slo specify increasing or decreasing effort using a hyphen and a
+# We can also specify increasing or decreasing effort using a hyphen and a
 # greater-than symbol (->).
 50 Butterfly @ 55% -> 75%
 100 Freestyle @ 80% -> 50%
