@@ -3,6 +3,11 @@
  * loads.
  */
 export const example_programme = `\
+### Welcome ###################################################################
+
+# swimDSL is part of a larger project, swiML! Information about the swiML
+# project can be found online at https://swiml.org
+
 ### Basic Instructions ########################################################
 
 # Writing your first swim instruction:
@@ -56,21 +61,19 @@ export const example_programme = `\
 # for the specified stroke type.
 100 Backstroke Kick + Fins Board
 200 Freestyle + Fins
-50 Freestyle Pull + Buoy Paddles
+50 Freestyle Pull + PullBuoy Pads
 
 
-### Swimming Pace ##############################################################
+### Swimming Intensity #########################################################
 
-# To specify the pace for a particular instruction, use the @ symbol.
-# Pace can be specified using a fixed time, such as 1:00 for one minute
-# or a percentage of perceived rate of excertion, such as 75%.
-125 Breaststroke on 2:30
-25 Freestyle on 0:20
+# To specify intensity for a particular instruction, use the @ symbol.
+# Intensity is specified as a percentage of the swimmer's perceived rate of
+# excertion.
 100 Backstroke @ 60%
 50 Backstroke @ 90%
 
-# When using percentage pace specification, we can specify increasing or
-# decreasing effort using a hyphen and a greater-than symbol (->).
+# We can also specify increasing or decreasing effort using a hyphen and a
+# greater-than symbol (->).
 50 Butterfly @ 55% -> 75%
 100 Freestyle @ 80% -> 50%
 
@@ -85,14 +88,32 @@ pace hard = 90%
 150 Backstroke @ medium
 200 Freestyle @ easy -> hard
 
+# Note that it is an error to use a pace name that isn't defined
+50 Butterfly @ max
+
 # Pace names must only contain letters. Numbers, spaces, and other
 # symbols are not allowed.
 
 
 ### Resting ####################################################################
 
-# Swimmers often need to take breaks, use the rest keyword to specify
-# a fixed duration of resting. Durations are in minutes and seconds.
+# There are multiple ways to specify rest in swimDSL. Currently, these are rest
+# since the start of the instruction, and rest after the end of the instruction.
+# These are both written as durations, in minutes and seconds, for example, 1:00
+# specifies one minute.
+
+# Rest since start indicates that the instruction should be completed in less
+# time than the duration specified, and any remaining time is rest time. To
+# specify rest since start, use the on keyword.
+2 x 125 Breaststroke on 2:30
+4 x 25 Freestyle on 0:25
+
+# In the above example, the swimmer should not start the second 125 breaststroke
+# until two and a half minutes have passed since they started the first 125.
+# Similarly, they should not start their next 25 Freestyle until twenty five
+# seconds since they started their previous length.
+
+# To specify a fixed duration of rest (rest after finish), use the rest keyword
 1:00 rest
 0:30 rest
 
@@ -124,7 +145,7 @@ pace hard = 90%
   100 Freestyle
   50 Breaststroke
   0:30 rest
-} Pull + Buoy @ 70%
+} Pull + PullBuoy @ 70%
 
 # When specifying a pace on a grouped isntruction, the pace applies to
 # the whole group as a single item.
@@ -184,6 +205,17 @@ pace hard = 90%
 100 NumberFour
 
 
+### Set Headers ################################################################
+
+# You can create section headings using the > symbol. The text you specify will
+# be copied verbatim into the document in a bold font.
+> Warm up
+100 Freestyle
+
+> Set One
+4 x 200 Backstroke
+
+
 ### Extras #####################################################################
 
 # It is very usefull for SwimDSL to know information such as the length
@@ -193,7 +225,7 @@ pace hard = 90%
 # specified at the very top of the file, and should not appear more than once!
 
 set PoolLength 25
-set LegnthUnit "metres"
+set LengthUnit "metres"
 
 
 # As well as specifying pool length and the unit used for length, one can
@@ -203,7 +235,7 @@ set LegnthUnit "metres"
 set Title "Programme Title"
 set Author "Programme Author"
 set Description "Programme description"
-set Date "2025-09-22"  # Must conform to YYY-MM-DD
+set Date "2025-09-22"  # Must conform to YYYY-MM-DD
 
 
 # Additional information can be added to configure the programme render. These
@@ -214,10 +246,6 @@ set NumeralSystem "decimal"
 set HideIntro False
 set LayoutWidth 50
 
-# You can write arbitrary text to help describe a particular instruction
-# or provide section headers using the > symbol
-> This text shows verbatim in the rendered document
-
 # Finally, you should have noticed already, any text preceeded by a
 # hash symbol (#) is a comment, and completely ignored when rendering.
 
@@ -226,5 +254,5 @@ set LayoutWidth 50
 # stroke name, stroke type, required gear, and finally pace. If your use
 # these in the wrong order, the editor will show you an error message.
 
-# Go fourth! 
+# Go fourth!
 `;
