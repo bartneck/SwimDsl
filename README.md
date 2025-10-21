@@ -1,6 +1,6 @@
 # SwimDSL
 
-Welcome to the SwimDSL project repository.
+Welcome to the SwimDSL project repository. For a short summmary of the project, please have have a look at this [YouTube Video](https://youtu.be/P46H6FrZjwo?si=Hh3q_qlo2XFv2DDp)
 
 ## What is SwimDSL?
 
