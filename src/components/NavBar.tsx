@@ -23,6 +23,12 @@ import {
   uploadFile,
 } from "../logic/fileIo";
 
+interface FileMenuItem {
+  text: string;
+  icon: React.ReactElement;
+  onclick: () => void;
+}
+
 interface NavBarProps {
   swimdslProgramme: string;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
@@ -51,17 +57,59 @@ function NavBar({
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+  function openFileMenu(event: React.MouseEvent<HTMLButtonElement>) {
     setAnchorEl(event.currentTarget);
   }
 
-  function handleClose() {
+  function closeFileMenu() {
     setAnchorEl(null);
   }
 
   function newProgramme() {
     window.open("./", "_blank")?.focus();
   }
+
+  const fileMenuOptions: FileMenuItem[][] = [
+    [
+      {
+        text: "New Programme",
+        icon: <AddIcon fontSize="small" />,
+        onclick: newProgramme,
+      },
+    ],
+    [
+      {
+        text: "Open",
+        icon: <UploadFileIcon fontSize="small" />,
+        onclick: () => {
+          uploadFile(setSwimdslProgramme);
+        },
+      },
+      {
+        text: "Save As",
+        icon: <SaveAsIcon fontSize="small" />,
+        onclick: () => {
+          downloadSwimdsl(swimdslProgramme);
+        },
+      },
+    ],
+    [
+      {
+        text: "Export swiML XML",
+        icon: <CodeIcon fontSize="small" />,
+        onclick: () => {
+          downloadSwimlXml(swimlXml);
+        },
+      },
+      {
+        text: "Export as PDF",
+        icon: <PictureAsPdfIcon fontSize="small" />,
+        onclick: () => {
+          downloadPdf();
+        },
+      },
+    ],
+  ];
 
   return (
     <AppBar sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
@@ -72,62 +120,24 @@ function NavBar({
           </Typography>
         </Paper>
 
-        <Button id="basic-button" onClick={handleClick} color="inherit">
+        <Button id="basic-button" onClick={openFileMenu} color="inherit">
           File
         </Button>
 
-        <Menu open={open} anchorEl={anchorEl} onClose={handleClose}>
-          <MenuItem onClick={newProgramme}>
-            <ListItemIcon>
-              <AddIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>New Programme</ListItemText>
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem
-            onClick={() => {
-              uploadFile(setSwimdslProgramme);
-            }}
-          >
-            <ListItemIcon>
-              <UploadFileIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Open</ListItemText>
-          </MenuItem>
-
-          <MenuItem
-            onClick={() => {
-              downloadSwimdsl(swimdslProgramme);
-            }}
-          >
-            <ListItemIcon>
-              <SaveAsIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Save As</ListItemText>
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem
-            onClick={() => {
-              downloadSwimlXml(swimlXml);
-            }}
-          >
-            <ListItemIcon>
-              <CodeIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Export swiML XML</ListItemText>
-          </MenuItem>
-
-          <MenuItem onClick={downloadPdf}>
-            <ListItemIcon>
-              <PictureAsPdfIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Export as PDF</ListItemText>
-          </MenuItem>
+        <Menu open={open} anchorEl={anchorEl} onClose={closeFileMenu}>
+          {fileMenuOptions.map((group, groupIdx) => (
+            <>
+              {group.map(({ text, icon, onclick }, index) => (
+                <MenuItem onClick={onclick} key={index}>
+                  <ListItemIcon>{icon}</ListItemIcon>
+                  <ListItemText>{text}</ListItemText>
+                </MenuItem>
+              ))}
+              {groupIdx < fileMenuOptions.length - 1 && <Divider />}
+            </>
+          ))}
         </Menu>
+
         <Box sx={{ ml: "auto" }}>{children}</Box>
       </Toolbar>
     </AppBar>
