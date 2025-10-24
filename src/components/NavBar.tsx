@@ -16,9 +16,16 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import React from "react";
 
+import {
+  downloadPdf,
+  downloadSwimdsl,
+  downloadSwimlXml,
+  uploadFile,
+} from "../logic/fileIo";
+
 interface NavBarProps {
-  fileContent: string;
-  setFileContent: React.Dispatch<React.SetStateAction<string>>;
+  swimdslProgramme: string;
+  setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
   swimlXml: string;
   children?: React.ReactNode;
 }
@@ -27,8 +34,8 @@ interface NavBarProps {
  * The NavBar component sits at the top of the viewport to provide additional
  * functionality such as file export and file import.
  *
- * @param fileContent - The UTF-8 text contents of the code editor.
- * @param setFileContent - A function which takes UTF-8 text and replaces the
+ * @param swimdslProgramme - The UTF-8 text contents of the code editor.
+ * @param setSwimdslProgramme - A function which takes UTF-8 text and replaces the
  *    contents of the code editor with the given text.
  * @param children - React nodes to place on the right hand side of the NavBar.
  *    Currently used to display the SidePanelSwitcher.
@@ -36,71 +43,20 @@ interface NavBarProps {
  * @returns The react element used to render the Navigation bar.
  */
 function NavBar({
-  fileContent,
-  setFileContent,
+  swimdslProgramme,
+  setSwimdslProgramme,
   swimlXml,
   children,
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+
+  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
     setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
+  }
+
+  function handleClose() {
     setAnchorEl(null);
-  };
-
-  function exportBlob(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
-
-  function downloadFile() {
-    const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
-    exportBlob(blob, "SwimProgramme.swim");
-  }
-
-  function uploadFile() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".swim";
-
-    input.onchange = (event: Event) => {
-      const target = event.target as HTMLInputElement;
-      if (target.files && target.files.length > 0) {
-        const file = target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const fileText = e.target?.result;
-          if (typeof fileText === "string") {
-            setFileContent(fileText);
-          }
-        };
-        reader.readAsText(file);
-      }
-    };
-
-    input.click();
-  }
-
-  function downloadPdf() {
-    const blob = new Blob(["This is a PDF file"], {
-      type: "text/plain;charset=utf-8",
-    });
-    exportBlob(blob, "SwimProgramme.pdf");
-  }
-
-  function downloadXml() {
-    const blob = new Blob([swimlXml], { type: "text/plain;charset=utf-8" });
-    exportBlob(blob, "SwimProgramme.xml");
   }
 
   function newProgramme() {
@@ -130,14 +86,22 @@ function NavBar({
 
           <Divider />
 
-          <MenuItem onClick={uploadFile}>
+          <MenuItem
+            onClick={() => {
+              uploadFile(setSwimdslProgramme);
+            }}
+          >
             <ListItemIcon>
               <UploadFileIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>Open</ListItemText>
           </MenuItem>
 
-          <MenuItem onClick={downloadFile}>
+          <MenuItem
+            onClick={() => {
+              downloadSwimdsl(swimdslProgramme);
+            }}
+          >
             <ListItemIcon>
               <SaveAsIcon fontSize="small" />
             </ListItemIcon>
@@ -146,7 +110,11 @@ function NavBar({
 
           <Divider />
 
-          <MenuItem onClick={downloadXml}>
+          <MenuItem
+            onClick={() => {
+              downloadSwimlXml(swimlXml);
+            }}
+          >
             <ListItemIcon>
               <CodeIcon fontSize="small" />
             </ListItemIcon>

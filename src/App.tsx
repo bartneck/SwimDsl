@@ -22,7 +22,7 @@ import PanelPage from "./types/PanelPage";
  * @returns The react element used to render the application.
  */
 function App(): React.ReactElement {
-  const [value, setValue] = React.useState("");
+  const [swimdslProgramme, setSwimdslProgramme] = React.useState("");
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [panelPage, setPanelPage] = React.useState(PanelPage.RENDER);
   const [swimlXml, setSwimlXml] = React.useState("");
@@ -39,7 +39,7 @@ function App(): React.ReactElement {
   );
 
   const onChange = React.useCallback((val: string) => {
-    setValue(val);
+    setSwimdslProgramme(val);
   }, []);
 
   function showPanel() {
@@ -58,7 +58,11 @@ function App(): React.ReactElement {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <NavBar fileContent={value} setFileContent={setValue} swimlXml={swimlXml}>
+      <NavBar
+        swimdslProgramme={swimdslProgramme}
+        setSwimdslProgramme={setSwimdslProgramme}
+        swimlXml={swimlXml}
+      >
         <SidePaneSwitcher
           activePanelPage={panelPage}
           setPanelPage={setPanelPage}
@@ -76,7 +80,7 @@ function App(): React.ReactElement {
           borderRight="1px solid"
         >
           <CodeMirror
-            value={value}
+            value={swimdslProgramme}
             height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
             width="100%"
             theme={prefersDarkMode ? "dark" : "light"}
