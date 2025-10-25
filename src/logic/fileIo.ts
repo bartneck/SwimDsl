@@ -1,3 +1,5 @@
+import { jsPDF } from "jspdf";
+
 /**
  * Prompt the user to choose a file to upload and assuming the file contains
  * string content, call `callback` with its content.
@@ -64,17 +66,6 @@ function downloadSwimdsl(swimdslProgramme: string): void {
 }
 
 /**
- * Download the render of the user's programme to their file system as a PDF
- * file.
- */
-function downloadPdf() {
-  const blob = new Blob(["This is a PDF file"], {
-    type: "application/pdf",
-  });
-  exportBlob(blob, "SwimProgramme.pdf");
-}
-
-/**
  * Download the swiML XML generated from the user's swimDSL programme to their
  * file system as an XML file.
  *
@@ -85,4 +76,29 @@ function downloadSwimlXml(swimlXml: string) {
   exportBlob(blob, "SwimProgramme.xml");
 }
 
-export { downloadSwimdsl, downloadSwimlXml, downloadPdf, uploadFile };
+function downloadHtml(htmlString: string) {
+  const blob = new Blob([htmlString], { type: "text/html" });
+  exportBlob(blob, "SwimProgramme.html");
+}
+
+/**
+ * Download the render of the user's programme to their file system as a PDF
+ * file.
+ */
+async function downloadPdf(htmlString: string) {
+  const doc = new jsPDF();
+  const worker = doc.html(htmlString, {
+    margin: 40,
+    html2canvas: { scale: 0.25, logging: false, x: 0, y: 0 },
+  });
+
+  await worker.save("SwimProgramme.pdf");
+}
+
+export {
+  downloadSwimdsl,
+  downloadSwimlXml,
+  downloadPdf,
+  downloadHtml,
+  uploadFile,
+};

@@ -26,6 +26,7 @@ function App(): React.ReactElement {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [panelPage, setPanelPage] = React.useState(PanelPage.RENDER);
   const [swimlXml, setSwimlXml] = React.useState("");
+  const [htmlString, setHtmlString] = React.useState("");
   const compiler = React.useMemo(() => compileSwimDsl(setSwimlXml), []);
   const languageSupport = React.useMemo(() => swimdsl(), []);
   const theme = React.useMemo(
@@ -48,7 +49,13 @@ function App(): React.ReactElement {
         return <TutorialPane />;
 
       case PanelPage.RENDER:
-        return <ProgrammeRender xmlString={swimlXml} />;
+        return (
+          <ProgrammeRender
+            xmlString={swimlXml}
+            htmlString={htmlString}
+            setHtmlString={setHtmlString}
+          />
+        );
 
       case PanelPage.SWIML_XML:
         return <SwimlDisplay xmlContent={swimlXml} />;
@@ -62,6 +69,7 @@ function App(): React.ReactElement {
         swimdslProgramme={swimdslProgramme}
         setSwimdslProgramme={setSwimdslProgramme}
         swimlXml={swimlXml}
+        htmlString={htmlString}
       >
         <SidePaneSwitcher
           activePanelPage={panelPage}

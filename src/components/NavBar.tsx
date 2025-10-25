@@ -6,7 +6,6 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
@@ -20,19 +19,21 @@ import {
   downloadPdf,
   downloadSwimdsl,
   downloadSwimlXml,
+  downloadHtml,
   uploadFile,
 } from "../logic/fileIo";
 
 interface FileMenuItem {
   text: string;
   icon: React.ReactElement;
-  onclick: () => void;
+  onclick: () => void | Promise<void>;
 }
 
 interface NavBarProps {
   swimdslProgramme: string;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
   swimlXml: string;
+  htmlString: string;
   children?: React.ReactNode;
 }
 
@@ -52,6 +53,7 @@ function NavBar({
   swimdslProgramme,
   setSwimdslProgramme,
   swimlXml,
+  htmlString,
   children,
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -69,46 +71,47 @@ function NavBar({
     window.open("./", "_blank")?.focus();
   }
 
-  const fileMenuOptions: FileMenuItem[][] = [
-    [
-      {
-        text: "New Programme",
-        icon: <AddIcon fontSize="small" />,
-        onclick: newProgramme,
+  const fileMenuOptions: FileMenuItem[] = [
+    {
+      text: "New Programme",
+      icon: <AddIcon fontSize="small" />,
+      onclick: newProgramme,
+    },
+    {
+      text: "Open",
+      icon: <UploadFileIcon fontSize="small" />,
+      onclick: () => {
+        uploadFile(setSwimdslProgramme);
       },
-    ],
-    [
-      {
-        text: "Open",
-        icon: <UploadFileIcon fontSize="small" />,
-        onclick: () => {
-          uploadFile(setSwimdslProgramme);
-        },
+    },
+    {
+      text: "Save As",
+      icon: <SaveAsIcon fontSize="small" />,
+      onclick: () => {
+        downloadSwimdsl(swimdslProgramme);
       },
-      {
-        text: "Save As",
-        icon: <SaveAsIcon fontSize="small" />,
-        onclick: () => {
-          downloadSwimdsl(swimdslProgramme);
-        },
+    },
+    {
+      text: "Export swiML XML",
+      icon: <CodeIcon fontSize="small" />,
+      onclick: () => {
+        downloadSwimlXml(swimlXml);
       },
-    ],
-    [
-      {
-        text: "Export swiML XML",
-        icon: <CodeIcon fontSize="small" />,
-        onclick: () => {
-          downloadSwimlXml(swimlXml);
-        },
+    },
+    {
+      text: "Export HTML",
+      icon: <CodeIcon fontSize="small" />,
+      onclick: () => {
+        downloadHtml(htmlString);
       },
-      {
-        text: "Export as PDF",
-        icon: <PictureAsPdfIcon fontSize="small" />,
-        onclick: () => {
-          downloadPdf();
-        },
+    },
+    {
+      text: "Export as PDF",
+      icon: <PictureAsPdfIcon fontSize="small" />,
+      onclick: () => {
+        downloadPdf(htmlString);
       },
-    ],
+    },
   ];
 
   return (
@@ -125,16 +128,11 @@ function NavBar({
         </Button>
 
         <Menu open={open} anchorEl={anchorEl} onClose={closeFileMenu}>
-          {fileMenuOptions.map((group, groupIdx) => (
-            <>
-              {group.map(({ text, icon, onclick }, index) => (
-                <MenuItem onClick={onclick} key={index}>
-                  <ListItemIcon>{icon}</ListItemIcon>
-                  <ListItemText>{text}</ListItemText>
-                </MenuItem>
-              ))}
-              {groupIdx < fileMenuOptions.length - 1 && <Divider />}
-            </>
+          {fileMenuOptions.map(({ text, icon, onclick }, index) => (
+            <MenuItem onClick={onclick} key={index}>
+              <ListItemIcon>{icon}</ListItemIcon>
+              <ListItemText>{text}</ListItemText>
+            </MenuItem>
           ))}
         </Menu>
 
