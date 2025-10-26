@@ -71,7 +71,7 @@ function downloadSwimdsl(swimdslProgramme: string): void {
  *
  * @param swimlXml The swiML XML programme as a string.
  */
-function downloadSwimlXml(swimlXml: string) {
+function downloadSwimlXml(swimlXml: string): void {
   const blob = new Blob([swimlXml], { type: "application/xml" });
   exportBlob(blob, "SwimProgramme.xml");
 }
