@@ -76,7 +76,7 @@ function downloadSwimlXml(swimlXml: string) {
   exportBlob(blob, "SwimProgramme.xml");
 }
 
-function downloadHtml(htmlString: string) {
+function downloadHtml(htmlString: string): void {
   const blob = new Blob([htmlString], { type: "text/html" });
   exportBlob(blob, "SwimProgramme.html");
 }
