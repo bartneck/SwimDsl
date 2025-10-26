@@ -22,10 +22,11 @@ import PanelPage from "./types/PanelPage";
  * @returns The react element used to render the application.
  */
 function App(): React.ReactElement {
-  const [value, setValue] = React.useState("");
+  const [swimdslProgramme, setSwimdslProgramme] = React.useState("");
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [panelPage, setPanelPage] = React.useState(PanelPage.RENDER);
   const [swimlXml, setSwimlXml] = React.useState("");
+  const [htmlString, setHtmlString] = React.useState("");
   const compiler = React.useMemo(() => compileSwimDsl(setSwimlXml), []);
   const languageSupport = React.useMemo(() => swimdsl(), []);
   const theme = React.useMemo(
@@ -39,7 +40,7 @@ function App(): React.ReactElement {
   );
 
   const onChange = React.useCallback((val: string) => {
-    setValue(val);
+    setSwimdslProgramme(val);
   }, []);
 
   function showPanel() {
@@ -48,7 +49,13 @@ function App(): React.ReactElement {
         return <TutorialPane />;
 
       case PanelPage.RENDER:
-        return <ProgrammeRender xmlString={swimlXml} />;
+        return (
+          <ProgrammeRender
+            xmlString={swimlXml}
+            htmlString={htmlString}
+            setHtmlString={setHtmlString}
+          />
+        );
 
       case PanelPage.SWIML_XML:
         return <SwimlDisplay xmlContent={swimlXml} />;
@@ -58,7 +65,12 @@ function App(): React.ReactElement {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <NavBar fileContent={value} setFileContent={setValue} swimlXml={swimlXml}>
+      <NavBar
+        swimdslProgramme={swimdslProgramme}
+        setSwimdslProgramme={setSwimdslProgramme}
+        swimlXml={swimlXml}
+        htmlString={htmlString}
+      >
         <SidePaneSwitcher
           activePanelPage={panelPage}
           setPanelPage={setPanelPage}
@@ -76,7 +88,7 @@ function App(): React.ReactElement {
           borderRight="1px solid"
         >
           <CodeMirror
-            value={value}
+            value={swimdslProgramme}
             height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
             width="100%"
             theme={prefersDarkMode ? "dark" : "light"}

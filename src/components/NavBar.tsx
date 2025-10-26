@@ -6,7 +6,6 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
@@ -16,10 +15,25 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import React from "react";
 
+import {
+  downloadPdf,
+  downloadSwimdsl,
+  downloadSwimlXml,
+  downloadHtml,
+  uploadFile,
+} from "../logic/fileIo";
+
+interface FileMenuItem {
+  text: string;
+  icon: React.ReactElement;
+  onclick: () => void | Promise<void>;
+}
+
 interface NavBarProps {
-  fileContent: string;
-  setFileContent: React.Dispatch<React.SetStateAction<string>>;
+  swimdslProgramme: string;
+  setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
   swimlXml: string;
+  htmlString: string;
   children?: React.ReactNode;
 }
 
@@ -27,8 +41,8 @@ interface NavBarProps {
  * The NavBar component sits at the top of the viewport to provide additional
  * functionality such as file export and file import.
  *
- * @param fileContent - The UTF-8 text contents of the code editor.
- * @param setFileContent - A function which takes UTF-8 text and replaces the
+ * @param swimdslProgramme - The UTF-8 text contents of the code editor.
+ * @param setSwimdslProgramme - A function which takes UTF-8 text and replaces the
  *    contents of the code editor with the given text.
  * @param children - React nodes to place on the right hand side of the NavBar.
  *    Currently used to display the SidePanelSwitcher.
@@ -36,76 +50,69 @@ interface NavBarProps {
  * @returns The react element used to render the Navigation bar.
  */
 function NavBar({
-  fileContent,
-  setFileContent,
+  swimdslProgramme,
+  setSwimdslProgramme,
   swimlXml,
+  htmlString,
   children,
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+
+  function openFileMenu(event: React.MouseEvent<HTMLButtonElement>) {
     setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
+  }
+
+  function closeFileMenu() {
     setAnchorEl(null);
-  };
-
-  function exportBlob(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
-
-  function downloadFile() {
-    const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
-    exportBlob(blob, "SwimProgramme.swim");
-  }
-
-  function uploadFile() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".swim";
-
-    input.onchange = (event: Event) => {
-      const target = event.target as HTMLInputElement;
-      if (target.files && target.files.length > 0) {
-        const file = target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const fileText = e.target?.result;
-          if (typeof fileText === "string") {
-            setFileContent(fileText);
-          }
-        };
-        reader.readAsText(file);
-      }
-    };
-
-    input.click();
-  }
-
-  function downloadPdf() {
-    const blob = new Blob(["This is a PDF file"], {
-      type: "text/plain;charset=utf-8",
-    });
-    exportBlob(blob, "SwimProgramme.pdf");
-  }
-
-  function downloadXml() {
-    const blob = new Blob([swimlXml], { type: "text/plain;charset=utf-8" });
-    exportBlob(blob, "SwimProgramme.xml");
   }
 
   function newProgramme() {
     window.open("./", "_blank")?.focus();
   }
+
+  const fileMenuOptions: FileMenuItem[] = [
+    {
+      text: "New Programme",
+      icon: <AddIcon fontSize="small" />,
+      onclick: newProgramme,
+    },
+    {
+      text: "Open",
+      icon: <UploadFileIcon fontSize="small" />,
+      onclick: () => {
+        uploadFile(setSwimdslProgramme);
+      },
+    },
+    {
+      text: "Save As",
+      icon: <SaveAsIcon fontSize="small" />,
+      onclick: () => {
+        downloadSwimdsl(swimdslProgramme);
+      },
+    },
+    {
+      text: "Export swiML XML",
+      icon: <CodeIcon fontSize="small" />,
+      onclick: () => {
+        downloadSwimlXml(swimlXml);
+      },
+    },
+    {
+      text: "Export HTML",
+      icon: <CodeIcon fontSize="small" />,
+      onclick: () => {
+        downloadHtml(htmlString);
+      },
+    },
+    {
+      text: "Export as PDF",
+      icon: <PictureAsPdfIcon fontSize="small" />,
+      onclick: () => {
+        downloadPdf(htmlString);
+      },
+    },
+  ];
 
   return (
     <AppBar sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
@@ -116,50 +123,19 @@ function NavBar({
           </Typography>
         </Paper>
 
-        <Button id="basic-button" onClick={handleClick} color="inherit">
+        <Button id="basic-button" onClick={openFileMenu} color="inherit">
           File
         </Button>
 
-        <Menu open={open} anchorEl={anchorEl} onClose={handleClose}>
-          <MenuItem onClick={newProgramme}>
-            <ListItemIcon>
-              <AddIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>New Programme</ListItemText>
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem onClick={uploadFile}>
-            <ListItemIcon>
-              <UploadFileIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Open</ListItemText>
-          </MenuItem>
-
-          <MenuItem onClick={downloadFile}>
-            <ListItemIcon>
-              <SaveAsIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Save As</ListItemText>
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem onClick={downloadXml}>
-            <ListItemIcon>
-              <CodeIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Export swiML XML</ListItemText>
-          </MenuItem>
-
-          <MenuItem onClick={downloadPdf}>
-            <ListItemIcon>
-              <PictureAsPdfIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Export as PDF</ListItemText>
-          </MenuItem>
+        <Menu open={open} anchorEl={anchorEl} onClose={closeFileMenu}>
+          {fileMenuOptions.map(({ text, icon, onclick }, index) => (
+            <MenuItem onClick={onclick} key={index}>
+              <ListItemIcon>{icon}</ListItemIcon>
+              <ListItemText>{text}</ListItemText>
+            </MenuItem>
+          ))}
         </Menu>
+
         <Box sx={{ ml: "auto" }}>{children}</Box>
       </Toolbar>
     </AppBar>

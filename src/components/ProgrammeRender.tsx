@@ -6,6 +6,8 @@ import { processSefJson, transformXml } from "../logic/xslTransformation";
 
 interface ProgrammeRenderProps {
   xmlString: string;
+  htmlString: string;
+  setHtmlString: (html: string) => void;
 }
 
 /**
@@ -18,9 +20,10 @@ interface ProgrammeRenderProps {
  */
 function ProgrammeRender({
   xmlString,
+  htmlString,
+  setHtmlString,
 }: ProgrammeRenderProps): React.ReactElement {
   const [sefData, setSefData] = useState({});
-  const [htmlContent, setHtmlContent] = useState("");
 
   useEffect(() => {
     fetch("./swiML.sef.json")
@@ -33,12 +36,12 @@ function ProgrammeRender({
   useEffect(() => {
     if (Object.keys(sefData).length === 0) return;
 
-    transformXml(xmlString, sefData).then(setHtmlContent).catch(console.error);
-  }, [sefData, xmlString]);
+    transformXml(xmlString, sefData).then(setHtmlString).catch(console.error);
+  }, [sefData, xmlString, setHtmlString]);
 
   return (
     <Box maxHeight="100vh" overflow="scroll">
-      <RawHtml rawHtml={htmlContent} />
+      <RawHtml rawHtml={htmlString} />
     </Box>
   );
 }
