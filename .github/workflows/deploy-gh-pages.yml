@@ -40,8 +40,8 @@ jobs:
 
       - name: Generate SEF JSON
         run: |
-            curl https://raw.githubusercontent.com/bartneck/swiML/refs/heads/main/swiML.xsl > public/swiML.xsl
-            node node_modules/xslt3/xslt3.js -xsl:public/swiML.xsl -export:public/swiML.sef.json -t -ns:##html5 -nogo
+          curl https://raw.githubusercontent.com/bartneck/swiML/refs/heads/main/swiML.xsl > public/swiML.xsl
+          node node_modules/xslt3/xslt3.js -xsl:public/swiML.xsl -export:public/swiML.sef.json -t -ns:##html5 -nogo -relocate:on
 
       - name: Build project
         run: npm run build
