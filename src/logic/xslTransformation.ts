@@ -17,16 +17,10 @@ async function transformXml(
   xmlString: string,
   compiledStylesheet: object,
 ): Promise<string> {
-  const baseURI = new URL(".", import.meta.url).origin + "/";
-
   const result = await SaxonJS.transform(
     {
       stylesheetInternal: compiledStylesheet,
       sourceText: xmlString,
-      stylesheetBaseURI: baseURI,
-      sourceBaseURI: baseURI,
-      baseOutputURI: baseURI,
-      nonInteractive: true,
       destination: "serialized",
     },
     "async",
