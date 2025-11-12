@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail # fail fast on errors
 
-# ------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Usage:
 #   ./generateSef.bash DEPLOYED_BASE_URL
 #
-# Generate a compiled SEF JSON file from the latest version of
-# the swiML XSL file which is to be deployed at `DEPLOYED_BASE_URL`.
-# ------------------------------------------------------------
+# DEPLOYED_BASE_URL - The URL at which the web application is available at,
+#     e.g. http://localhost:5173
+#
+# Generate a compiled SEF JSON file from the latest version of the swiML XSL
+# file which is to be deployed at `DEPLOYED_BASE_URL`.
+# ------------------------------------------------------------------------------
 
 deployed_base_url=$1
 
