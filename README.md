@@ -23,12 +23,13 @@ run the program from source, execute the following:
 git clone --recurse-submodules https://github.com/hazzery/SwimDsl.git
 cd SwimDsl
 npm i
+./scripts/generateSef.bash http://localhost:5173
 npm run dev
 ```
 
 Once the Vite development server has started, type `o` and press `Enter` to
 open the web app in a new tab in your default browser. Alternatively,
-navigate to `https://localhost:5173`.
+navigate to `http://localhost:5173`.
 
 ### I did something wrong and it doesn't run
 
