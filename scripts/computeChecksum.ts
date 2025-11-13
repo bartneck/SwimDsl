@@ -5,8 +5,8 @@
  * Compute (and optionally verify) the checksum of a Saxon‑JS SEF file.
  *
  * Usage:
- *   node sef-checksum.js path/to/file.sef.json   # prints the computed checksum
- *   node sef-checksum.js -v path/to/file.sef.json   # also reports match/mismatch
+ *   ./computeChecksum.ts path/to/file.sef.json   # prints the computed checksum
+ *   ./computeChecksum.ts -v path/to/file.sef.json   # also reports match/mismatch
  *
  * The algorithm is a faithful recreation of the one shipped with Saxon‑JS 2
  * (see the de‑obfuscated function `verifyChecksum` in the previous answer).
