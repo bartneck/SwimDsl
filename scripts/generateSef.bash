@@ -24,7 +24,7 @@ sef_file_path="./${STATIC_HTTP_DIR}/${SEF_FILE_NAME}"
 static_http_uri="file://$(cd "${STATIC_HTTP_DIR}" && pwd -P)"
 
 # Download the latest version of the swiML XSL transformation schema
-curl ${MASTER_XSL_URL} >"${xsl_file_path}"
+curl --fail ${MASTER_XSL_URL} >"${xsl_file_path}"
 
 # Compile it into a SEF JSON file
 node node_modules/xslt3/xslt3.js -xsl:"${xsl_file_path}" -export:"${sef_file_path}" -t -ns:##html5 -nogo
