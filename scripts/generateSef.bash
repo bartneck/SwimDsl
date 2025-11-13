@@ -18,7 +18,7 @@ readonly MASTER_XSL_URL=https://raw.githubusercontent.com/bartneck/swiML/refs/he
 readonly SEF_FILE_NAME=swiML.sef.json
 readonly STATIC_HTTP_DIR=public
 
-xsl_file_name=$(basename ${MASTER_XSL_URL})
+xsl_file_name=$(basename "${MASTER_XSL_URL}")
 xsl_file_path="./${STATIC_HTTP_DIR}/${xsl_file_name}"
 sef_file_path="./${STATIC_HTTP_DIR}/${SEF_FILE_NAME}"
 static_http_uri="file://$(cd "${STATIC_HTTP_DIR}" && pwd -P)"
