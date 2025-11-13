@@ -33,7 +33,7 @@ node node_modules/xslt3/xslt3.js -xsl:"${xsl_file_path}" -export:"${sef_file_pat
 sed --in-place --expression="s&${static_http_uri}&${deployed_base_url}&g" "${sef_file_path}"
 
 # Calculate what the checksum should be for the updated sef json
-new_checksum=$(./scripts/computeChecksum.ts ${sef_file_path})
+new_checksum=$(./scripts/computeChecksum.ts "${sef_file_path}")
 
 # Replace the Σ field using jq
 #    The property name is the Greek capital sigma (U+03A3).
