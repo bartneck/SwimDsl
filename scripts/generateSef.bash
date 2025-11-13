@@ -30,7 +30,7 @@ curl ${MASTER_XSL_URL} >"${xsl_file_path}"
 node node_modules/xslt3/xslt3.js -xsl:"${xsl_file_path}" -export:${sef_file_path} -t -ns:##html5 -nogo
 
 # Replace references to the XSL file with the hosted instance
-sed --in-place --expression="s&${static_http_uri}&${deployed_base_url}&g" ${sef_file_path}
+sed --in-place --expression="s&${static_http_uri}&${deployed_base_url}&g" "${sef_file_path}"
 
 # Calculate what the checksum should be for the updated sef json
 new_checksum=$(./scripts/computeChecksum.ts ${sef_file_path})
