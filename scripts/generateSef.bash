@@ -27,7 +27,7 @@ static_http_uri="file://$(cd "${STATIC_HTTP_DIR}" && pwd -P)"
 curl ${MASTER_XSL_URL} >"${xsl_file_path}"
 
 # Compile it into a SEF JSON file
-node node_modules/xslt3/xslt3.js -xsl:"${xsl_file_path}" -export:${sef_file_path} -t -ns:##html5 -nogo
+node node_modules/xslt3/xslt3.js -xsl:"${xsl_file_path}" -export:"${sef_file_path}" -t -ns:##html5 -nogo
 
 # Replace references to the XSL file with the hosted instance
 sed --in-place --expression="s&${static_http_uri}&${deployed_base_url}&g" "${sef_file_path}"
