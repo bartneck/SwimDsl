@@ -1,3 +1,7 @@
+# XSL stylesheet
+public/swiML.xsl
+public/swiML.sef.json
+
 # Logs
 logs
 *.log
