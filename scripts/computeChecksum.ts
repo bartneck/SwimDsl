@@ -1,46 +1,51 @@
 #!/usr/bin/env node
 /**
- * sef-checksum.js
+ * Compute the checksum of a Saxon‑JS SEF file and print it to stdout.
  *
- * Compute (and optionally verify) the checksum of a Saxon‑JS SEF file.
- *
- * Usage:
- *   ./computeChecksum.ts path/to/file.sef.json   # prints the computed checksum
- *   ./computeChecksum.ts -v path/to/file.sef.json   # also reports match/mismatch
- *
- * The algorithm is a faithful recreation of the one shipped with Saxon‑JS 2
- * (see the de‑obfuscated function `verifyChecksum` in the previous answer).
+ * Usage: ./computeChecksum.ts path/to/file.sef.json
  */
 
-"use strict";
 import fs from "fs";
 import path from "path";
 
-// ---------------------------------------------------------------------------
-// Helper: simple rolling hash used by the checksum algorithm.
-// ---------------------------------------------------------------------------
+type SefObject = Record<string, string> & {
+  C?: SefObject[];
+};
+
+/**
+ * Rolling hash used by the checksum algorithm.
+ *
+ * @param str The string to compute the hash of.
+ * @param seed Numeric hashing seed.
+ */
 function hashString(str: string, seed: number) {
-  seed <<= 8; // shift left 8 bits first
+  seed <<= 8;
   for (let i = 0; i < str.length; i++) {
     seed = (seed << 1) + str.charCodeAt(i);
   }
   return seed;
 }
 
-// ---------------------------------------------------------------------------
-// Helper: XOR two hashes that share the same seed.
-// ---------------------------------------------------------------------------
+/**
+ * Combine the hashes of two strings
+ *
+ * @param a A string to hash.
+ * @param b A string to hash.
+ * @param seed The numeric hashing seed used for both hashes.
+ */
 function xorHashes(a: string, b: string, seed: number) {
   return hashString(a, seed) ^ hashString(b, seed);
 }
 
-// ---------------------------------------------------------------------------
-// Recursive walker that updates the global checksum.
-// ---------------------------------------------------------------------------
-function walk(node, state) {
-  // state.checksum  – accumulated integer checksum
-  // state.counter   – monotonically increasing seed for the hash functions
-
+/**
+ * Recursive walker that updates the global checksum.
+ *
+ * @param node The SEF object to walk through.
+ * @param state An object keeping track of the checksum.
+ *     state.checksum  – accumulated integer checksum
+ *     state.counter   – monotonically increasing seed for the hash functions
+ */
+function walk(node: SefObject, state: { checksum: number; counter: number }) {
   // Mix the node's own identifier (node.N) together with the fixed namespace.
   state.checksum ^= xorHashes(
     node.N,
@@ -72,17 +77,22 @@ function walk(node, state) {
 
   // Recurse into child nodes, if any.
   if (Array.isArray(node.C)) {
-    node.C.forEach((child) => walk(child, state));
+    node.C.forEach((child) => {
+      walk(child, state);
+    });
   }
 
   // Final mixing step for this node.
   state.checksum ^= 1;
 }
 
-// ---------------------------------------------------------------------------
-// Main driver – reads the file, runs the algorithm, prints results.
-// ---------------------------------------------------------------------------
-function computeChecksum(sefObject) {
+/**
+ * Compute the checksum value of the given SEF object.
+ *
+ * @param sefObject Object to compute the checksum of.
+ * @returns The checksum of `sefObject` as a string.
+ */
+function computeChecksum(sefObject: SefObject): string {
   const state = { checksum: 0, counter: 0 };
   walk(sefObject, state);
 
@@ -91,71 +101,61 @@ function computeChecksum(sefObject) {
   return unsigned.toString(16);
 }
 
-// ---------------------------------------------------------------------------
-// CLI handling
-// ---------------------------------------------------------------------------
-function printHelpAndExit() {
-  console.error(`Usage:
-  ${path.basename(process.argv[1])} [-v] <path-to-sef-json>
-
-Options:
-  -v    Verify the checksum stored inside the SEF (property Σ) and report match/mismatch.
-`);
-  process.exit(1);
-}
-
-(async () => {
+/**
+ * Parse the SEF JSON file pathe from command line arguments.
+ *
+ * @returns The path to the SEF JSON file specified by the user.
+ */
+function parseFilePathFromArguments(): string {
   const args = process.argv.slice(2);
-  if (args.length === 0) printHelpAndExit();
-
-  let verify = false;
-  let filePath;
-
-  // Simple flag parsing (only -v supported)
-  if (args[0] === "-v") {
-    verify = true;
-    filePath = args[1];
-  } else {
-    filePath = args[0];
+  if (args.length === 0) {
+    console.error(
+      `Usage: ${path.basename(process.argv[1])} <path-to-sef-json>`,
+    );
+    process.exit(1);
   }
 
+  const filePath = args[0];
   if (!filePath) {
     console.error("Error: No SEF file supplied.");
-    printHelpAndExit();
+    console.error(
+      `Usage: ${path.basename(process.argv[1])} <path-to-sef-json>`,
+    );
+    process.exit(1);
   }
+
+  return filePath;
+}
+
+/**
+ * Read the SEF JSON file provided in the command line arguments, runs the
+ * checksum algorithm, and print it to stdout.
+ */
+async function main() {
+  const filePath = parseFilePathFromArguments();
 
   // Load the SEF file – Saxon‑JS SEFs are plain JSON.
   let raw;
   try {
     raw = await fs.promises.readFile(filePath, "utf8");
-  } catch (e) {
-    console.error(`Failed to read "${filePath}": ${e.message}`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error(`Failed to read "${filePath}": ${message}`);
     process.exit(2);
   }
 
   let sefObj;
   try {
-    sefObj = JSON.parse(raw);
+    sefObj = JSON.parse(raw) as SefObject;
   } catch (e) {
-    console.error(`Failed to parse JSON from "${filePath}": ${e.message}`);
+    const message = e instanceof Error ? e.message : String(e);
+    console.error(`Failed to parse JSON from "${filePath}": ${message}`);
     process.exit(3);
   }
 
   // Compute the checksum.
   const computedHex = computeChecksum(sefObj);
   console.log(computedHex);
+}
 
-  if (verify) {
-    const stored = sefObj[String.fromCharCode(931)] || "unspecified";
-    if (stored === "unspecified") {
-      console.warn("⚠️  No checksum (Σ) stored inside the SEF.");
-    } else if (stored.toLowerCase() === computedHex.toLowerCase()) {
-      console.log("✅  Stored checksum matches the computed value.");
-    } else {
-      console.error(
-        `❌  MISMATCH – stored: ${stored}, computed: ${computedHex}`,
-      );
-      process.exit(4);
-    }
-  }
-})();
+await main();
