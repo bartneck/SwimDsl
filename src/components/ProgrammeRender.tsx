@@ -41,7 +41,7 @@ function ProgrammeRender({
 
   return (
     <Box maxHeight="100vh" overflow="scroll">
-      <RawHtml rawHtml={htmlString} />
+      <RawHtml rawHtml={htmlString} style={{ fontFamily: "Jetbrains Mono" }} />
     </Box>
   );
 }
