@@ -72,7 +72,7 @@ The SwimDSL language is currently capable of modelling the following concepts:
 - Rest from end of instruction (e.g. rest 1:00)
 - Named intensities, e.g. easy, medium, and max
 - Stroke types (pull, kick, and drill)
-- Usage of gear such as fins or kick-boards
+- Usage of equipment such as fins or kick-boards
 - Repeating an instruction an arbitrary number of times
 - Grouping instructions into a single block, allowing for repetition of
   multiple instructions
@@ -96,8 +96,8 @@ from writing malformed programmes.
 - Syntax Error
 - Invalid stroke name
 - Invalid stroke type
-- Invalid gear name
+- Invalid equipment name
 - Invalid distance unit
 - Undefined pace name
-- Incompatible gear and stroke type combination
+- Incompatible equipment and stroke type combination
 - Invalid duration

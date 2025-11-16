@@ -54,10 +54,10 @@ export const example_programme = `\
 100 Backstroke Kick
 50 Breaststroke Pull
 
-# When performing kick and pull, it is common to use special gear. These
+# When performing kick and pull, it is common to use special equipment. These
 # can be specified using the + symbol. You can specify multiple pieces
-# of gear by separating each one with a space. The SwimDSL editor will
-# show you an error message if you make an invalid combination of gear
+# of equipment by separating each one with a space. The SwimDSL editor will
+# show you an error message if you make an invalid combination of equipment
 # for the specified stroke type.
 100 Backstroke Kick + Fins Board
 200 Freestyle + Fins
@@ -139,7 +139,7 @@ pace hard = 90%
 ### Grouping Instructions ######################################################
 
 # Instructions can be grouped together to apply a repition, pace, stroke
-# type, or gear to many different instructions as a sinle one.
+# type, or equipment to many different instructions as a sinle one.
 2 x {
   50 Backstroke
   100 Freestyle
@@ -248,11 +248,6 @@ set LayoutWidth 50
 
 # Finally, you should have noticed already, any text preceeded by a
 # hash symbol (#) is a comment, and completely ignored when rendering.
-
-# And thats it! You are now well versed in SwimDSL. Make sure to keep
-# the order of you instructions correct, that is repititions, distance,
-# stroke name, stroke type, required gear, and finally pace. If your use
-# these in the wrong order, the editor will show you an error message.
 
 # Go fourth!
 `;
