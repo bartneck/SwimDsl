@@ -1,8 +1,9 @@
 import DomPurify from "dompurify";
-import { CSSProperties } from "react";
+import { CSSProperties, RefObject } from "react";
 
 interface RawHtmlProps {
   rawHtml: string;
+  ref?: RefObject<HTMLDivElement | null> | undefined;
   style?: CSSProperties | undefined;
 }
 
@@ -15,14 +16,18 @@ interface RawHtmlProps {
  *
  * @param style - A CSS object containing styles for the HTML compoent.
  *
+ * @param ref - An object to hold a reference to the div element containing the
+ *    rendered HTML.
+ *
  * @returns A React element used to render `rawHtml`.
  */
-function RawHtml({ rawHtml, style }: RawHtmlProps): React.ReactElement {
+function RawHtml({ rawHtml, style, ref }: RawHtmlProps): React.ReactElement {
   const sanitizedHtml = DomPurify.sanitize(rawHtml);
   return (
     <div
       dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
       style={style}
+      ref={ref}
     ></div>
   );
 }

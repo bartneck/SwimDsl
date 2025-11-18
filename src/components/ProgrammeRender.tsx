@@ -1,13 +1,16 @@
 import Box from "@mui/material/Box";
-import { useEffect, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 
 import RawHtml from "./RawHtml";
 import { processSefJson, transformXml } from "../logic/xslTransformation";
+
+import "../../public/swiML.css";
 
 interface ProgrammeRenderProps {
   xmlString: string;
   htmlString: string;
   setHtmlString: (html: string) => void;
+  nodeRef: RefObject<HTMLDivElement | null>;
 }
 
 /**
@@ -22,6 +25,7 @@ function ProgrammeRender({
   xmlString,
   htmlString,
   setHtmlString,
+  nodeRef,
 }: ProgrammeRenderProps): React.ReactElement {
   const [sefData, setSefData] = useState({});
 
@@ -41,7 +45,11 @@ function ProgrammeRender({
 
   return (
     <Box maxHeight="100vh" overflow="scroll">
-      <RawHtml rawHtml={htmlString} style={{ fontFamily: "Jetbrains Mono" }} />
+      <RawHtml
+        rawHtml={htmlString}
+        style={{ fontFamily: "Jetbrains Mono" }}
+        ref={nodeRef}
+      />
     </Box>
   );
 }

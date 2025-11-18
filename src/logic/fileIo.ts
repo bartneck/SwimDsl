@@ -1,4 +1,4 @@
-import { jsPDF } from "jspdf";
+import { printNode } from "./pdfExport";
 
 /**
  * Prompt the user to choose a file to upload and assuming the file contains
@@ -85,14 +85,8 @@ function downloadHtml(htmlString: string): void {
  * Download the render of the user's programme to their file system as a PDF
  * file.
  */
-async function downloadPdf(htmlString: string) {
-  const doc = new jsPDF();
-  const worker = doc.html(htmlString, {
-    margin: 40,
-    html2canvas: { scale: 0.25, logging: false, x: 0, y: 0 },
-  });
-
-  await worker.save("SwimProgramme.pdf");
+async function downloadPdf(node: Node): Promise<void> {
+  await printNode(node);
 }
 
 export {
