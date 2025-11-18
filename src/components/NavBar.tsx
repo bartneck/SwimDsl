@@ -34,6 +34,7 @@ interface NavBarProps {
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
   swimlXml: string;
   htmlString: string;
+  renderNode: React.RefObject<HTMLDivElement | null>;
   children?: React.ReactNode;
 }
 
@@ -54,6 +55,7 @@ function NavBar({
   setSwimdslProgramme,
   swimlXml,
   htmlString,
+  renderNode,
   children,
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -108,8 +110,10 @@ function NavBar({
     {
       text: "Export as PDF",
       icon: <PictureAsPdfIcon fontSize="small" />,
-      onclick: () => {
-        downloadPdf(htmlString);
+      onclick: async () => {
+        if (renderNode.current === null) return;
+
+        await downloadPdf(renderNode.current);
       },
     },
   ];
