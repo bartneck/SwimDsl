@@ -40,15 +40,11 @@ async function printNode(node: Node): Promise<void> {
 
   doc.body.appendChild(clone);
 
-  setTimeout(() => {
-    if (iframe.contentWindow === null) return;
+  // Trigger the print dialog – the user can choose “Save as PDF”
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
 
-    // Trigger the print dialog – the user can choose “Save as PDF”
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-
-    setTimeout(() => document.body.removeChild(iframe), 1000);
-  }, 100);
+  document.body.removeChild(iframe);
 }
 
 export { printNode };
