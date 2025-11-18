@@ -139,7 +139,7 @@ pace hard = 90%
 ### Grouping Instructions ######################################################
 
 # Instructions can be grouped together to apply a repition, pace, stroke
-# type, or equipment to many different instructions as a sinle one.
+# type, or equipment to many different instructions as a single one.
 2 x {
   50 Backstroke
   100 Freestyle
