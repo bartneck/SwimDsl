@@ -19,7 +19,7 @@ async function templateDocument(): Promise<string> {
       <head>
         <meta charset="utf-8">
         <title>Swim Programme</title>
-        <style>${css}</ style>
+        <style>${css}</style>
       </head>
       <body></body>
     </html>`;
