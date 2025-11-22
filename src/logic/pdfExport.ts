@@ -11,7 +11,7 @@ function createIframe(): HTMLIFrameElement {
 }
 
 async function templateDocument(): Promise<string> {
-  const css = await (await fetch("/swiML.css")).text();
+  const css = await (await fetch("./swiML.css")).text();
 
   return `\
     <!doctype html>
