@@ -19,6 +19,9 @@ swiML project [here](https://www.swiml.org).
 SwimDSL is currently under active development and has not yet been hosted. To
 run the program from source, execute the following:
 
+> Note: You must have [`jq`](https://github.com/jqlang/jq) installed for the
+> `generateSef.bash` script to work.
+
 ```bash
 git clone --recurse-submodules https://github.com/hazzery/SwimDsl.git
 cd SwimDsl
