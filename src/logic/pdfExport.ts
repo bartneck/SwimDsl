@@ -74,7 +74,6 @@ async function templateDocument(): Promise<string> {
  * @param node The DOM node to print.
  */
 async function printNode(node: Node): Promise<void> {
-  console.log("hello 1");
   const clone = node.cloneNode(true);
 
   const windowHandle = createContentWindow();
