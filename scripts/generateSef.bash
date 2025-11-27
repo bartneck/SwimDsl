@@ -37,7 +37,7 @@ fi
 temp_file=$(mktemp "${sef_file_path}.XXXXXX")
 sed "s&${static_http_uri}&${deployed_base_url}&g" "${sef_file_path}" >"${temp_file}"
 mv "${temp_file}" "${sef_file_path}"
-echo "Replaced occurance of ${static_http_uri} with ${deployed_base_url}"
+echo "Replaced occurrence of ${static_http_uri} with ${deployed_base_url}"
 
 # Calculate what the checksum should be for the updated sef json
 new_checksum=$(./scripts/computeChecksum.ts "${sef_file_path}")
