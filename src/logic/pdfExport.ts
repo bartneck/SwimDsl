@@ -8,7 +8,7 @@ interface WindowHandle {
 /**
  * Create a new window for the printing content to sit in.
  *
- * @returns If the window opens successfully, an object containing a refernce
+ * @returns If the window opens successfully, an object containing a reference
  * to the window and a cleanup function to call once the printing has completed,
  * otherwise `null`.
  */
