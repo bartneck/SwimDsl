@@ -68,7 +68,7 @@ async function templateDocument(): Promise<string> {
 }
 
 /**
- * Print the given node as it it were the only one on the page using the
+ * Print the given node as if it were the only one on the page using the
  * browser's print dialogue.
  *
  * @param node The DOM node to print.
