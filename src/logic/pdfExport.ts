@@ -90,13 +90,13 @@ async function printNode(node: Node): Promise<void> {
   doc.close();
   doc.body.appendChild(clone);
 
-  // Wait briefly for content to render. This is neccessary for the fonts to
+  // Wait briefly for content to render. This is necessary for the fonts to
   // appear in Chromium browsers.
   setTimeout(() => {
     contentWindow.focus();
     contentWindow.print();
 
-    // This timeout is neccesary to prevent the window from closing before
+    // This timeout is necesary to prevent the window from closing before
     // the print dialogue has appeared in Safari.
     setTimeout(windowHandle.cleanup, 10);
   }, 50);
