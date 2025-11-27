@@ -97,7 +97,7 @@ async function printNode(node: Node): Promise<void> {
     contentWindow.print();
 
     // This timeout is neccesary to prevent the window from closing before
-    // the print dialogue has appeeared in Safari.
+    // the print dialogue has appeared in Safari.
     setTimeout(windowHandle.cleanup, 10);
   }, 50);
 }
