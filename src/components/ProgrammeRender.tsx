@@ -1,16 +1,12 @@
-import Box from "@mui/material/Box";
 import { RefObject, useEffect, useState } from "react";
 
-import RawHtml from "./RawHtml";
 import { processSefJson, transformXml } from "../logic/xslTransformation";
-
-import "../../public/swiML.css";
 
 interface ProgrammeRenderProps {
   xmlString: string;
   htmlString: string;
   setHtmlString: (html: string) => void;
-  nodeRef: RefObject<HTMLDivElement | null>;
+  nodeRef: RefObject<HTMLIFrameElement | null>;
 }
 
 /**
@@ -44,13 +40,13 @@ function ProgrammeRender({
   }, [sefData, xmlString, setHtmlString]);
 
   return (
-    <Box maxHeight="100vh" overflow="scroll">
-      <RawHtml
-        rawHtml={htmlString}
-        style={{ fontFamily: "Jetbrains Mono" }}
-        ref={nodeRef}
-      />
-    </Box>
+    <iframe
+      ref={nodeRef}
+      width="100%"
+      height="100%"
+      style={{ border: "none" }}
+      srcDoc={htmlString}
+    />
   );
 }
 

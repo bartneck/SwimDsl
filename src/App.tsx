@@ -27,7 +27,7 @@ function App(): React.ReactElement {
   const [panelPage, setPanelPage] = React.useState(PanelPage.RENDER);
   const [swimlXml, setSwimlXml] = React.useState("");
   const [htmlString, setHtmlString] = React.useState("");
-  const renderNode = React.useRef<HTMLDivElement>(null);
+  const renderNode = React.useRef<HTMLIFrameElement>(null);
   const compiler = React.useMemo(() => compileSwimDsl(setSwimlXml), []);
   const languageSupport = React.useMemo(() => swimdsl(), []);
   const theme = React.useMemo(
