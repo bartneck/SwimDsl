@@ -28,10 +28,7 @@ if [ ! -f "${xsl_file_path}" ]; then
     curl --fail ${MASTER_XSL_URL} >"${xsl_file_path}"
 fi
 
-# Compile it into a SEF JSON file
-if [ ! -f "${sef_file_path}" ]; then
-    node node_modules/xslt3/xslt3.js -xsl:"${xsl_file_path}" -export:"${sef_file_path}" -t -ns:##html5 -nogo
-fi
+node node_modules/xslt3/xslt3.js -xsl:"${xsl_file_path}" -export:"${sef_file_path}" -t -ns:##html5 -nogo
 
 # Replace references to the XSL file with the hosted instance
 temp_file=$(mktemp "${sef_file_path}.XXXXXX")
