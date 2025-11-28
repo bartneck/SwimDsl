@@ -90,16 +90,57 @@ async function printNode(node: Node): Promise<void> {
   doc.close();
   doc.body.appendChild(clone);
 
-  // Wait briefly for content to render. This is necessary for the fonts to
-  // appear in Chromium browsers.
-  setTimeout(() => {
-    contentWindow.focus();
-    contentWindow.print();
+  // INFO: The following code was entirely written by an LLM, with the comments
+  // rewritten to reduce bloat. I am unsure exactly why each line is needed, but
+  // after playing around, this seemed to be the only thing I could get reliably
+  // working in Firefox, Chromium, and Safari. IMPORTANT NOTE - If you change
+  // the following code, test it in Safari! I previously had it working
+  // perfectly in Firefox and Chromium, but the print dialogue didn't show at
+  // all in Safari due to stricter conditions on what can be `.print()`ed from
+  // JavaScript.
 
-    // This timeout is necesary to prevent the window from closing before
-    // the print dialogue has appeared in Safari.
-    setTimeout(windowHandle.cleanup, 10);
-  }, 50);
+  const winLoaded = new Promise<void>((resolve) => {
+    // Some browsers (Chrome/Firefox) may have already fired `load`
+    // by the time we attach the listener, so also check readyState.
+    if (contentWindow.document.readyState === "complete") {
+      resolve();
+    } else {
+      contentWindow.addEventListener(
+        "load",
+        () => {
+          resolve();
+        },
+        { once: true },
+      );
+    }
+  });
+
+  const fontsReady = doc.fonts.ready.catch((err: unknown) => {
+    // A font has failed to load, the fallback font will be used.
+    console.warn("Font loading error:", err);
+  });
+
+  const timeout = new Promise<void>((resolve) =>
+    setTimeout(() => {
+      console.warn("Rendering timed out, fonts unlikely to have rendered.");
+      resolve();
+    }, 1000),
+  );
+
+  // Wait until one of the following conditions is true:
+  //     - The document is loaded, in the ready state, and the fonts have loaded
+  //     - One second has elapsed. This provides a fallback in the case of an
+  //         error.
+  await Promise.race([Promise.all([winLoaded, fontsReady]), timeout]);
+
+  // Call paint on the next repaint of the browser window.
+  contentWindow.requestAnimationFrame(() => {
+    contentWindow.focus();
+    contentWindow.addEventListener("afterprint", windowHandle.cleanup, {
+      once: true,
+    });
+    contentWindow.print();
+  });
 }
 
 export { printNode };
