@@ -40,5 +40,11 @@ export default tseslint.config({
         checksVoidReturn: false,
       },
     ],
+    "no-restricted-imports": [
+      "error",
+      {
+        patterns: [{ regex: "^@mui/[^/]+$" }],
+      },
+    ],
   },
 });

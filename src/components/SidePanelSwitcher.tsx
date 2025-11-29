@@ -2,7 +2,9 @@ import CodeIcon from "@mui/icons-material/Code";
 import HelpIcon from "@mui/icons-material/Help";
 import ImageIcon from "@mui/icons-material/Image";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { Button, Paper, Tooltip } from "@mui/material";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
 
 import PanelPage from "../types/PanelPage";
 

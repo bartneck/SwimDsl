@@ -1,10 +1,10 @@
-import { Toolbar } from "@mui/material";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Toolbar from "@mui/material/Toolbar";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import CodeMirror from "@uiw/react-codemirror";
-import { swimdsl, compileSwimDsl } from "codemirror-lang-swimdsl";
+import { compileSwimDsl, swimdsl } from "codemirror-lang-swimdsl";
 import React from "react";
 
 import NavBar from "./components/NavBar";
