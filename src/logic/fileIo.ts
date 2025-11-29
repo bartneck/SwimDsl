@@ -1,5 +1,3 @@
-import { printNode } from "./pdfExport";
-
 /**
  * Prompt the user to choose a file to upload and assuming the file contains
  * string content, call `callback` with its content.
@@ -85,8 +83,10 @@ function downloadHtml(htmlString: string): void {
  * Download the render of the user's programme to their file system as a PDF
  * file.
  */
-async function downloadPdf(node: Node): Promise<void> {
-  await printNode(node);
+function downloadPdf(iframe: HTMLIFrameElement): void {
+  if (iframe.contentWindow === null) return;
+
+  iframe.contentWindow.print();
 }
 
 export {
