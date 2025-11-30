@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useState } from "react";
+import React from "react";
 
 import { processSefJson, transformXml } from "../logic/xslTransformation";
 
@@ -6,7 +6,7 @@ interface ProgrammeRenderProps {
   xmlString: string;
   htmlString: string;
   setHtmlString: (html: string) => void;
-  nodeRef: RefObject<HTMLIFrameElement | null>;
+  nodeRef: React.RefObject<HTMLIFrameElement | null>;
 }
 
 /**
@@ -23,9 +23,9 @@ function ProgrammeRender({
   setHtmlString,
   nodeRef,
 }: ProgrammeRenderProps): React.ReactElement {
-  const [sefData, setSefData] = useState({});
+  const [sefData, setSefData] = React.useState({});
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetch("./swiML.sef.json")
       .then((response) => response.text())
       .then(processSefJson)
@@ -33,7 +33,7 @@ function ProgrammeRender({
       .catch(console.error);
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (Object.keys(sefData).length === 0) return;
 
     transformXml(xmlString, sefData).then(setHtmlString).catch(console.error);
