@@ -7,7 +7,7 @@
   "targetVersion": "2",
   "name": "TOP-LEVEL",
   "relocatable": "false",
-  "buildDateTime": "2025-11-29T00:18:39.541Z",
+  "buildDateTime": "2025-12-01T20:11:59.913Z",
   "ns": "xml=~ xsl=~ xs=~ myData=http://www.bartneck.de xd=http://www.oxygenxml.com/ns/doc/xsl sw=https://github.com/bartneck/swiML",
   "C": [
     {
@@ -32815,5 +32815,5 @@
       "N": "decimalFormat"
     }
   ],
-  "Σ": "69bfc5db"
+  "Σ": "69bf2fa3"
 }
