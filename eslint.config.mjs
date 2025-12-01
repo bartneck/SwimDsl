@@ -6,15 +6,18 @@ import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 
 /** @type {import('eslint').Linter.Config[]} */
-export default defineConfig({
-  extends: [
-    js.configs.recommended,
-    tseslint.configs.strictTypeChecked,
-    tseslint.configs.stylisticTypeChecked,
-  ],
-  files: ["**/*.{ts,tsx}"],
-  ignores: ["dist", "codemirror-swimdsl"],
-  languageOptions: {
+export default defineConfig([
+  {
+    ignores: ["dist", "codemirror-swimdsl", "public"],
+  },
+  {
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
+    ],
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
     ecmaVersion: 2020,
     globals: globals.browser,
     parserOptions: {
@@ -49,4 +52,4 @@ export default defineConfig({
       },
     ],
   },
-});
+}]);
