@@ -1,10 +1,9 @@
-import { Toolbar } from "@mui/material";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import CodeMirror from "@uiw/react-codemirror";
-import { swimdsl, compileSwimDsl } from "codemirror-lang-swimdsl";
+import { compileSwimDsl, swimdsl } from "codemirror-lang-swimdsl";
 import React from "react";
 
 import NavBar from "./components/NavBar";
@@ -67,41 +66,44 @@ function App(): React.ReactElement {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <NavBar
-        swimdslProgramme={swimdslProgramme}
-        setSwimdslProgramme={setSwimdslProgramme}
-        swimlXml={swimlXml}
-        htmlString={htmlString}
-        renderNode={renderNode}
-      >
-        <SidePaneSwitcher
-          activePanelPage={panelPage}
-          setPanelPage={setPanelPage}
-        />
-      </NavBar>
-      <Toolbar />
       <Box
         sx={{
           display: "flex",
-          maxHeight: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
+          flexDirection: "column",
+          height: "100vh",
         }}
       >
-        <Box
-          sx={{ width: panelPage !== PanelPage.NONE ? "50%" : "100%" }}
-          borderRight="1px solid"
+        <NavBar
+          swimdslProgramme={swimdslProgramme}
+          setSwimdslProgramme={setSwimdslProgramme}
+          swimlXml={swimlXml}
+          htmlString={htmlString}
+          renderNode={renderNode}
         >
-          <CodeMirror
-            value={swimdslProgramme}
-            height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
-            width="100%"
-            theme={prefersDarkMode ? "dark" : "light"}
-            extensions={[languageSupport, compiler]}
-            onChange={onChange}
+          <SidePaneSwitcher
+            activePanelPage={panelPage}
+            setPanelPage={setPanelPage}
           />
+        </NavBar>
+        <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+          <Box
+            sx={{ width: panelPage !== PanelPage.NONE ? "50%" : "100%" }}
+            borderRight="1px solid"
+          >
+            <CodeMirror
+              value={swimdslProgramme}
+              style={{ height: "100%" }}
+              width="100%"
+              height="100%"
+              theme={prefersDarkMode ? "dark" : "light"}
+              extensions={[languageSupport, compiler]}
+              onChange={onChange}
+            />
+          </Box>
+          {panelPage !== PanelPage.NONE && (
+            <Box sx={{ width: "50%", overflow: "auto" }}>{showPanel()}</Box>
+          )}
         </Box>
-        {panelPage !== PanelPage.NONE && (
-          <Box sx={{ width: "50%" }}>{showPanel()}</Box>
-        )}
       </Box>
     </ThemeProvider>
   );

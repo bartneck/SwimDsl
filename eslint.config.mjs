@@ -3,8 +3,10 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import { defineConfig } from "eslint/config";
 
-export default tseslint.config({
+/** @type {import('eslint').Linter.Config[]} */
+export default defineConfig({
   extends: [
     js.configs.recommended,
     tseslint.configs.strictTypeChecked,
@@ -38,6 +40,12 @@ export default tseslint.config({
       "error",
       {
         checksVoidReturn: false,
+      },
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        patterns: [{ regex: "^@mui/[^/]+$" }],
       },
     ],
   },
