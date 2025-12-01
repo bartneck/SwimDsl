@@ -72,7 +72,7 @@ function walk(node: SefObject, state: { checksum: number; counter: number }) {
 
     // Hash the property name (as a string) and its value.
     state.checksum ^= xorHashes(prop, "", state.counter);
-    state.checksum ^= hashString(String(node[prop]), state.counter);
+    state.checksum ^= hashString(node[prop], state.counter);
   }
 
   // Recurse into child nodes, if any.

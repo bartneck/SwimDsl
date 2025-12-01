@@ -116,7 +116,7 @@ declare namespace SaxonJS {
   /**
    * Sets the value of a specific SaxonJS configuration property. (New in SaxonJS 2.4.)
    */
-  export function setConfigurationProperty(name: string, value: any);
+  export function setConfigurationProperty(name: string, value: unknown);
 
   /**
    * Sets the logging level for warnings, processing messages, or full tracing.
@@ -206,7 +206,7 @@ declare namespace SaxonJS {
       xpath: string,
       contextItem?: object,
       options?: EvaluateOptions,
-    ): any;
+    ): unknown[] | null;
   }
 
   export namespace XS {
