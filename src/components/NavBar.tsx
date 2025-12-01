@@ -119,7 +119,10 @@ function NavBar({
   ];
 
   return (
-    <AppBar sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+    <AppBar
+      sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      position="static"
+    >
       <Toolbar>
         <Paper sx={{ paddingX: "1em" }}>
           <Typography variant="h6" component="div">
