@@ -13,7 +13,7 @@ export default defineConfig({
     tseslint.configs.stylisticTypeChecked,
   ],
   files: ["**/*.{ts,tsx}"],
-  ignores: ["dist", "codemirror-swimdsl/dist"],
+  ignores: ["dist", "codemirror-swimdsl"],
   languageOptions: {
     ecmaVersion: 2020,
     globals: globals.browser,
