@@ -16,8 +16,12 @@ swiML project [here](https://www.swiml.org).
 
 ## How can I use SwimDSL?
 
-SwimDSL is currently under active development and has not yet been hosted. To
-run the program from source, execute the following:
+SwimDSL has been hosted with GitHub pages. It can currently be found at
+<https://bartneck.github.io/SwimDsl>.
+
+## What about running it locally?
+
+To run the program from source, execute the following:
 
 > Note: You must have [`jq`](https://github.com/jqlang/jq) installed for the
 > `generateSef.bash` script to work.
