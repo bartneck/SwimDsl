@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Compute the checksum of a Saxon‑JS SEF file and print it to stdout.
  *
@@ -8,7 +7,7 @@
 import fs from "fs";
 import path from "path";
 
-type SefObject = Record<string, string> & {
+export type SefObject = Record<string, string> & {
   C?: SefObject[];
 };
 
@@ -92,7 +91,7 @@ function walk(node: SefObject, state: { checksum: number; counter: number }) {
  * @param sefObject Object to compute the checksum of.
  * @returns The checksum of `sefObject` as a string.
  */
-function computeChecksum(sefObject: SefObject): string {
+export function computeChecksum(sefObject: SefObject): string {
   const state = { checksum: 0, counter: 0 };
   walk(sefObject, state);
 
@@ -157,5 +156,3 @@ async function main() {
   const computedHex = computeChecksum(sefObj);
   console.log(computedHex);
 }
-
-await main();
