@@ -2,9 +2,9 @@ import fetchFonts from "./fetchFonts.ts";
 import generateSef from "./src/generateSef.ts";
 
 async function main(): Promise<void> {
-  const programName = process.argv[1];
+  const scriptPath = process.argv[1];
 
-  const deployedBaseUrl = programName.startsWith("/home/runner")
+  const deployedBaseUrl = scriptPath.startsWith("/home/runner")
     ? "https://bartneck.github.io/SwimDsl"
     : "http://localhost:5173";
 
