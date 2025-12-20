@@ -25,7 +25,7 @@ function hashString(str: string, seed: number): number {
  * @param b - A string to hash.
  * @param seed - The numeric hashing seed used for both hashes.
  *
- * @returns The bitwise exclusive or of the hases of `a` and `b`.
+ * @returns The bitwise exclusive or of the hashes of `a` and `b`.
  */
 function xorHashes(a: string, b: string, seed: number): number {
   return hashString(a, seed) ^ hashString(b, seed);
