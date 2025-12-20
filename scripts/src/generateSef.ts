@@ -70,7 +70,7 @@ async function downloadXsl(
 }
 
 /**
- * Generate a SEF JSON file from the latest version of the swiML XML schema.
+ * Generate a SEF JSON file from the latest version of the swiML XSL transformation.
  *
  * @param deployedBaseUrl - The base URL at which the app will be deployed.
  */
