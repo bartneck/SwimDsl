@@ -14,7 +14,7 @@ export default async function main(): Promise<void> {
   const cssFile = fs.promises.writeFile("public/swiML.css", cssContent);
   const fontFiles = downloadRelativeUrls(urls, "https://swiml.org", "public");
 
-  console.log("Fetching JetBrains fonts");
+  console.log("Fetching fonts referenced in swiML.css");
   await Promise.all([cssFile, fontFiles]);
   console.log("Downloaded all fonts");
 }
