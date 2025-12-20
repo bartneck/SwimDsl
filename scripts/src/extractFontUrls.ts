@@ -20,9 +20,9 @@ function extractFontUrls(cssContent: string): string[] {
       )
         continue;
 
-      const match = /url\('([^']+)'\)/.exec(declaration.value);
+      const match = /url\((['"]?)([^'")]+)\1\)/.exec(declaration.value);
       if (match) {
-        urls.push(match[1]);
+        urls.push(match[2]);
       }
     }
   }
