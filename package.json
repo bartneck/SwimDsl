@@ -6,12 +6,13 @@
   "type": "module",
   "engines": {
     "npm": ">=10.0.0",
-    "node": ">=22.0.0"
+    "node": ">=22.18.0"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "deploy": "npm run build && gh-pages -d dist",
+    "prepare": "node ./scripts/prepare.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },

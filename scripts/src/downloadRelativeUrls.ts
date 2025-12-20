@@ -1,7 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 
-async function downloadRelativeUrls(
+/**
+ * Download all resources specified by `relativeUrls` from `fetchBase`.
+ *
+ * @param relativeUrls - An array of relative resource paths to download.
+ * @param fetchBase - The base URL to fetch the resources from.
+ * @param downloadLocation - The local directory to download the files to.
+ */
+export default async function downloadRelativeUrls(
   relativeUrls: string[],
   fetchBase: string,
   downloadLocation: string,
@@ -30,5 +37,3 @@ async function downloadRelativeUrls(
 
   await Promise.all(promises);
 }
-
-export default downloadRelativeUrls;

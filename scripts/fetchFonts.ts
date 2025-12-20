@@ -1,18 +1,24 @@
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
-import extractFontUrls from "./src/extractFontUrls.ts";
 import downloadRelativeUrls from "./src/downloadRelativeUrls.ts";
+import extractFontUrls from "./src/extractFontUrls.ts";
 
-const cssUrl = "https://swiml.org/swiML.css";
+const CSS_URL = "https://swiml.org/swiML.css";
 
-async function main(): Promise<void> {
-  const cssContent = await (await fetch(cssUrl)).text();
+export default async function main(): Promise<void> {
+  console.log("Fetching swiML.css");
+  const cssContent = await (await fetch(CSS_URL)).text();
   const urls = extractFontUrls(cssContent);
 
   const cssFile = fs.promises.writeFile("public/swiML.css", cssContent);
   const fontFiles = downloadRelativeUrls(urls, "https://swiml.org", "public");
 
+  console.log("Fetching JetBrains fonts");
   await Promise.all([cssFile, fontFiles]);
+  console.log("Downloaded all fonts");
 }
 
-await main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  await main();
+}

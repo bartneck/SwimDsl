@@ -36,7 +36,15 @@ function ProgrammeRender({
   React.useEffect(() => {
     if (Object.keys(sefData).length === 0) return;
 
-    transformXml(xmlString, sefData).then(setHtmlString).catch(console.error);
+    transformXml(xmlString, sefData)
+      .then((html: string): string =>
+        html.replace(
+          "https://bartneck.github.io/swiML/swiML.css",
+          "./swiML.css",
+        ),
+      )
+      .then(setHtmlString)
+      .catch(console.error);
   }, [sefData, xmlString, setHtmlString]);
 
   return (
