@@ -8,7 +8,15 @@ const CSS_URL = "https://swiml.org/swiML.css";
 
 export default async function main(): Promise<void> {
   console.log("Fetching swiML.css");
-  const cssContent = await (await fetch(CSS_URL)).text();
+
+  const response = await fetch(CSS_URL);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch CSS from ${CSS_URL}: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  const cssContent = await response.text();
   const urls = extractFontUrls(cssContent);
 
   const cssFile = fs.promises.writeFile("public/swiML.css", cssContent);
