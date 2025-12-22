@@ -62,7 +62,9 @@ async function downloadXsl(
   console.log(`Downloading ${url}...`);
   const response = await fetch(url);
   if (!response.ok) {
-    process.exit(`Failed to download ${url}: ${response.statusText}`);
+    throw new Error(
+      `Failed to download XSL from ${url}: ${response.status} ${response.statusText}`,
+    );
   }
   const buffer = await response.arrayBuffer();
   fs.writeFileSync(destinationPath, Buffer.from(buffer));
