@@ -38,6 +38,11 @@ function ProgrammeRender({
 
     transformXml(xmlString, sefData)
       .then((html: string): string =>
+        // INFO: The following call only replaces the first instance of the
+        // search string. While this is sufficient for this usecase, it would be
+        // nice to provide further guarantee. ES2021 introduced
+        // String.replaceAll, which would provide this guarantee.
+        // TODO: Look into using `replaceAll`.
         html.replace(
           "https://bartneck.github.io/swiML/swiML.css",
           "./swiML.css",
