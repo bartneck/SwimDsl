@@ -38,10 +38,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate SEF JSON
-        run: |
-          ./scripts/generateSef.bash https://bartneck.github.io/SwimDsl
-
       - name: Build project
         run: npm run build
 
