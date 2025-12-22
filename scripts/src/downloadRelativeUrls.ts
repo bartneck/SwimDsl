@@ -20,9 +20,15 @@ export default async function downloadRelativeUrls(
     const localDownloadFilePath = path.join(downloadLocation, relativeUrl);
     const localDownloadDirectory = path.dirname(localDownloadFilePath);
 
-    const responseBytes = fetch(absoluteFetchUrl.href).then((response) =>
-      response.bytes(),
-    );
+    const responseBytes = fetch(absoluteFetchUrl.href).then((response) => {
+      if (!response.ok) {
+        throw new Error(
+          `Failed to download resousrce from ${absoluteFetchUrl.href}: ` +
+            `${response.status} ${response.statusText}`,
+        );
+      }
+      return response.bytes();
+    });
 
     const directoryCreated = fs.promises.mkdir(localDownloadDirectory, {
       recursive: true,
