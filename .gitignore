@@ -1,6 +1,8 @@
 # XSL stylesheet
 public/swiML.xsl
 public/swiML.sef.json
+public/swiML.css
+public/fonts/
 
 # Logs
 logs
