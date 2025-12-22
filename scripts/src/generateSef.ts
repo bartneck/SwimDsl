@@ -7,7 +7,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 
 import computeChecksum, { type SefObject } from "./computeChecksum.ts";
 
@@ -87,12 +87,28 @@ async function generateSef(deployedBaseUrl: string): Promise<void> {
     await downloadXsl(MASTER_XSL_URL, xslFilePath);
   }
 
-  execSync(
-    `node node_modules/xslt3/xslt3.js -xsl:"${xslFilePath}" -export:"${sefFilePath}" -t -ns:##html5 -nogo`,
+  const result = spawnSync(
+    "node",
+    [
+      "node_modules/xslt3/xslt3.js",
+      `-xsl:${xslFilePath}`,
+      `-export:${sefFilePath}`,
+      "-t",
+      "-ns:##html5",
+      "-nogo",
+    ],
     {
       stdio: "inherit",
     },
   );
+
+  if (result.error) {
+    throw new Error(`Failed to execute xslt3: ${result.error.message}`);
+  }
+
+  if (result.status !== 0) {
+    throw new Error(`xslt3 exited with code ${result.status}`);
+  }
 
   const sefContent = fs.readFileSync(sefFilePath, "utf8");
   const updatedSefContent = updateSef(
