@@ -50,6 +50,29 @@ function updateSef(
 }
 
 /**
+ * Executes a Node.js script with the specified arguments.
+ *
+ * @param scriptPath - The path to the Node.js script to execute.
+ * @param args - The arguments to pass to the script.
+ * @throws {Error} If the script fails to execute or exits with a non-zero status.
+ */
+function executeNodeScript(scriptPath: string, args: string[]): void {
+  const result = spawnSync("node", [scriptPath, ...args], {
+    stdio: "inherit",
+  });
+
+  if (result.error) {
+    throw new Error(
+      `Failed to execute ${scriptPath}: ${result.error.message}`,
+    );
+  }
+
+  if (result.status !== 0) {
+    throw new Error(`${scriptPath} exited with code ${result.status}`);
+  }
+}
+
+/**
  * Downloads the XSL file from the specified URL.
  *
  * @param url - The URL for the XSL file.
@@ -87,28 +110,13 @@ async function generateSef(deployedBaseUrl: string): Promise<void> {
     await downloadXsl(MASTER_XSL_URL, xslFilePath);
   }
 
-  const result = spawnSync(
-    "node",
-    [
-      "node_modules/xslt3/xslt3.js",
-      `-xsl:${xslFilePath}`,
-      `-export:${sefFilePath}`,
-      "-t",
-      "-ns:##html5",
-      "-nogo",
-    ],
-    {
-      stdio: "inherit",
-    },
-  );
-
-  if (result.error) {
-    throw new Error(`Failed to execute xslt3: ${result.error.message}`);
-  }
-
-  if (result.status !== 0) {
-    throw new Error(`xslt3 exited with code ${result.status}`);
-  }
+  executeNodeScript("node_modules/xslt3/xslt3.js", [
+    `-xsl:${xslFilePath}`,
+    `-export:${sefFilePath}`,
+    "-t",
+    "-ns:##html5",
+    "-nogo",
+  ]);
 
   const sefContent = fs.readFileSync(sefFilePath, "utf8");
   const updatedSefContent = updateSef(
