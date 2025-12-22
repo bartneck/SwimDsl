@@ -32,8 +32,8 @@ function updateSef(
   deployedBaseUrl: string,
 ): string {
   // Replace references to the XSL file with the hosted instance
-  const updatedSefContent = sefString.replace(
-    new RegExp(staticHttpUri, "g"),
+  const updatedSefContent = sefString.replaceAll(
+    staticHttpUri,
     deployedBaseUrl,
   );
 
