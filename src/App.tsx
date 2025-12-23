@@ -23,7 +23,9 @@ import PanelPage from "./types/PanelPage";
 function App(): React.ReactElement {
   const [swimdslProgramme, setSwimdslProgramme] = React.useState("");
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const [panelPage, setPanelPage] = React.useState(PanelPage.RENDER);
+  const [panelPage, setPanelPage] = React.useState<PanelPage | null>(
+    PanelPage.RENDER,
+  );
   const [swimlXml, setSwimlXml] = React.useState("");
   const [htmlString, setHtmlString] = React.useState("");
   const renderNode = React.useRef<HTMLIFrameElement>(null);
@@ -43,7 +45,13 @@ function App(): React.ReactElement {
     setSwimdslProgramme(val);
   }, []);
 
-  function showPanel() {
+  /**
+   * Renders the content for the currently selected side panel.
+   *
+   * @param panelPage - The side panel page to display.
+   * @returns A React element containing the content for the requested panel.
+   */
+  function showPanel(panelPage: PanelPage): React.ReactElement {
     switch (panelPage) {
       case PanelPage.TUTORIAL:
         return <TutorialPane />;
@@ -87,7 +95,7 @@ function App(): React.ReactElement {
         </NavBar>
         <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
           <Box
-            sx={{ width: panelPage !== PanelPage.NONE ? "50%" : "100%" }}
+            sx={{ width: panelPage !== null ? "50%" : "100%" }}
             borderRight="1px solid"
           >
             <CodeMirror
@@ -100,8 +108,10 @@ function App(): React.ReactElement {
               onChange={onChange}
             />
           </Box>
-          {panelPage !== PanelPage.NONE && (
-            <Box sx={{ width: "50%", overflow: "auto" }}>{showPanel()}</Box>
+          {panelPage !== null && (
+            <Box sx={{ width: "50%", overflow: "auto" }}>
+              {showPanel(panelPage)}
+            </Box>
           )}
         </Box>
       </Box>

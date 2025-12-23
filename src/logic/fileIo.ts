@@ -9,22 +9,26 @@ function uploadFile(callback: (arg: string) => void): void {
   input.type = "file";
   input.accept = ".txt";
 
-  input.onchange = (event: Event) => {
+  input.onchange = (event: Event): void => {
     const target = event.target as HTMLInputElement;
 
-    if (target.files && target.files.length > 0) {
-      const file = target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        const fileText = e.target?.result;
-        if (typeof fileText === "string") {
-          callback(fileText);
-        }
-      };
-
-      reader.readAsText(file);
+    if (!target.files || target.files.length <= 0) {
+      console.warn("No files were selected");
+      return;
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const file = target.files[0]!; // We've already checked the array length.
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const fileText = e.target?.result;
+      if (typeof fileText === "string") {
+        callback(fileText);
+      }
+    };
+
+    reader.readAsText(file);
   };
 
   input.click();

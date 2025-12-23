@@ -1,5 +1,6 @@
 export type SefObject = Record<string, string> & {
   C?: SefObject[];
+  N: string;
 };
 
 /**
@@ -69,7 +70,10 @@ function walk(
 
     // Hash the property name (as a string) and its value.
     state.checksum ^= xorHashes(prop, "", state.counter);
-    state.checksum ^= hashString(node[prop], state.counter);
+
+    // By definition, prop is a property of node.
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    state.checksum ^= hashString(node[prop]!, state.counter);
   }
 
   // Recurse into child nodes, if any.
