@@ -45,6 +45,12 @@ function App(): React.ReactElement {
     setSwimdslProgramme(val);
   }, []);
 
+  /**
+   * Renders the content for the currently selected side panel.
+   *
+   * @param panelPage - The side panel page to display.
+   * @returns A React element containing the content for the requested panel.
+   */
   function showPanel(panelPage: PanelPage): React.ReactElement {
     switch (panelPage) {
       case PanelPage.TUTORIAL:
