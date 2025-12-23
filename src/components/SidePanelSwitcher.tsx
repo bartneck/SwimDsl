@@ -10,14 +10,14 @@ import React from "react";
 import PanelPage from "../types/PanelPage";
 
 interface SidePanelItem {
-  page: PanelPage;
+  page: PanelPage | null;
   icon: React.ReactElement;
   label: string;
 }
 
 const sideBarItems: SidePanelItem[] = [
   {
-    page: PanelPage.NONE,
+    page: null,
     icon: <VisibilityOffIcon />,
     label: "Hide panel",
   },
@@ -39,8 +39,8 @@ const sideBarItems: SidePanelItem[] = [
 ];
 
 interface SidePaneSwitcherProps {
-  activePanelPage: PanelPage;
-  setPanelPage: React.Dispatch<React.SetStateAction<PanelPage>>;
+  activePanelPage: PanelPage | null;
+  setPanelPage: React.Dispatch<React.SetStateAction<PanelPage | null>>;
 }
 
 /**

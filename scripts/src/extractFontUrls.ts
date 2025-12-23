@@ -21,7 +21,7 @@ function extractFontUrls(cssContent: string): string[] {
         continue;
 
       const match = /url\((['"]?)([^'")]+)\1\)/.exec(declaration.value);
-      if (match) {
+      if (match?.[2]) {
         urls.push(match[2]);
       }
     }

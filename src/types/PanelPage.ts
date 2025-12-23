@@ -1,5 +1,4 @@
 enum PanelPage {
-  NONE,
   TUTORIAL,
   RENDER,
   SWIML_XML,

@@ -7,7 +7,9 @@ export default async function main(): Promise<void> {
 
   if (!deployedBaseUrl) {
     console.error(
-      `Usage: node ${path.basename(process.argv[1])} DEPLOYED_BASE_URL`,
+      // The 2nd argv item is always the script name, can't be undefined.
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      `Usage: node ${path.basename(process.argv[1]!)} DEPLOYED_BASE_URL`,
     );
     process.exit(1);
   }
