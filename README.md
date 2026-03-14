@@ -23,14 +23,10 @@ SwimDSL has been hosted with GitHub pages. It can currently be found at
 
 To run the program from source, execute the following:
 
-> Note: You must have [`jq`](https://github.com/jqlang/jq) installed for the
-> `generateSef.bash` script to work.
-
 ```bash
-git clone --recurse-submodules https://github.com/hazzery/SwimDsl.git
+git clone --recurse-submodules https://github.com/bartneck/SwimDsl.git
 cd SwimDsl
 npm i
-./scripts/generateSef.bash http://localhost:5173
 npm run dev
 ```
 
