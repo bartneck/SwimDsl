@@ -1,4 +1,3 @@
-import fetchFonts from "./fetchFonts.ts";
 import generateSef from "./src/generateSef.ts";
 
 async function main(): Promise<void> {
@@ -7,13 +6,8 @@ async function main(): Promise<void> {
       ? "https://bartneck.github.io/SwimDsl"
       : "http://localhost:5173";
 
-  const sef = generateSef(deployedBaseUrl).then(() => {
-    console.log(`Wrote SEF file`);
-  });
-
-  const fonts = fetchFonts();
-
-  await Promise.all([sef, fonts]);
+  await generateSef(deployedBaseUrl);
+  console.log("Wrote SEF file");
 }
 
 await main();
