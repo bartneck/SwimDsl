@@ -93,9 +93,15 @@ function App(): React.ReactElement {
             setPanelPage={setPanelPage}
           />
         </NavBar>
-        <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <Box
+          sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}
+        >
           <Box
-            sx={{ width: panelPage !== null ? "50%" : "100%" }}
+            sx={{
+              width: panelPage !== null ? "50%" : "100%",
+              minWidth: 0,
+              minHeight: 0,
+            }}
             borderRight="1px solid"
           >
             <CodeMirror
@@ -109,7 +115,14 @@ function App(): React.ReactElement {
             />
           </Box>
           {panelPage !== null && (
-            <Box sx={{ width: "50%", overflow: "auto" }}>
+            <Box
+              sx={{
+                width: "50%",
+                overflow: "hidden",
+                minWidth: 0,
+                minHeight: 0,
+              }}
+            >
               {showPanel(panelPage)}
             </Box>
           )}
