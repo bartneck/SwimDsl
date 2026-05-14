@@ -15,12 +15,14 @@ interface SwimlDisplayProps {
  */
 function SwimlDisplay({ xmlContent }: SwimlDisplayProps): React.ReactElement {
   const theme = useTheme();
+
   return (
     <CodeMirror
       readOnly
       value={xmlContent}
-      height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
+      height="100%"
       width="100%"
+      style={{ height: "100%" }}
       theme={theme.palette.mode}
       extensions={[xml()]}
     />
