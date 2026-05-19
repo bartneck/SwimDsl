@@ -63,7 +63,7 @@ export const example_programme = `\
 200 Freestyle + Fins
 50 Freestyle Pull + PullBuoy Pads
 
-# It is also common to sspecify lengths as being swum completely underwater or
+# It is also common to specify lengths as being swum completely underwater or
 # only breathing after a certain number of strokes.
 25 Freestyle underwater
 100 Freestyle breathe 5
@@ -102,10 +102,11 @@ pace hard = 90%
 
 ### Resting ####################################################################
 
-# There are multiple ways to specify rest in swimDSL. First, these are rest
-# since the start of the instruction, and rest after the end of the instruction.
-# These are both written as durations, in minutes and seconds, for example, 1:00
-# specifies one minute.
+# There are multiple ways to specify rest in swimDSL.
+
+# The first two ways to do so are rest since the start of the instruction, and
+# rest after the end of the instruction. These are both written as durations,
+# in minutes and seconds, for example, 1:00 specifies one minute.
 
 # Rest since start indicates that the instruction should be completed in less
 # time than the duration specified, and any remaining time is rest time. To
@@ -122,16 +123,16 @@ pace hard = 90%
 100 Freestyle with 0:15
 50 Butterfly with 1:00
 
-# In addition to these duration based rests, it is possible to specify a rest
+# In addition to duration based rests, it is possible to specify a rest
 # time as the number of swimmers to finish the instruction before a swimmer
-# starts to swim again, this can be acheived with the in-out keyword.
+# starts to swim again, this can be achieved with the in-out keyword.
 4 x 50 Butterfly in-out 3
 2 x 400 Freestyle in-out 2
 
 # In the examples above, a swimmer should not start their next 50 Butterfly until
-# 3 other swimmers have finished their current 50 Butterfly.
+# 3 other swimmers have finished the same 50 Butterfly rep.
 # In the same vein, a swimmer should not start their second 400 Freestyle until
-# 2 other swimmers have finished their current 400 Freestyle.
+# 2 other swimmers have finished the first 400 Freestyle.
 
 
 ### Repeition ##################################################################
