@@ -63,6 +63,11 @@ export const example_programme = `\
 200 Freestyle + Fins
 50 Freestyle Pull + PullBuoy Pads
 
+# It is also common to specify lengths as being swum completely underwater or
+# only breathing after a certain number of strokes.
+25 Freestyle underwater
+100 Freestyle breathe 5
+
 
 ### Swimming Intensity #########################################################
 
@@ -97,10 +102,11 @@ pace hard = 90%
 
 ### Resting ####################################################################
 
-# There are multiple ways to specify rest in swimDSL. Currently, these are rest
-# since the start of the instruction, and rest after the end of the instruction.
-# These are both written as durations, in minutes and seconds, for example, 1:00
-# specifies one minute.
+# There are multiple ways to specify rest in swimDSL.
+
+# The first two ways to do so are rest since the start of the instruction, and
+# rest after the end of the instruction. These are both written as durations,
+# in minutes and seconds, for example, 1:00 specifies one minute.
 
 # Rest since start indicates that the instruction should be completed in less
 # time than the duration specified, and any remaining time is rest time. To
@@ -113,9 +119,20 @@ pace hard = 90%
 # Similarly, they should not start their next 25 Freestyle until twenty five
 # seconds since they started their previous length.
 
-# To specify a fixed duration of rest (rest after finish), use the rest keyword
-1:00 rest
-0:30 rest
+# To specify a fixed duration of rest (rest after finish), use the with keyword
+100 Freestyle with 0:15
+50 Butterfly with 1:00
+
+# In addition to duration based rests, it is possible to specify a rest
+# time as the number of swimmers to finish the instruction before a swimmer
+# starts to swim again, this can be achieved with the in-out keyword.
+4 x 50 Butterfly in-out 3
+2 x 400 Freestyle in-out 2
+
+# In the examples above, a swimmer should not start their next 50 Butterfly until
+# 3 other swimmers have finished the same 50 Butterfly rep.
+# In the same vein, a swimmer should not start their second 400 Freestyle until
+# 2 other swimmers have finished the first 400 Freestyle.
 
 
 ### Repeition ##################################################################
@@ -203,6 +220,39 @@ pace hard = 90%
 100 NumberTwo
 100 NumberThree
 100 NumberFour
+
+
+### Additional instruction details #############################################
+
+# While it is possible to model a large variety of swim programs using swimDSL,
+# there will always be different instructions that cannot be expressed with the
+# options provided here. To solve this it is possible to provide a description
+# to an instruction with extra details
+100 Freestyle Kick -- "Focus on pointed toes"
+
+# It is also possible to provide a description for a set of repetitions to apply
+# to all instructions being repeated
+4 x {
+100 Kick
+50 Freestyle
+} -- "Focus on pointed toes"
+
+# In this example the extra description of "Focus on pointed toes" would apply to
+# both the 100 Kick and the 50 Freestyle.
+
+
+### Additional Distances #######################################################
+
+# In addition to simply writing the distance, it is possible to specify the
+# distance for an instruction as a number of laps or as a set amount of time.
+1 lap Butterfly
+4 laps Backstroke
+5:00 Freestyle
+
+# For the first two examples, the swimmer should swim 1 lap of Butterfly which in
+# the case of a 25m pool would be 25 Butterfly. Similarly 4 laps of Backstroke
+# would be the same as 100 Backstroke in a 25m pool. For 5:00 Freestyle, the
+# swimmer should swim Freestyle for a continuous 5 minutes.
 
 
 ### Set Headers ################################################################
