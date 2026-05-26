@@ -119,7 +119,7 @@ function pacePer100(stroke: string): number {
   const table: Record<string, number> = {
     Freestyle:    95,
     Backstroke:   110,
-    Breaststroke: 130,
+    Breaststroke: 145,
     Butterfly:    110,
   };
   return table[stroke] ?? 100;
@@ -145,7 +145,7 @@ function calculateSendoff(distance: number, restRatio: number, stroke: string = 
  * @returns adjusted rest time in seconds, ensuring a minimum of 10 seconds
  */
 function calculateAfterStop(restSeconds: number): number {
-  return Math.max(10, Math.round(restSeconds / 5) * 5);
+  return Math.max(20, Math.round(restSeconds / 5) * 5);
 }
 
 /**
@@ -481,7 +481,7 @@ function generateThresholdMainSet(mainVolume: number): SwimItem[] {
   const a3Volume = Math.floor(mainVolume * 0.20);
   const a3Dist = pickRandom([50, 100].filter(d => a3Volume / d >= 2)) ?? 50;
   const a3Reps = Math.max(2, Math.round(a3Volume / a3Dist));
-  const a3BreatheOpts = [3, 5, 7] as const;
+  const a3BreatheOpts = [3, 5] as const;
 
   sets.push(makeSet(a3Reps, a3Dist, "Freestyle", {
     intensityZone: "steady",
@@ -530,7 +530,7 @@ function generateSpeedMainSet(mainVolume: number): SwimItem[] {
     { dist: 25,  zone: "sprint"    },
   ];
 
-  const outerReps = Math.max(2, Math.min(4,
+  const outerReps = Math.max(2, Math.min(6,
     Math.floor(speedVolume / descSets.reduce((s, d) => s + d.dist, 0))
   ));
 
