@@ -42,21 +42,6 @@ interface Session {
   totalDistance: number;
 }
 
-type WarmupTemplate = "standard" | "stroke-focus" | "progressive" | "build-kick";
-
-const RANGE_PACE_DEFINITIONS: Record<string, { start: number; end: number }> = {
-  descend: { start: 70, end: 90 },
-};
-
-const PACE_DEFINITIONS: Record<string, string> = {
-  easy:      "65%",
-  aerobic:   "72%",
-  steady:    "78%",
-  threshold: "88%",
-  race:      "95%",
-  sprint:    "100%",
-};
-
 const POOL_LENGTH = 25;
 
 const STROKES = ["Freestyle", "Backstroke", "Breaststroke"];
@@ -190,11 +175,13 @@ function chooseCooldownVolume(totalVolume: number): number {
  * @returns object containing either intensityPercent or intensityZone
  */
 function resolveIntensity(zone: string): Partial<Pick<SwimSet, "intensityZone" | "intensityPercent" | "intensityPercentEnd">> {
-  const range = RANGE_PACE_DEFINITIONS[zone];
-  if (range) {
-    return { intensityPercent: range.start, intensityPercentEnd: range.end };
-  }
-  return { intensityZone: zone };
+  const ranges: Record<string, { start: number; end: number }> = {
+    descend: { start: 70, end: 90 },
+  };
+  const range = ranges[zone];
+  return range
+    ? { intensityPercent: range.start, intensityPercentEnd: range.end }
+    : { intensityZone: zone };
 }
 
 /**
@@ -299,7 +286,7 @@ function makeGroup(items: SwimItem[], opts: Partial<Omit<SwimGroup, "kind" | "it
  * @returns array of SwimSet objects representing the warm-up sets
  */
 function generateWarmup(warmupVolume: number): SwimItem[] {
-  const template = pickRandom<WarmupTemplate>(["standard", "stroke-focus", "progressive", "build-kick"]);
+  const template = pickRandom(["standard", "stroke-focus", "progressive", "build-kick"]);
   const sets: SwimItem[] = [];
 
   if (template === "standard") {
@@ -793,7 +780,12 @@ export function generateWeekProgramme(sessionLengthMetres: number): string {
     `set Title "Generated Base Phase Week"`,
     `set Description "Adaptive base phase week. Target session length: ${sessionLengthMetres}m"`,
     "",
-    ...Object.entries(PACE_DEFINITIONS).map(([name, pace]) => `pace ${name} = ${pace}`),
+    "pace easy = 65%",
+    "pace aerobic = 72%",
+    "pace steady = 78%",
+    "pace threshold = 88%",
+    "pace race = 95%",
+    "pace sprint = 100%",
     "",
   ];
 
