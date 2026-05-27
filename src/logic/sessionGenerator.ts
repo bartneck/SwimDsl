@@ -524,10 +524,10 @@ function generateSpeedMainSet(mainVolume: number): SwimItem[] {
   // e.g. 4x100, 4x75, 4x50, 4x25 with increasing intensity
   const speedVolume = mainVolume * 0.65;
   const descSets: { dist: number; zone: string }[] = [
-    { dist: 100, zone: "steady"    },
-    { dist: 75,  zone: "race"      },
-    { dist: 50,  zone: "sprint"    },
-    { dist: 25,  zone: "sprint"    },
+    { dist: 100, zone: "steady" },
+    { dist: 75,  zone: "race" },
+    { dist: 50,  zone: "sprint" },
+    { dist: 25,  zone: "sprint" },
   ];
 
   const outerReps = Math.max(2, Math.min(6,
@@ -587,7 +587,7 @@ function generateMixedMainSet(mainVolume: number): SwimItem[] {
 
 
   const spVolume = Math.floor(mainVolume * 0.25);
-  const spReps   = Math.min(8, Math.max(4, Math.round(spVolume / (25 * 2))));
+  const spReps = Math.min(8, Math.max(4, Math.round(spVolume / (25 * 2))));
 
   sets.push(makeGroup(
     [
@@ -602,7 +602,7 @@ function generateMixedMainSet(mainVolume: number): SwimItem[] {
 
 function generateCooldown(cooldownVolume: number): SwimItem[] {
   const useTimed = Math.random() < 0.25;
-  const stroke   = Math.random() < 0.4 ? "Backstroke" : "Freestyle";
+  const stroke = Math.random() < 0.4 ? "Backstroke" : "Freestyle";
 
   if (useTimed) {
     const estimatedSeconds = Math.round((cooldownVolume / 100) * pacePer100(stroke));
@@ -674,18 +674,18 @@ function renderRest(s: SwimSet, insideGroup: boolean): string {
  */
 function setLineToSwimDsl(s: SwimSet, insideGroup = false): string {
   const lengthStr = renderLength(s);
-  const base      = s.repetitions > 1
+  const base = s.repetitions > 1
     ? `${s.repetitions} x ${lengthStr} ${s.stroke}`
     : `${lengthStr} ${s.stroke}`;
-  const modifier  = s.strokeModifier ? ` ${s.strokeModifier}` : "";
+  const modifier = s.strokeModifier ? ` ${s.strokeModifier}` : "";
   const intensity = formatIntensity(s.intensityPercent, s.intensityPercentEnd, s.intensityZone);
-  const paceStr   = intensity ? ` @ ${intensity}` : "";
-  const rest      = renderRest(s, insideGroup);
+  const paceStr = intensity ? ` @ ${intensity}` : "";
+  const rest = renderRest(s, insideGroup);
   const equipment = s.equipment?.length ? ` + ${s.equipment.join(" ")}` : "";
   const underwater = s.underwater ? " underwater" : "";
-  const breathe   = s.breatheEvery != null ? ` breathe ${s.breatheEvery}` : "";
-  const noalign   = s.noalign ? " noalign" : "";
-  const desc      = s.description ? ` -- "${s.description}"` : "";
+  const breathe = s.breatheEvery != null ? ` breathe ${s.breatheEvery}` : "";
+  const noalign = s.noalign ? " noalign" : "";
+  const desc = s.description ? ` -- "${s.description}"` : "";
 
   return `${base}${modifier}${paceStr}${rest}${equipment}${underwater}${breathe}${noalign}${desc}`;
 }
@@ -699,18 +699,21 @@ function setLineToSwimDsl(s: SwimSet, insideGroup = false): string {
 function itemToSwimDsl(item: SwimItem, depth = 0): string {
   const indent = "  ".repeat(depth);
 
+  // if its a set, render the line directly
   if (item.kind === "set") {
     return indent + setLineToSwimDsl(item, depth > 0);
   }
 
   const lines: string[] = [];
-  const repPrefix = item.repetitions && item.repetitions > 1 ? `${item.repetitions} x ` : "";
+  const repPrefix = item.repetitions && item.repetitions > 1 ? `${item.repetitions} x ` : ""; // only show repetition count on group if more than 1
   lines.push(`${indent}${repPrefix}{`);
 
+  // recursively render child items with increased indentation
   for (const child of item.items) {
     lines.push(itemToSwimDsl(child, depth + 1));
   }
 
+  // render modifiers for the group after closing brace
   const mods: string[] = [];
   const intensity = formatIntensity(item.intensityPercent, item.intensityPercentEnd, item.intensityZone);
   if (intensity) mods.push(`@ ${intensity}`);
@@ -724,6 +727,11 @@ function itemToSwimDsl(item: SwimItem, depth = 0): string {
   return lines.join("\n");
 }
 
+/**
+ * Recursively calculates the total volume of a SwimItem
+ * @param item SwimItem object to calculate volume for
+ * @returns total volume in metres represented by the SwimItem
+ */
 function itemVolume(item: SwimItem): number {
   if (item.kind === "set") {
     if (item.durationSeconds != null) return 0;
@@ -734,24 +742,30 @@ function itemVolume(item: SwimItem): number {
   return reps * item.items.reduce((sum, child) => sum + itemVolume(child), 0);
 }
 
+/**
+ * Main function to generate a week of swim sessions based on a target session length in metres
+ * @param sessionLengthMetres target length in metres for each session in the generated week
+ * @returns string representing the generated swim sessions in SwimDSL format
+ */
 export function generateWeekProgramme(sessionLengthMetres: number): string {
   const sessions: Session[] = [];
 
-  const sessionCount = getSessionCount(sessionLengthMetres);
-  const sessionPlan  = buildSessionPlan(sessionCount);
+  const sessionCount = getSessionCount(sessionLengthMetres); // number of sessions to generate based on user input of session length
+  const sessionPlan = buildSessionPlan(sessionCount); // session plans with label, type, and factor
 
   for (const plan of sessionPlan) {
     const totalVolume = roundToPool(sessionLengthMetres * plan.factor);
 
-    const warmupVolume   = chooseWarmupVolume(totalVolume);
-    const pullVolume     = roundToPool(totalVolume * 0.12);
+    const warmupVolume = chooseWarmupVolume(totalVolume);
+    const pullVolume = roundToPool(totalVolume * 0.12);
     const cooldownVolume = chooseCooldownVolume(totalVolume);
-    const mainVolume     = totalVolume - warmupVolume - pullVolume - cooldownVolume;
+    const mainVolume = totalVolume - warmupVolume - pullVolume - cooldownVolume;
 
+    // generate main set based on session type
     const mainItems: SwimItem[] =
-      plan.type === "volume"     ? generateVolumeMainSet(mainVolume)
+      plan.type === "volume" ? generateVolumeMainSet(mainVolume)
       : plan.type === "threshold" ? generateThresholdMainSet(mainVolume)
-      : plan.type === "speed"     ? generateSpeedMainSet(mainVolume)
+      : plan.type === "speed" ? generateSpeedMainSet(mainVolume)
       : generateMixedMainSet(mainVolume);
 
     const allItems: SwimItem[] = [
@@ -761,29 +775,29 @@ export function generateWeekProgramme(sessionLengthMetres: number): string {
       ...generateCooldown(cooldownVolume),
     ];
 
+    // Total volume of the session
     const actualTotal = allItems.reduce((sum, item) => sum + itemVolume(item), 0);
 
     sessions.push({
       label: plan.label,
-      type:  plan.type,
+      type: plan.type,
       items: allItems,
       totalDistance: actualTotal,
     });
   }
 
-  // ---- Header ----
+  // Declare items at the top of the file
   const lines: string[] = [
     `set PoolLength ${POOL_LENGTH}`,
     `set LengthUnit "metres"`,
     `set Title "Generated Base Phase Week"`,
     `set Description "Adaptive base phase week. Target session length: ${sessionLengthMetres}m"`,
     "",
-    // Named pace definitions
     ...Object.entries(PACE_DEFINITIONS).map(([name, pace]) => `pace ${name} = ${pace}`),
     "",
   ];
 
-  // ---- Sessions ----
+  // Render each session with a header and its items in SwimDSL format
   for (const session of sessions) {
     lines.push(`> ${session.label} — ${session.type} (${session.totalDistance}m)`);
     for (const item of session.items) {
