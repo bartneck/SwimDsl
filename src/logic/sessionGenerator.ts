@@ -408,7 +408,7 @@ function generateVolumeMainSet(mainVolume: number): SwimItem[] {
   const a2Reps = Math.max(2, Math.round(a2Volume / a2Dist));
 
   sets.push(makeSet(a2Reps, a2Dist, "Freestyle", {
-    intensityZone: "steady",
+    intensityPercent: 78,
     restKind: "on",
     sendoffSeconds: calculateSendoff(a2Dist, 0.30),
   }));
