@@ -506,6 +506,7 @@ function generateSpeedMainSet(mainVolume: number): SwimItem[] {
   const a1Rounded  = roundToPool(a1Volume);
   const a1LapCount = a1Rounded / POOL_LENGTH;
   const TIDY_LAPS  = new Set([2, 4, 6, 8, 10, 12]);
+  // If the aerobic volume can be neatly expressed as a whole number of laps, do that for simplicity and better pacing. Otherwise, do a distance-based set.
   if (TIDY_LAPS.has(a1LapCount)) {
     sets.push(makeLapSet(a1LapCount, "Freestyle", {
       intensityZone: "aerobic",
@@ -520,8 +521,7 @@ function generateSpeedMainSet(mainVolume: number): SwimItem[] {
     }));
   }
 
-  // Descending distance speed set — classic speed session structure
-  // e.g. 4x100, 4x75, 4x50, 4x25 with increasing intensity
+  // Descending distance speed set
   const speedVolume = mainVolume * 0.65;
   const descSets: { dist: number; zone: string }[] = [
     { dist: 100, zone: "steady" },
@@ -585,7 +585,7 @@ function generateMixedMainSet(mainVolume: number): SwimItem[] {
     sendoffSeconds: calculateAfterStop(ltRestSecs),
   }));
 
-
+  // Speed block with short sprints and more rest
   const spVolume = Math.floor(mainVolume * 0.25);
   const spReps = Math.min(8, Math.max(4, Math.round(spVolume / (25 * 2))));
 
