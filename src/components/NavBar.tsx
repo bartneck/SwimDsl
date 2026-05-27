@@ -22,6 +22,7 @@ import {
   downloadHtml,
   uploadFile,
 } from "../logic/fileIo";
+import {modifyProgram} from "../logic/programmeModification.ts";
 
 interface FileMenuItem {
   text: string;
@@ -45,6 +46,9 @@ interface NavBarProps {
  * @param swimdslProgramme - The UTF-8 text contents of the code editor.
  * @param setSwimdslProgramme - A function which takes UTF-8 text and replaces the
  *    contents of the code editor with the given text.
+ * @param swimlXml - The swiML XML of the swimDSL content.
+ * @param htmlString - The HTML file for the swiML HTML render.
+ * @param renderNode - The HTML render for the swiML session.
  * @param children - React nodes to place on the right hand side of the NavBar.
  *    Currently used to display the SidePanelSwitcher.
  *
@@ -116,6 +120,14 @@ function NavBar({
         downloadPdf(renderNode.current);
       },
     },
+    {
+      text: "Modify Programme",
+      icon: <CodeIcon fontSize="small"/>,
+      onclick: () => {
+        const modifiedProgramme = modifyProgram(swimdslProgramme);
+        setSwimdslProgramme(modifiedProgramme);
+      }
+    }
   ];
 
   return (
