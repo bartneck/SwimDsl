@@ -23,6 +23,7 @@ import {
   uploadFile,
 } from "../logic/fileIo";
 import {modifyProgram} from "../logic/programmeModification.ts";
+import ModificationDialog from "./ModificationDialog.tsx";
 
 interface FileMenuItem {
   text: string;
@@ -145,6 +146,7 @@ function NavBar({
         <Button id="basic-button" onClick={openFileMenu} color="inherit">
           File
         </Button>
+        <ModificationDialog/>
 
         <Menu open={open} anchorEl={anchorEl} onClose={closeFileMenu}>
           {fileMenuOptions.map(({ text, icon, onclick }, index) => (
