@@ -146,7 +146,10 @@ function NavBar({
         <Button id="basic-button" onClick={openFileMenu} color="inherit">
           File
         </Button>
-        <ModificationDialog/>
+        <ModificationDialog
+          swimdslProgramme={swimdslProgramme}
+          setSwimdslProgramme={setSwimdslProgramme}
+        />
 
         <Menu open={open} anchorEl={anchorEl} onClose={closeFileMenu}>
           {fileMenuOptions.map(({ text, icon, onclick }, index) => (

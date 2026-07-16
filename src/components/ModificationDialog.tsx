@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {Dispatch, SetStateAction, useState} from "react";
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
@@ -10,17 +10,21 @@ import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-// import {TextField} from "@mui/material";
-// import {modifyProgram} from "../logic/programmeModification.ts";
 
-interface ModificationParameters {
-  group: string;
-  paces: string[]; // This is where the type definition goes!
-  duration: string;
-  volume: string;
+// import {TextField} from "@mui/material";
+import {modifyProgram, ModificationParameters} from "../logic/programmeModification.ts";
+
+
+
+interface ModificationDialogProps {
+  swimdslProgramme: string;
+  setSwimdslProgramme: Dispatch<SetStateAction<string>>;
 }
 
-export default function ModificationDialog() {
+export default function ModificationDialog({
+                                             swimdslProgramme,
+                                             setSwimdslProgramme
+                                           }: ModificationDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [modificationParameters, setModificationParameters] = useState<ModificationParameters>({
     group: '',
@@ -34,10 +38,17 @@ export default function ModificationDialog() {
   const handleOpen = () => { setOpen(true); };
   const handleClose = () => { setOpen(false); };
 
-  const handleSubmit = () => {
-    // const modifiedProgramme = modifyProgram(swimdslProgramme);
-    // setSwimdslProgramme(modifiedProgramme);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (modificationParameters.paces.length === 0) {
+      alert("Please add at least one pace");
+      return;
+    }
+    const modifiedProgramme = modifyProgram(swimdslProgramme, modificationParameters,);
+    setSwimdslProgramme(modifiedProgramme);
     console.log(JSON.stringify(modificationParameters, null, 2));
+    console.log(modifiedProgramme);
+    handleClose();
   }
 
   return (

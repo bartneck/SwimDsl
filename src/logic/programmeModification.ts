@@ -1,14 +1,24 @@
 
+// TYPES
+export interface ModificationParameters {
+  group: string;
+  paces: string[]; // This is where the type definition goes!
+  duration: string;
+  volume: string;
+}
+
 // MAIN ALGORITHM
 
 export function modifyProgram(
-  program: string
+  program: string,
+  modificationParams: ModificationParameters,
   // Want type of session. i.e. sprint/distance/aerobic
   // Want average 100m time.
   // Maybe need to change the output style
 ): string {
   // const numPrograms = 3;
-  const hundredTimes = ["1:30", "1:45", "2:00"]
+  // const hundredTimes = ["1:30", "1:45", "2:00"]
+  const hundredTimes = modificationParams.paces;
 
   const instructions =
     program
