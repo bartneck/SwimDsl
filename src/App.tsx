@@ -12,6 +12,7 @@ import SidePaneSwitcher from "./components/SidePanelSwitcher";
 import SwimlDisplay from "./components/SwimlDisplay";
 import TutorialPane from "./components/TutorialPane";
 import PanelPage from "./types/PanelPage";
+import FileSelector from "./components/FileSelector.tsx";
 
 /**
  * The App compoent is the primary component of the SwimDSL web editor.
@@ -21,6 +22,7 @@ import PanelPage from "./types/PanelPage";
  * @returns The react element used to render the application.
  */
 function App(): React.ReactElement {
+  const [selectedFile, setSelectedFile] = React.useState("");
   const [swimdslProgramme, setSwimdslProgramme] = React.useState("");
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [panelPage, setPanelPage] = React.useState<PanelPage | null>(
@@ -41,9 +43,26 @@ function App(): React.ReactElement {
     [prefersDarkMode],
   );
 
-  const onChange = React.useCallback((val: string) => {
-    setSwimdslProgramme(val);
-  }, []);
+  const handleSelectFile = (newKey: string) => {
+    // save the current programme under the OLD key first
+    if (selectedFile) {
+      localStorage.setItem(selectedFile, swimdslProgramme);
+    }
+    // then switch to the new file and load its value
+    setSelectedFile(newKey);
+    setSwimdslProgramme(localStorage.getItem(newKey) ?? "");
+  }
+
+  const handleProgrammeChange = React.useCallback((value: string) => {
+    setSwimdslProgramme(value);
+    if (selectedFile) {
+      localStorage.setItem(selectedFile, value);
+    }
+  }, [selectedFile]);
+
+  // const onChange = React.useCallback((val: string) => {
+  //   setSwimdslProgramme(val);
+  // }, []);
 
   /**
    * Renders the content for the currently selected side panel.
@@ -84,6 +103,7 @@ function App(): React.ReactElement {
         <NavBar
           swimdslProgramme={swimdslProgramme}
           setSwimdslProgramme={setSwimdslProgramme}
+          handleSelectFile={handleSelectFile}
           swimlXml={swimlXml}
           htmlString={htmlString}
           renderNode={renderNode}
@@ -92,6 +112,7 @@ function App(): React.ReactElement {
             activePanelPage={panelPage}
             setPanelPage={setPanelPage}
           />
+          <FileSelector handleSelectFile={handleSelectFile} />
         </NavBar>
         <Box
           sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}
@@ -111,7 +132,7 @@ function App(): React.ReactElement {
               height="100%"
               theme={prefersDarkMode ? "dark" : "light"}
               extensions={[languageSupport, compiler]}
-              onChange={onChange}
+              onChange={handleProgrammeChange}
             />
           </Box>
           {panelPage !== null && (

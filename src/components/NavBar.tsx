@@ -32,6 +32,7 @@ interface FileMenuItem {
 interface NavBarProps {
   swimdslProgramme: string;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
+  handleSelectFile: (newKey: string) =>  void;
   swimlXml: string;
   htmlString: string;
   renderNode: React.RefObject<HTMLIFrameElement | null>;
@@ -53,6 +54,7 @@ interface NavBarProps {
 function NavBar({
   swimdslProgramme,
   setSwimdslProgramme,
+  handleSelectFile,
   swimlXml,
   htmlString,
   renderNode,
@@ -70,7 +72,10 @@ function NavBar({
   }
 
   function newProgramme() {
-    window.open("./", "_blank")?.focus();
+    const newKey = "File" + localStorage.length.toString();
+    localStorage.setItem(newKey, "");
+    handleSelectFile(newKey);
+    // window.open("./", "_blank")?.focus();
   }
 
   const fileMenuOptions: FileMenuItem[] = [
