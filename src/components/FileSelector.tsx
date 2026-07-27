@@ -1,25 +1,33 @@
 import React from "react";
+import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
+import { TreeItem } from '@mui/x-tree-view/TreeItem';
 
 interface FileSelectorProps {
+  selectedFile: string;
   handleSelectFile: (key: string) => void;
 }
 
 
 export default function FileSelector
 ({
+  selectedFile,
   handleSelectFile
 }: FileSelectorProps):React.ReactElement {
   const allKeys = Object.keys(localStorage);
   console.log(allKeys);
 
   // Set the code editor text to the local storage value.
+  // Need to add a MUI drawer.
   return(
     <>
-      <ul>
-        {allKeys.map(key => <li onClick={() => {
-          handleSelectFile(key)
-        }}>{key}</li>)}
-      </ul>
+      <SimpleTreeView
+        selectedItems={selectedFile}
+        onSelectedItemsChange={(_event, itemId) => {
+          handleSelectFile(itemId??"")
+        }}
+      >
+        {allKeys.map(key => <TreeItem key={key} itemId={key} label={key}/>)}
+      </SimpleTreeView>
     </>
   )
 }

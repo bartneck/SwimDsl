@@ -112,7 +112,7 @@ function App(): React.ReactElement {
             activePanelPage={panelPage}
             setPanelPage={setPanelPage}
           />
-          <FileSelector handleSelectFile={handleSelectFile} />
+          <FileSelector handleSelectFile={handleSelectFile} selectedFile={selectedFile} />
         </NavBar>
         <Box
           sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}
