@@ -47,9 +47,9 @@ function App(): React.ReactElement {
     [prefersDarkMode],
   );
 
-  const handleSelectFile = (newKey: string) => {
+  const handleSelectFile = (newKey: string, saveOldFile = true) => {
     // save the current programme under the OLD key first
-    if (selectedFile) {
+    if (saveOldFile && selectedFile) {
       localStorage.setItem(selectedFile, swimdslProgramme);
     }
     // then switch to the new file and load its value
@@ -155,6 +155,13 @@ function App(): React.ReactElement {
                 overflow: "hidden",
                 minWidth: 0,
                 minHeight: 0,
+                flexGrow: 1,
+                transition: (theme) =>
+                  theme.transitions.create('margin', {
+                    easing: theme.transitions.easing.sharp,
+                    duration: theme.transitions.duration.leavingScreen,
+                  }),
+                marginRight: selectorOpen ? 0 : `-250px`,
               }}
             >
               {showPanel(panelPage)}
