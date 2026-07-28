@@ -22,12 +22,14 @@ import FileSelector from "./components/FileSelector.tsx";
  * @returns The react element used to render the application.
  */
 function App(): React.ReactElement {
+  // localStorage.clear();
   const [selectedFile, setSelectedFile] = React.useState("");
   const [swimdslProgramme, setSwimdslProgramme] = React.useState("");
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [panelPage, setPanelPage] = React.useState<PanelPage | null>(
     PanelPage.RENDER,
   );
+  const [selectorOpen, setSelectorOpen] = React.useState(true);
   const [swimlXml, setSwimlXml] = React.useState("");
   const [htmlString, setHtmlString] = React.useState("");
   const renderNode = React.useRef<HTMLIFrameElement>(null);
@@ -111,8 +113,9 @@ function App(): React.ReactElement {
           <SidePaneSwitcher
             activePanelPage={panelPage}
             setPanelPage={setPanelPage}
+            selectorOpen={selectorOpen}
+            setSelectorOpen={setSelectorOpen}
           />
-          <FileSelector handleSelectFile={handleSelectFile} selectedFile={selectedFile} />
         </NavBar>
         <Box
           sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}
@@ -147,6 +150,7 @@ function App(): React.ReactElement {
               {showPanel(panelPage)}
             </Box>
           )}
+          <FileSelector handleSelectFile={handleSelectFile} selectedFile={selectedFile} selectorOpen={selectorOpen}/>
         </Box>
       </Box>
     </ThemeProvider>
