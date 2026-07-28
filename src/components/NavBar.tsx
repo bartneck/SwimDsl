@@ -33,6 +33,7 @@ interface NavBarProps {
   swimdslProgramme: string;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
   handleSelectFile: (newKey: string) =>  void;
+  setNewProgrammeOpen: React.Dispatch<React.SetStateAction<boolean>>;
   swimlXml: string;
   htmlString: string;
   renderNode: React.RefObject<HTMLIFrameElement | null>;
@@ -54,7 +55,8 @@ interface NavBarProps {
 function NavBar({
   swimdslProgramme,
   setSwimdslProgramme,
-  handleSelectFile,
+  // handleSelectFile,
+  setNewProgrammeOpen,
   swimlXml,
   htmlString,
   renderNode,
@@ -72,9 +74,10 @@ function NavBar({
   }
 
   function newProgramme() {
-    const newKey = "File" + localStorage.length.toString();
-    localStorage.setItem(newKey, "");
-    handleSelectFile(newKey);
+    // const newKey = "File" + localStorage.length.toString();
+    // localStorage.setItem(newKey, "");
+    // handleSelectFile(newKey);
+    setNewProgrammeOpen(true);
     // window.open("./", "_blank")?.focus();
   }
 

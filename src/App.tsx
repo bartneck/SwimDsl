@@ -13,6 +13,7 @@ import SwimlDisplay from "./components/SwimlDisplay";
 import TutorialPane from "./components/TutorialPane";
 import PanelPage from "./types/PanelPage";
 import FileSelector from "./components/FileSelector.tsx";
+import NewProgrammeModal from "./components/NewProgrammeModal.tsx";
 
 /**
  * The App compoent is the primary component of the SwimDSL web editor.
@@ -23,6 +24,7 @@ import FileSelector from "./components/FileSelector.tsx";
  */
 function App(): React.ReactElement {
   // localStorage.clear();
+  const [newProgrammeOpen, setNewProgrammeOpen] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState("");
   const [swimdslProgramme, setSwimdslProgramme] = React.useState("");
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -66,6 +68,12 @@ function App(): React.ReactElement {
   //   setSwimdslProgramme(val);
   // }, []);
 
+  if (localStorage.length === 0) {
+    // console.log("localStorage is empty");
+    localStorage.setItem("First Programme", "");
+    handleSelectFile("First Programme");
+  }
+
   /**
    * Renders the content for the currently selected side panel.
    *
@@ -102,9 +110,11 @@ function App(): React.ReactElement {
           height: "100vh",
         }}
       >
+        <NewProgrammeModal handleSelectFile={handleSelectFile} newProgrammeOpen={newProgrammeOpen} setNewProgrammeOpen={setNewProgrammeOpen} />
         <NavBar
           swimdslProgramme={swimdslProgramme}
           setSwimdslProgramme={setSwimdslProgramme}
+          setNewProgrammeOpen={setNewProgrammeOpen}
           handleSelectFile={handleSelectFile}
           swimlXml={swimlXml}
           htmlString={htmlString}
