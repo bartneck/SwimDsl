@@ -8,6 +8,8 @@ import Tooltip from "@mui/material/Tooltip";
 import React from "react";
 
 import PanelPage from "../types/PanelPage";
+import MenuIcon from "@mui/icons-material/Menu";
+import IconButton from "@mui/material/IconButton";
 
 interface SidePanelItem {
   page: PanelPage | null;
@@ -41,6 +43,8 @@ const sideBarItems: SidePanelItem[] = [
 interface SidePaneSwitcherProps {
   activePanelPage: PanelPage | null;
   setPanelPage: React.Dispatch<React.SetStateAction<PanelPage | null>>;
+  selectorOpen: boolean;
+  setSelectorOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
@@ -56,6 +60,8 @@ interface SidePaneSwitcherProps {
 function SidePaneSwitcher({
   setPanelPage,
   activePanelPage,
+  selectorOpen,
+  setSelectorOpen,
 }: SidePaneSwitcherProps): React.ReactElement {
   return (
     <Paper>
@@ -74,6 +80,14 @@ function SidePaneSwitcher({
           </span>
         </Tooltip>
       ))}
+      <Tooltip title="Show/hide file picker">
+        <IconButton onClick={() => {
+          setSelectorOpen(!selectorOpen);
+        }}>
+          <MenuIcon />
+        </IconButton>
+      </Tooltip>
+
     </Paper>
   );
 }
