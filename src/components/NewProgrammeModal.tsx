@@ -8,7 +8,6 @@ import {handleSelectFile} from "../logic/filePersistence.ts";
 
 
 interface NewProgrammeModalProps {
-  // handleSelectFile: (newKey: string) =>  void;
   newProgrammeOpen: boolean;
   setNewProgrammeOpen: React.Dispatch<React.SetStateAction<boolean>>;
   selectedFile: string;
@@ -32,7 +31,6 @@ const style = {
 };
 
 export default function NewProgrammeModal({
-  // handleSelectFile,
   newProgrammeOpen,
   setNewProgrammeOpen,
   selectedFile,

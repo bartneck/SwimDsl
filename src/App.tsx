@@ -24,7 +24,6 @@ import {handleSelectFile} from "./logic/filePersistence.ts";
  * @returns The react element used to render the application.
  */
 function App(): React.ReactElement {
-  // localStorage.clear();
   const [newProgrammeOpen, setNewProgrammeOpen] = React.useState(false);
   const [selectedFile, setSelectedFile] = React.useState("");
   const [swimdslProgramme, setSwimdslProgramme] = React.useState("");
@@ -48,16 +47,6 @@ function App(): React.ReactElement {
     [prefersDarkMode],
   );
 
-  // const handleSelectFile = (newKey: string, saveOldFile = true) => {
-  //   // save the current programme under the OLD key first
-  //   if (saveOldFile && selectedFile) {
-  //     localStorage.setItem(selectedFile, swimdslProgramme);
-  //   }
-  //   // then switch to the new file and load its value
-  //   setSelectedFile(newKey);
-  //   setSwimdslProgramme(localStorage.getItem(newKey) ?? "");
-  // }
-
   const handleProgrammeChange = React.useCallback((value: string) => {
     setSwimdslProgramme(value);
     if (selectedFile) {
@@ -65,12 +54,7 @@ function App(): React.ReactElement {
     }
   }, [selectedFile]);
 
-  // const onChange = React.useCallback((val: string) => {
-  //   setSwimdslProgramme(val);
-  // }, []);
-
   if (localStorage.length === 0) {
-    // console.log("localStorage is empty");
     localStorage.setItem("First Programme", "");
     handleSelectFile("First Programme", selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
   }
@@ -112,7 +96,6 @@ function App(): React.ReactElement {
         }}
       >
         <NewProgrammeModal
-          // handleSelectFile={handleSelectFile}
           newProgrammeOpen={newProgrammeOpen}
           setNewProgrammeOpen={setNewProgrammeOpen}
           selectedFile={selectedFile}
@@ -124,7 +107,6 @@ function App(): React.ReactElement {
           swimdslProgramme={swimdslProgramme}
           setSwimdslProgramme={setSwimdslProgramme}
           setNewProgrammeOpen={setNewProgrammeOpen}
-          // handleSelectFile={handleSelectFile}
           swimlXml={swimlXml}
           htmlString={htmlString}
           renderNode={renderNode}
@@ -177,7 +159,6 @@ function App(): React.ReactElement {
             </Box>
           )}
           <FileSelector
-            // handleSelectFile={handleSelectFile}
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
             swimdslProgramme={swimdslProgramme}

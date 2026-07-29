@@ -8,17 +8,11 @@ function newFile(key: string, value: string): void {
   }
 }
 
-function handleDelete(key: string, selectedFile: string, setSelectedFile: (newFile: string)=>void, setSwimdslProgramme:(swimdslProgramme: string)=>void):void {
+function handleDelete(key: string, setSelectedFile: (newFile: string)=>void, setSwimdslProgramme:(swimdslProgramme: string)=>void):void {
   if (key === "") return;
-  console.log("Deleting " + key);
-  console.log("Selected file: " + selectedFile);
   localStorage.removeItem(key);
-  // if (key === selectedFile) {
-  //   handleSelectFile("", false);
-  // }
   setSelectedFile("");
   setSwimdslProgramme("");
-
 }
 
 function handleSelectFile(

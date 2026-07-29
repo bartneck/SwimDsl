@@ -13,7 +13,6 @@ interface FileSelectorProps {
   setSelectedFile: (selectedFile: string) => void;
   swimdslProgramme: string;
   setSwimdslProgramme: (swimdslProgramme: string) => void;
-  // handleSelectFile: (key: string, saveOldFile: boolean) => void;
 }
 type ContextMenuPosition = {
   mouseX: number;
@@ -30,7 +29,6 @@ export default function FileSelector
    setSelectedFile,
   swimdslProgramme,
   setSwimdslProgramme,
-   // handleSelectFile
  }: FileSelectorProps):React.ReactElement {
 
   const [contextMenu, setContextMenu] = React.useState<ContextMenuPosition>(null);
@@ -42,10 +40,8 @@ export default function FileSelector
     e.stopPropagation();
 
     setTargetKey(key);
-    // handleSelectFile(key, true);
     handleSelectFile(key, selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
     setContextMenu(
-      // contextMenu === null ? { mouseX: e.clientX + 2, mouseY: e.clientY - 6 } : null // if already open, close it (toggle-ish behavior on repeat right-clicks)
       { mouseX: e.clientX + 2, mouseY: e.clientY - 6 }
     );
   }
@@ -69,16 +65,6 @@ export default function FileSelector
     setTargetKey("");
   }
 
-  // const handleDelete = (key: string) => {
-  //   if (key === "") return;
-  //   console.log("Deleting " + key);
-  //   console.log("Selected file: " + selectedFile);
-  //   localStorage.removeItem(key);
-  //   if (key === selectedFile) {
-  //     handleSelectFile("", false);
-  //   }
-  // }
-
   return(
     <>
       <Drawer
@@ -97,7 +83,6 @@ export default function FileSelector
           style={{ marginTop: 10}}
           selectedItems={selectedFile}
           onSelectedItemsChange={(_event, itemId) => {
-            // handleSelectFile(itemId??"", true)
           handleSelectFile(itemId??"", selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
           }}
         >
@@ -123,12 +108,8 @@ export default function FileSelector
           },
         }}
       >
-        {/*<MenuItem onClick={() => { handleRename(targetKey); handleClose(); }}>*/}
-        {/*  Rename*/}
-        {/*</MenuItem>*/}
         <MenuItem onClick={() => {
-          handleDelete(targetKey, selectedFile, setSelectedFile, setSwimdslProgramme);
-          // handleDelete(targetKey);
+          handleDelete(targetKey, setSelectedFile, setSwimdslProgramme);
           handleClose(); }}>
           Delete
         </MenuItem>
