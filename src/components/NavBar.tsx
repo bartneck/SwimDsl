@@ -32,6 +32,7 @@ interface FileMenuItem {
 interface NavBarProps {
   swimdslProgramme: string;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
+  setNewProgrammeOpen: React.Dispatch<React.SetStateAction<boolean>>;
   swimlXml: string;
   htmlString: string;
   renderNode: React.RefObject<HTMLIFrameElement | null>;
@@ -45,6 +46,7 @@ interface NavBarProps {
  * @param swimdslProgramme - The UTF-8 text contents of the code editor.
  * @param setSwimdslProgramme - A function which takes UTF-8 text and replaces the
  *    contents of the code editor with the given text.
+ * @param setNewProgrammeOpen - A function which takes a boolean and sets the state of the new programme modal.
  * @param children - React nodes to place on the right hand side of the NavBar.
  *    Currently used to display the SidePanelSwitcher.
  *
@@ -53,6 +55,7 @@ interface NavBarProps {
 function NavBar({
   swimdslProgramme,
   setSwimdslProgramme,
+  setNewProgrammeOpen,
   swimlXml,
   htmlString,
   renderNode,
@@ -70,7 +73,7 @@ function NavBar({
   }
 
   function newProgramme() {
-    window.open("./", "_blank")?.focus();
+    setNewProgrammeOpen(true);
   }
 
   const fileMenuOptions: FileMenuItem[] = [
