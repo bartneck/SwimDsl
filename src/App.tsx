@@ -14,6 +14,7 @@ import TutorialPane from "./components/TutorialPane";
 import PanelPage from "./types/PanelPage";
 import FileSelector from "./components/FileSelector.tsx";
 import NewProgrammeModal from "./components/NewProgrammeModal.tsx";
+import {handleSelectFile} from "./logic/filePersistence.ts";
 
 /**
  * The App compoent is the primary component of the SwimDSL web editor.
@@ -47,15 +48,15 @@ function App(): React.ReactElement {
     [prefersDarkMode],
   );
 
-  const handleSelectFile = (newKey: string, saveOldFile = true) => {
-    // save the current programme under the OLD key first
-    if (saveOldFile && selectedFile) {
-      localStorage.setItem(selectedFile, swimdslProgramme);
-    }
-    // then switch to the new file and load its value
-    setSelectedFile(newKey);
-    setSwimdslProgramme(localStorage.getItem(newKey) ?? "");
-  }
+  // const handleSelectFile = (newKey: string, saveOldFile = true) => {
+  //   // save the current programme under the OLD key first
+  //   if (saveOldFile && selectedFile) {
+  //     localStorage.setItem(selectedFile, swimdslProgramme);
+  //   }
+  //   // then switch to the new file and load its value
+  //   setSelectedFile(newKey);
+  //   setSwimdslProgramme(localStorage.getItem(newKey) ?? "");
+  // }
 
   const handleProgrammeChange = React.useCallback((value: string) => {
     setSwimdslProgramme(value);
@@ -71,7 +72,7 @@ function App(): React.ReactElement {
   if (localStorage.length === 0) {
     // console.log("localStorage is empty");
     localStorage.setItem("First Programme", "");
-    handleSelectFile("First Programme");
+    handleSelectFile("First Programme", selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
   }
 
   /**
@@ -110,12 +111,20 @@ function App(): React.ReactElement {
           height: "100vh",
         }}
       >
-        <NewProgrammeModal handleSelectFile={handleSelectFile} newProgrammeOpen={newProgrammeOpen} setNewProgrammeOpen={setNewProgrammeOpen} />
+        <NewProgrammeModal
+          // handleSelectFile={handleSelectFile}
+          newProgrammeOpen={newProgrammeOpen}
+          setNewProgrammeOpen={setNewProgrammeOpen}
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
+          swimdslProgramme={swimdslProgramme}
+          setSwimdslProgramme={setSwimdslProgramme}
+        />
         <NavBar
           swimdslProgramme={swimdslProgramme}
           setSwimdslProgramme={setSwimdslProgramme}
           setNewProgrammeOpen={setNewProgrammeOpen}
-          handleSelectFile={handleSelectFile}
+          // handleSelectFile={handleSelectFile}
           swimlXml={swimlXml}
           htmlString={htmlString}
           renderNode={renderNode}
@@ -167,7 +176,14 @@ function App(): React.ReactElement {
               {showPanel(panelPage)}
             </Box>
           )}
-          <FileSelector handleSelectFile={handleSelectFile} selectedFile={selectedFile} selectorOpen={selectorOpen}/>
+          <FileSelector
+            // handleSelectFile={handleSelectFile}
+            selectedFile={selectedFile}
+            setSelectedFile={setSelectedFile}
+            swimdslProgramme={swimdslProgramme}
+            setSwimdslProgramme={setSwimdslProgramme}
+            selectorOpen={selectorOpen}
+          />
         </Box>
       </Box>
     </ThemeProvider>

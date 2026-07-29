@@ -5,11 +5,15 @@ import Drawer from "@mui/material/Drawer";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
+import {handleDelete, handleSelectFile} from "../logic/filePersistence";
 
 interface FileSelectorProps {
   selectorOpen: boolean;
   selectedFile: string;
-  handleSelectFile: (key: string, saveOldFile: boolean) => void;
+  setSelectedFile: (selectedFile: string) => void;
+  swimdslProgramme: string;
+  setSwimdslProgramme: (swimdslProgramme: string) => void;
+  // handleSelectFile: (key: string, saveOldFile: boolean) => void;
 }
 type ContextMenuPosition = {
   mouseX: number;
@@ -21,10 +25,13 @@ type ContextMenuPosition = {
 
 export default function FileSelector
 ({
-  selectorOpen,
-  selectedFile,
-  handleSelectFile
-}: FileSelectorProps):React.ReactElement {
+   selectorOpen,
+   selectedFile,
+   setSelectedFile,
+  swimdslProgramme,
+  setSwimdslProgramme,
+   // handleSelectFile
+ }: FileSelectorProps):React.ReactElement {
 
   const [contextMenu, setContextMenu] = React.useState<ContextMenuPosition>(null);
   const [targetKey, setTargetKey] = React.useState("");
@@ -35,7 +42,8 @@ export default function FileSelector
     e.stopPropagation();
 
     setTargetKey(key);
-    handleSelectFile(key, true);
+    // handleSelectFile(key, true);
+    handleSelectFile(key, selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
     setContextMenu(
       // contextMenu === null ? { mouseX: e.clientX + 2, mouseY: e.clientY - 6 } : null // if already open, close it (toggle-ish behavior on repeat right-clicks)
       { mouseX: e.clientX + 2, mouseY: e.clientY - 6 }
@@ -49,7 +57,7 @@ export default function FileSelector
     const key = hit?.closest('[data-key]')?.getAttribute('data-key');
     if (key) {
       setTargetKey(key);
-      handleSelectFile(key, true);
+      handleSelectFile(key, selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
       setContextMenu({ mouseX: e.clientX + 2, mouseY: e.clientY - 6 });
     } else {
       setContextMenu(null); // right-clicked empty space, just close
@@ -61,15 +69,15 @@ export default function FileSelector
     setTargetKey("");
   }
 
-  const handleDelete = (key: string) => {
-    if (key === "") return;
-    console.log("Deleting " + key);
-    console.log("Selected file: " + selectedFile);
-    localStorage.removeItem(key);
-    if (key === selectedFile) {
-      handleSelectFile("", false);
-    }
-  }
+  // const handleDelete = (key: string) => {
+  //   if (key === "") return;
+  //   console.log("Deleting " + key);
+  //   console.log("Selected file: " + selectedFile);
+  //   localStorage.removeItem(key);
+  //   if (key === selectedFile) {
+  //     handleSelectFile("", false);
+  //   }
+  // }
 
   return(
     <>
@@ -81,7 +89,7 @@ export default function FileSelector
           width: 250,
           flexShrink: 0,
           '& .MuiDrawer-paper': { width: 250, boxSizing: 'border-box', backgroundColor: "lightgray",
-            },
+          },
         }}
       >
         <Toolbar/>
@@ -89,7 +97,8 @@ export default function FileSelector
           style={{ marginTop: 10}}
           selectedItems={selectedFile}
           onSelectedItemsChange={(_event, itemId) => {
-            handleSelectFile(itemId??"", true)
+            // handleSelectFile(itemId??"", true)
+          handleSelectFile(itemId??"", selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
           }}
         >
           {allKeys.map(key => <TreeItem key={key} itemId={key} data-key={key} label={key} onContextMenu={(e) => {
@@ -117,7 +126,10 @@ export default function FileSelector
         {/*<MenuItem onClick={() => { handleRename(targetKey); handleClose(); }}>*/}
         {/*  Rename*/}
         {/*</MenuItem>*/}
-        <MenuItem onClick={() => { handleDelete(targetKey); handleClose(); }}>
+        <MenuItem onClick={() => {
+          handleDelete(targetKey, selectedFile, setSelectedFile, setSwimdslProgramme);
+          // handleDelete(targetKey);
+          handleClose(); }}>
           Delete
         </MenuItem>
       </Menu>

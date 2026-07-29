@@ -4,12 +4,17 @@ import React from "react";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
+import {handleSelectFile} from "../logic/filePersistence.ts";
 
 
 interface NewProgrammeModalProps {
-  handleSelectFile: (newKey: string) =>  void;
+  // handleSelectFile: (newKey: string) =>  void;
   newProgrammeOpen: boolean;
   setNewProgrammeOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedFile: string;
+  swimdslProgramme: string;
+  setSelectedFile: (selectedFile: string) => void;
+  setSwimdslProgramme: (swimdslProgramme: string) => void;
 }
 
 const style = {
@@ -27,9 +32,13 @@ const style = {
 };
 
 export default function NewProgrammeModal({
-  handleSelectFile,
+  // handleSelectFile,
   newProgrammeOpen,
   setNewProgrammeOpen,
+  selectedFile,
+  swimdslProgramme,
+  setSelectedFile,
+  setSwimdslProgramme,
   }:NewProgrammeModalProps)
 {
 
@@ -50,7 +59,7 @@ export default function NewProgrammeModal({
     }
     else {
       localStorage.setItem(newProgrammeName, "");
-      handleSelectFile(newProgrammeName);
+      handleSelectFile(newProgrammeName, selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
       handleClose();
     }
   }

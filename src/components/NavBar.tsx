@@ -32,7 +32,7 @@ interface FileMenuItem {
 interface NavBarProps {
   swimdslProgramme: string;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
-  handleSelectFile: (newKey: string) =>  void;
+  // handleSelectFile: (newKey: string) =>  void;
   setNewProgrammeOpen: React.Dispatch<React.SetStateAction<boolean>>;
   swimlXml: string;
   htmlString: string;
