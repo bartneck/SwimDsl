@@ -1,4 +1,4 @@
-import React, {Dispatch, SetStateAction, useState} from "react";
+import React, {useState} from "react";
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
@@ -18,13 +18,16 @@ import {modifyProgram, ModificationParameters} from "../logic/programmeModificat
 
 interface ModificationDialogProps {
   swimdslProgramme: string;
-  setSwimdslProgramme: Dispatch<SetStateAction<string>>;
+  selectedFile: string;
+  setSelectedFile: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export default function ModificationDialog({
-                                             swimdslProgramme,
-                                             setSwimdslProgramme
-                                           }: ModificationDialogProps) {
+export default function ModificationDialog(
+  {
+      swimdslProgramme,
+      selectedFile,
+    setSelectedFile,
+ }: ModificationDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [modificationParameters, setModificationParameters] = useState<ModificationParameters>({
     group: '',
@@ -44,10 +47,8 @@ export default function ModificationDialog({
       alert("Please add at least one pace");
       return;
     }
-    const modifiedProgramme = modifyProgram(swimdslProgramme, modificationParameters,);
-    setSwimdslProgramme(modifiedProgramme);
+    modifyProgram(swimdslProgramme, selectedFile, setSelectedFile, modificationParameters);
     console.log(JSON.stringify(modificationParameters, null, 2));
-    console.log(modifiedProgramme);
     handleClose();
   }
 

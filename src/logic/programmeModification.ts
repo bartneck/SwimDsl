@@ -1,5 +1,7 @@
 
 // TYPES
+import {newFile} from "./filePersistence.ts";
+
 export interface ModificationParameters {
   group: string;
   paces: string[]; // This is where the type definition goes!
@@ -11,11 +13,13 @@ export interface ModificationParameters {
 
 export function modifyProgram(
   program: string,
+  selectedFile: string,
+  setSelectedFile: (selectedFile: string) => void,
   modificationParams: ModificationParameters,
   // Want type of session. i.e. sprint/distance/aerobic
   // Want average 100m time.
   // Maybe need to change the output style
-): string {
+): void {
   // const numPrograms = 3;
   // const hundredTimes = ["1:30", "1:45", "2:00"]
   const hundredTimes = modificationParams.paces;
@@ -27,7 +31,7 @@ export function modifyProgram(
       .map(line => line.trim())
       .filter(line => line.length > 0);
 
-  const newProgrammes: string[] = [];
+  const newProgrammes = new Map<string, string>();
 
   for (const pace of hundredTimes) {
     const newInstructions: string[] = []
@@ -43,10 +47,15 @@ export function modifyProgram(
       }
       newInstructions.push(instruction);
     }
-    newProgrammes.push(`>--- ${pace} modification ---\n`+newInstructions.join("\n")+"\n");
+    newProgrammes.set(pace+" ("+selectedFile+")", newInstructions.join("\n"));
   }
   // Returns the modified programmes as a string.
-  return newProgrammes.join("\n");
+  for (const [key, value] of newProgrammes) {
+    console.log(key, value);
+    console.log(selectedFile);
+    newFile(selectedFile, setSelectedFile, key, value);
+  }
+  window.location.reload();
 }
 
 

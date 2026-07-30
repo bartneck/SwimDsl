@@ -104,7 +104,9 @@ function App(): React.ReactElement {
           setSwimdslProgramme={setSwimdslProgramme}
         />
         <NavBar
+          selectedFile={selectedFile}
           swimdslProgramme={swimdslProgramme}
+          setSelectedFile={setSelectedFile}
           setSwimdslProgramme={setSwimdslProgramme}
           setNewProgrammeOpen={setNewProgrammeOpen}
           swimlXml={swimlXml}

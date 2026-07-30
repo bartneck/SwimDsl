@@ -22,7 +22,6 @@ import {
   downloadHtml,
   uploadFile,
 } from "../logic/fileIo";
-import {modifyProgram} from "../logic/programmeModification.ts";
 import ModificationDialog from "./ModificationDialog.tsx";
 
 interface FileMenuItem {
@@ -32,9 +31,11 @@ interface FileMenuItem {
 }
 
 interface NavBarProps {
+  selectedFile: string;
   swimdslProgramme: string;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
   setNewProgrammeOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedFile: React.Dispatch<React.SetStateAction<string>>;
   swimlXml: string;
   htmlString: string;
   renderNode: React.RefObject<HTMLIFrameElement | null>;
@@ -58,8 +59,10 @@ interface NavBarProps {
  * @returns The react element used to render the Navigation bar.
  */
 function NavBar({
+  selectedFile,
   swimdslProgramme,
   setSwimdslProgramme,
+  setSelectedFile,
   setNewProgrammeOpen,
   swimlXml,
   htmlString,
@@ -124,14 +127,6 @@ function NavBar({
         downloadPdf(renderNode.current);
       },
     },
-    {
-      text: "Modify Programme",
-      icon: <CodeIcon fontSize="small"/>,
-      onclick: () => {
-        const modifiedProgramme = modifyProgram(swimdslProgramme);
-        setSwimdslProgramme(modifiedProgramme);
-      }
-    }
   ];
 
   return (
@@ -151,7 +146,8 @@ function NavBar({
         </Button>
         <ModificationDialog
           swimdslProgramme={swimdslProgramme}
-          setSwimdslProgramme={setSwimdslProgramme}
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
         />
 
         <Menu open={open} anchorEl={anchorEl} onClose={closeFileMenu}>
