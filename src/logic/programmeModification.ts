@@ -24,7 +24,7 @@ export function modifyProgram(
   // const hundredTimes = ["1:30", "1:45", "2:00"]
   const hundredTimes = modificationParams.paces;
 
-  const averageDistanceTimes = new Map<string, number>();
+  const averageDistanceTimes = new Map<string, number[]>();
 
   const instructions =
     program
@@ -44,10 +44,28 @@ export function modifyProgram(
       originalTime = wordAt(instruction, timeIndex);
     }
 
+    if (distance && originalTime) {
+      const times = averageDistanceTimes.get(distance);
+      if (times) {
+        times.push(timeToSeconds(originalTime));
+      } else {
+        averageDistanceTimes.set(distance, []);
+      }
+    }
     return { instruction, distance, originalTime };
   });
 
+  let averageTime: number;
+  // Average the times
+  for (const [distance, times] of averageDistanceTimes)
+  {
+    averageTime = times.reduce((sum, time) => sum + time, 0) / times.length;
+    averageDistanceTimes.set(distance, [averageTime])
+  }
+
+
   const newProgrammes = new Map<string, string>();
+
 
   // for (const pace of hundredTimes) {
   //   const newInstructions: string[] = []
@@ -76,27 +94,24 @@ export function modifyProgram(
         const baseSwimTime = getIntervalTime(item.distance, pace);
         const baseTotalTime = addTimes(baseSwimTime, getRestTime(baseSwimTime, "endurance"));
 
-        const originalPace = (timeToSeconds(item.originalTime)/timeToSeconds(item.distance))*100;
+        // const originalPace = (timeToSeconds(item.originalTime)/timeToSeconds(item.distance))*100;
         // 2. PRESERVE DIFFERENCES: Calculate the offset
         // Find the difference between a standard 100m at this pace vs what the original text had
         // const standardOriginalBase = getIntervalTime(item.distance, pace);
 
-        const baseTimeSecs = timeToSeconds(baseSwimTime);
         const baseTotalSecs = timeToSeconds(baseTotalTime);
         // const standardOriginalBaseSecs = timeToSeconds(standardOriginalBase);
         const originalSecs = timeToSeconds(item.originalTime);
 
-        const offsetSecs = originalSecs - baseTimeSecs;
-
-        // const timeOffset: string = subtractTimes(item.originalTime, standardOriginalBase); // e.g., +15 seconds for a slower lane
+        const ratio = originalSecs / (averageDistanceTimes.get(item.distance)?.[0] ?? originalSecs);
+        // const offset = originalSecs - (averageDistanceTimes.get(item.distance)?.[0] ?? originalSecs);
 
         // 3. Apply the offset to the new base time
-        // const finalModifiedTime = addTimes(baseTotalTime, timeOffset);
+        const finalModifiedSecs = baseTotalSecs * ratio;
+        // const finalModifiedSecs = baseTotalSecs + (offset);
 
-        const finalModifiedSecs = baseTotalSecs - (offsetSecs);
         const finalModifiedTime = secondsToTime(finalModifiedSecs);
 
-        console.log("[original, standard base, offset, modified]", originalSecs, baseTimeSecs, offsetSecs, finalModifiedTime);
         // 4. Swap the time out
         modifiedInstruction = modifiedInstruction.replace(item.originalTime, finalModifiedTime);
       }
