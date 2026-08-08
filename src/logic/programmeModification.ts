@@ -25,6 +25,8 @@ export function modifyProgram(
   const hundredTimes = modificationParams.paces;
 
   const averageDistanceTimes = new Map<string, number[]>();
+  let totalDistance = 0;
+  const totalTime = 0;
 
   const instructions =
     program
@@ -52,6 +54,9 @@ export function modifyProgram(
         averageDistanceTimes.set(distance, []);
       }
     }
+
+    totalDistance += Number(distance);
+
     return { instruction, distance, originalTime };
   });
 
@@ -67,21 +72,6 @@ export function modifyProgram(
   const newProgrammes = new Map<string, string>();
 
 
-  // for (const pace of hundredTimes) {
-  //   const newInstructions: string[] = []
-  //   for (let instruction of instructions) {
-  //     const distance = getDistance(instruction);
-  //     if (instruction.toLowerCase().includes("on")) {
-  //       const timeIndex = instruction.indexOf("on") + ("on".length) + 1;
-  //       const intervalTime = wordAt(instruction, timeIndex);
-  //       const intervalSwimTime = getIntervalTime(distance, pace);
-  //       const modifiedTime = addTimes(intervalSwimTime, getRestTime(intervalSwimTime, "endurance")); // This should become the swimmers new interval time i.e. intervalSwimTime + intervalRestTime
-  //
-  //       instruction = instruction.replace(intervalTime, modifiedTime);
-  //     }
-  //     newInstructions.push(instruction);
-  //   }
-
   // STEP 2: Loop through your new paces
   for (const pace of hundredTimes) {
     const newInstructions: string[] = [];
@@ -94,13 +84,8 @@ export function modifyProgram(
         const baseSwimTime = getIntervalTime(item.distance, pace);
         const baseTotalTime = addTimes(baseSwimTime, getRestTime(baseSwimTime, "endurance"));
 
-        // const originalPace = (timeToSeconds(item.originalTime)/timeToSeconds(item.distance))*100;
         // 2. PRESERVE DIFFERENCES: Calculate the offset
-        // Find the difference between a standard 100m at this pace vs what the original text had
-        // const standardOriginalBase = getIntervalTime(item.distance, pace);
-
         const baseTotalSecs = timeToSeconds(baseTotalTime);
-        // const standardOriginalBaseSecs = timeToSeconds(standardOriginalBase);
         const originalSecs = timeToSeconds(item.originalTime);
 
         const ratio = originalSecs / (averageDistanceTimes.get(item.distance)?.[0] ?? originalSecs);
