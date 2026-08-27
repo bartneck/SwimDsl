@@ -9,6 +9,12 @@ export interface ModificationParameters {
   volume: string;
 }
 
+interface TimedInstruction {
+  instruction: string;
+  perRepSeconds: number;
+  reps: number;
+}
+
 // MAIN ALGORITHM
 
 export function modifyProgram(
@@ -22,11 +28,15 @@ export function modifyProgram(
 ): void {
   // const numPrograms = 3;
   // const hundredTimes = ["1:30", "1:45", "2:00"]
+  const totalDuration = modificationParams.duration;
   const hundredTimes = modificationParams.paces;
+  const totalDurationSeconds =
+    totalDuration && !isNaN(Number(totalDuration))
+      ? Number(totalDuration) * 60
+      : Infinity;
 
   const averageDistanceTimes = new Map<string, number[]>();
   let totalDistance = 0;
-  const totalTime = 0;
 
   const instructions =
     program
@@ -51,13 +61,15 @@ export function modifyProgram(
       if (times) {
         times.push(timeToSeconds(originalTime));
       } else {
-        averageDistanceTimes.set(distance, []);
+        averageDistanceTimes.set(distance, [timeToSeconds(originalTime)]);
       }
     }
 
     totalDistance += Number(distance);
 
-    return { instruction, distance, originalTime };
+    const reps = getReps(instruction);
+
+    return { instruction, distance, originalTime, reps };
   });
 
   let averageTime: number;
@@ -74,10 +86,11 @@ export function modifyProgram(
 
   // STEP 2: Loop through your new paces
   for (const pace of hundredTimes) {
-    const newInstructions: string[] = [];
+    const newInstructions: TimedInstruction[] = [];
 
     for (const item of parsedInstructions) {
       let modifiedInstruction = item.instruction;
+      let perRepSeconds = 0;
 
       if (item.originalTime) {
         // 1. Get the standard baseline swim time for this distance at the NEW pace
@@ -99,11 +112,17 @@ export function modifyProgram(
 
         // 4. Swap the time out
         modifiedInstruction = modifiedInstruction.replace(item.originalTime, finalModifiedTime);
+
+        // 5. Time this instruction takes up per single repetition
+        perRepSeconds = finalModifiedSecs;
       }
 
-      newInstructions.push(modifiedInstruction);
+      newInstructions.push({ instruction: modifiedInstruction, perRepSeconds, reps: item.reps });
     }
-    newProgrammes.set(pace+" ("+selectedFile+")", newInstructions.join("\n"));
+
+    // STEP 3: Cut the programme off once it would exceed the total session duration
+    const cappedInstructions = capInstructionsToDuration(newInstructions, totalDurationSeconds);
+    newProgrammes.set(pace+" ("+selectedFile+")", cappedInstructions.join("\n"));
   }
   // Returns the modified programmes as a string.
   for (const [key, value] of newProgrammes) {
@@ -117,6 +136,44 @@ export function modifyProgram(
 
 
 
+// STEP 3 FUNCTION
+
+// Loops through a pace's instructions, keeping a running total of how long
+// they take. Once an instruction's full set of reps would push that total
+// past totalDurationSeconds, its rep count is reduced to however many reps
+// still fit, rather than dropping the whole instruction, and the programme
+// ends there.
+function capInstructionsToDuration(
+  items: TimedInstruction[],
+  totalDurationSeconds: number
+): string[] {
+  const cappedInstructions: string[] = [];
+  let cumulativeSeconds = 0;
+
+  for (const item of items) {
+    const totalSeconds = item.perRepSeconds * item.reps;
+
+    if (cumulativeSeconds + totalSeconds <= totalDurationSeconds) {
+      cumulativeSeconds += totalSeconds;
+      cappedInstructions.push(item.instruction);
+      continue;
+    }
+
+    const remainingSeconds = totalDurationSeconds - cumulativeSeconds;
+    const possibleReps = item.perRepSeconds > 0
+      ? Math.floor(remainingSeconds / item.perRepSeconds)
+      : 0;
+
+    if (possibleReps > 0) {
+      cappedInstructions.push(withReps(item.instruction, possibleReps));
+    }
+
+    break;
+  }
+
+  return cappedInstructions;
+}
+
 // HELPER FUNCTIONS
 
 function getDistance(
@@ -127,6 +184,31 @@ function getDistance(
     return wordAt(instruction, xIndex + 3); // skip past " x "
   }
   return wordAt(instruction, 0);
+}
+
+function getReps(
+  instruction: string
+): number {
+  const xIndex = instruction.toLowerCase().indexOf(" x ");
+  if (xIndex === -1) {
+    return 1;
+  }
+  const reps = Number(wordAt(instruction, 0));
+  return Number.isNaN(reps) ? 1 : reps;
+}
+
+// Rewrites the leading "N x " repetition count of an instruction to a new
+// value, e.g. withReps("4 x 100 Freestyle on 1:30", 2) -> "2 x 100 Freestyle on 1:30"
+function withReps(
+  instruction: string,
+  reps: number
+): string {
+  const xIndex = instruction.toLowerCase().indexOf(" x ");
+  if (xIndex === -1) {
+    return instruction;
+  }
+  const originalRepsWord = wordAt(instruction, 0);
+  return String(reps) + instruction.slice(originalRepsWord.length);
 }
 
 export function getIntervalTime(
