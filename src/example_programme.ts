@@ -99,6 +99,11 @@ pace hard = 90%
 # Pace names must only contain letters. Numbers, spaces, and other
 # symbols are not allowed.
 
+# Oftentimes you may want to specify the swimmers intensity through an individual metric. An example of
+# this would be heart rate. This can be done as a percentage of the swimmer's maximum heart rate.
+
+100 Freestyle @ 60bpm -> 70bpm
+
 
 ### Resting ####################################################################
 
