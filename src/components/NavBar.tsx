@@ -33,6 +33,8 @@ import {
 
 import { generateWeekProgramme } from "../logic/sessionGenerator";
 
+import { newFile } from "../logic/filePersistence";
+
 interface FileMenuItem {
   text: string;
   icon: React.ReactElement;
@@ -47,6 +49,7 @@ interface NavBarProps {
   htmlString: string;
   renderNode: React.RefObject<HTMLIFrameElement | null>;
   children?: React.ReactNode;
+  setSelectedFile: (selectedFile: string) => void;
 }
 
 /**
@@ -66,6 +69,7 @@ function NavBar({
   swimdslProgramme,
   setSwimdslProgramme,
   setNewProgrammeOpen,
+  setSelectedFile,
   swimlXml,
   htmlString,
   renderNode,
@@ -90,6 +94,18 @@ function NavBar({
 
   function handleGenerate() {
     const programme = generateWeekProgramme(sessionLength);
+
+    let counter = 1;
+    let fileName = `Generated Programme ${counter}`;
+
+    while (localStorage.getItem(fileName)) {
+      counter++;
+      fileName = `Generated Programme ${counter}`;
+    }
+
+    newFile(fileName, programme);
+    setSelectedFile(fileName);
+
     setSwimdslProgramme(programme);
     setGenerateOpen(false);
   }
