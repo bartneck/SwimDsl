@@ -1,8 +1,8 @@
 /**
  * Generate a compiled SEF JSON file from the latest version of the swiML XSL
- * file which is to be deployed at the specified base URL.
+ * file.
  *
- * Usage: node generateSef.ts DEPLOYED_BASE_URL
+ * Usage: node generateSef.ts
  */
 
 import fs from "node:fs";
@@ -16,25 +16,28 @@ const MASTER_XSL_URL =
 const SEF_FILE_NAME = "swiML.sef.json";
 const STATIC_HTTP_DIR = "public";
 
+// The swiML XSL resolves relative document() calls (e.g. its i18n
+// translation files) against its own base URI. That base URI is baked into
+// the compiled SEF at compile time, so it must be rewritten to point at the
+// hosted swiML instance rather than the local file path used to compile it -
+// otherwise those relative lookups are resolved against SwimDSL's own
+// deployment, where the referenced files don't exist.
+const SWIML_HOSTED_BASE_URL = "https://bartneck.github.io/swiML";
+
 /**
  * Updates the SEF JSON string by replacing the static HTTP URI with the
- * deployed base URL.
+ * hosted swiML base URL.
  *
  * @param sefString - The string content of the generated SEF JSON file.
  * @param staticHttpUri - The string in the SEF file to replace.
- * @param deployedBaseUrl - The string to replace `staticHttpUri`.
  *
  * @returns The updated SEF JSON string.
  */
-function updateSef(
-  sefString: string,
-  staticHttpUri: string,
-  deployedBaseUrl: string,
-): string {
+function updateSef(sefString: string, staticHttpUri: string): string {
   // Replace references to the XSL file with the hosted instance
   const updatedSefContent = sefString.replaceAll(
     staticHttpUri,
-    deployedBaseUrl,
+    SWIML_HOSTED_BASE_URL,
   );
 
   const sefObject = JSON.parse(updatedSefContent) as SefObject;
@@ -96,14 +99,15 @@ async function downloadXsl(
 
 /**
  * Generate a SEF JSON file from the latest version of the swiML XSL transformation.
- *
- * @param deployedBaseUrl - The base URL at which the app will be deployed.
  */
-async function generateSef(deployedBaseUrl: string): Promise<void> {
+async function generateSef(): Promise<void> {
   const xslFileName = path.basename(MASTER_XSL_URL);
   const xslFilePath = path.join(STATIC_HTTP_DIR, xslFileName);
   const sefFilePath = path.join(STATIC_HTTP_DIR, SEF_FILE_NAME);
-  const staticHttpUri = `file://${path.resolve(STATIC_HTTP_DIR)}`;
+  // Saxon bakes the compiled stylesheet's absolute file-system path into the
+  // SEF verbatim (with "\" left unconverted on Windows), so match that
+  // exactly rather than producing a spec-compliant file:// URI.
+  const staticHttpUri = `file://${path.resolve(STATIC_HTTP_DIR).replace(/\\/g, "/")}`;
 
   // Download the latest version of the swiML XSL transformation schema
   if (!fs.existsSync(xslFilePath)) {
@@ -119,11 +123,7 @@ async function generateSef(deployedBaseUrl: string): Promise<void> {
   ]);
 
   const sefContent = fs.readFileSync(sefFilePath, "utf8");
-  const updatedSefContent = updateSef(
-    sefContent,
-    staticHttpUri,
-    deployedBaseUrl,
-  );
+  const updatedSefContent = updateSef(sefContent, staticHttpUri);
 
   fs.writeFileSync(sefFilePath, updatedSefContent);
 }
