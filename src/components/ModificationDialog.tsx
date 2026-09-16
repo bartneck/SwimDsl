@@ -6,6 +6,7 @@ import Dialog from "@mui/material/Dialog";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import FormLabel from "@mui/material/FormLabel";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import Stack from "@mui/material/Stack";
@@ -13,6 +14,7 @@ import TextField from "@mui/material/TextField";
 
 // import {TextField} from "@mui/material";
 import {modifyProgram, ModificationParameters} from "../logic/programmeModification.ts";
+import {FitMethod} from "../logic/programmeAdjustment.ts";
 
 
 
@@ -34,6 +36,7 @@ export default function ModificationDialog(
     paces: [],
     duration: '',
     volume: '',
+    fit: 'rescale',
   })
 
   const [addPace, setAddPace] = useState('')
@@ -76,6 +79,29 @@ export default function ModificationDialog(
               >
                 <FormControlLabel value={'individual'} control={<Radio />} label="Individual"></FormControlLabel>
                 <FormControlLabel value={'group'} control={<Radio />} label="Group"></FormControlLabel>
+              </RadioGroup>
+            </FormControl>
+            <FormControl>
+              <FormLabel id="fit-method-label">Fitting the session</FormLabel>
+              <RadioGroup
+                row
+                aria-labelledby="fit-method-label"
+                name="FitMethod"
+                value={modificationParameters.fit}
+                onChange={(e) => {
+                  setModificationParameters(prev => ({ ...prev, fit: e.target.value as FitMethod }));
+                }}
+              >
+                <FormControlLabel
+                  value={'rescale'}
+                  control={<Radio />}
+                  label="Adjust the sets to fit"
+                ></FormControlLabel>
+                <FormControlLabel
+                  value={'trim'}
+                  control={<Radio />}
+                  label="Stop when the time runs out"
+                ></FormControlLabel>
               </RadioGroup>
             </FormControl>
             <Stack direction="column" spacing={2}>
