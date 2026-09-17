@@ -1,27 +1,37 @@
+import { useState } from "react";
+import React from "react";
 import AddIcon from "@mui/icons-material/Add";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import CodeIcon from "@mui/icons-material/Code";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import SaveAsIcon from "@mui/icons-material/SaveAs";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
-import React from "react";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Stack from "@mui/material/Stack";
-import Chip from "@mui/material/Chip";
-import Slider from "@mui/material/Slider";
+import {
+  AppBar,
+  Box,
+  Button,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Paper,
+  Toolbar,
+  Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  TextField,
+  InputAdornment,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+} from "@mui/material";
 
 import {
   downloadPdf,
@@ -78,6 +88,24 @@ function NavBar({
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [generateOpen, setGenerateOpen] = React.useState(false);
   const [sessionLength, setSessionLength] = React.useState<number>(3000);
+  const [phase, setPhase] = useState("base");
+  const [focus, setFocus] = useState("speed");
+  const [sessions, setSessions] = useState(10);
+  const [paceValues, setPaceValues] = useState({
+    easy: 65,
+    endurance: 72,
+    threshold: 88,
+    racePace: 95,
+    max: 100,
+  });
+  const [selectedStrokes, setSelectedStrokes] = useState([
+    "Freestyle",
+    "Backstroke",
+    "Breaststroke",
+    "Butterfly",
+  ]);
+
+  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const open = Boolean(anchorEl);
 
   function openFileMenu(event: React.MouseEvent<HTMLButtonElement>) {
@@ -93,21 +121,17 @@ function NavBar({
   }
 
   function handleGenerate() {
-    const programme = generateWeekProgramme(sessionLength);
+    const settings = {
+      phase,
+      focus,
+      sessions,
+      distance: sessionLength,
+      pace: paceValues,
+      strokes: selectedStrokes,
+      equipment: selectedEquipment,
+    };
 
-    let counter = 1;
-    let fileName = `Generated Programme ${counter}`;
-
-    while (localStorage.getItem(fileName)) {
-      counter++;
-      fileName = `Generated Programme ${counter}`;
-    }
-
-    newFile(fileName, programme);
-    setSelectedFile(fileName);
-
-    setSwimdslProgramme(programme);
-    setGenerateOpen(false);
+    console.log("Generator settings:", settings);
   }
 
   const fileMenuOptions: FileMenuItem[] = [
@@ -194,64 +218,154 @@ function NavBar({
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Build Training Week</DialogTitle>
+          <DialogTitle>Generate Programmes</DialogTitle>
 
           <DialogContent>
 
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Generates 10 base phase sessions for a full training week.
-              Choose a target training load below.
+              Choose the training requirements for your programme.
             </Typography>
 
-            {/* Session display */}
-            <Typography variant="h6" sx={{ mb: 0.5 }}>
-              {sessionLength} m
+            {/* Training Phase */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Training Phase
             </Typography>
 
-            {/* Simple training zone label */}
-            <Typography variant="body2" color="primary" sx={{ mb: 2 }}>
-              {sessionLength <= 2000 && "Technique / Recovery"}
-              {sessionLength > 2000 && sessionLength <= 3500 && "Club Base"}
-              {sessionLength > 3500 && sessionLength <= 5000 && "Aerobic / Threshold"}
-              {sessionLength > 5000 && "Performance Volume"}
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Phase</InputLabel>
+              <Select value={phase} label="Phase" onChange={(e) => setPhase(e.target.value)} >
+                <MenuItem value="base">Base</MenuItem>
+                <MenuItem value="build">Build</MenuItem>
+                <MenuItem value="peak">Peak</MenuItem>
+                <MenuItem value="recovery">Recovery</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Training Focus */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Training Focus
             </Typography>
 
-            {/* Preset quick select */}
-            <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Focus</InputLabel>
+              <Select value={focus} label="Focus" onChange={(e) => setFocus(e.target.value)} >
+                <MenuItem value="speed">Speed</MenuItem>
+                <MenuItem value="endurance">Endurance</MenuItem>
+                <MenuItem value="mixed">Mixed</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Number of Sessions */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Number of Sessions
+            </Typography>
+
+            <TextField fullWidth type="number" value={sessions} onChange={(e) => setSessions(Number(e.target.value))} inputProps={{ min: 1, max: 20 }} sx={{ mb: 3 }}/>
+
+            {/* Target Distance */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Target Distance
+            </Typography>
+
+            <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap", gap: 1 }}>
               {[1500, 2000, 3000, 4000, 5000].map((val) => (
-                <Chip
-                  key={val}
-                  label={`${val} m`}
-                  clickable
-                  color={sessionLength === val ? "primary" : "default"}
-                  onClick={() => setSessionLength(val)}
+                <Chip key={val} label={`${val} m`} clickable color={sessionLength === val ? "primary" : "default"} onClick={() => setSessionLength(val)} />
+              ))}
+            </Stack>
+
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 3 }}>
+              This is the approximate distance for each generated session
+            </Typography>
+
+            {/* Pace Definitions */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Pace Definitions
+            </Typography>
+
+            <Stack spacing={2} sx={{ mb: 3 }}>
+              {[
+                { key: "easy", label: "Easy" },
+                { key: "endurance", label: "Endurance" },
+                { key: "threshold", label: "Threshold" },
+                { key: "racePace", label: "Race Pace" },
+                { key: "max", label: "Max" }, ].map((pace) => (
+                <TextField
+                  key={pace.key}
+                  label={pace.label}
+                  type="number"
+                  value={paceValues[pace.key as keyof typeof paceValues]}
+                  onChange={(e) => setPaceValues({
+                     ...paceValues,
+                     [pace.key]: Number(e.target.value),
+                    })
+                  }
+                  InputProps={{
+                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                  }}
+                  inputProps={{ min: 0, max: 100 }}
+                  fullWidth
                 />
               ))}
             </Stack>
 
-            {/* Slider */}
-            <Slider
-              value={sessionLength}
-              onChange={(_, val) => setSessionLength(val as number)}
-              min={1000}
-              max={6000}
-              step={250}
-              marks={[
-                { value: 1000, label: "1k" },
-                { value: 2000, label: "2k" },
-                { value: 3000, label: "3k" },
-                { value: 4000, label: "4k" },
-                { value: 5000, label: "5k" },
-                { value: 6000, label: "6k" },
-              ]}
-              valueLabelDisplay="auto"
-              sx={{ mb: 2 }}
-            />
-
-            <Typography variant="caption" color="text.secondary">
-              Sessions will vary slightly (±15%) to reflect natural training load variation.
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 3 }}>
+              Enter 0% to exclude a pace from the generated programme
             </Typography>
 
+            {/* Strokes */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Strokes
+            </Typography>
+
+            <FormGroup sx={{ mb: 3 }}>
+              {["Freestyle", "Backstroke", "Breaststroke", "Butterfly"].map(
+                (stroke) => (
+                  <FormControlLabel
+                    key={stroke}
+                    control={
+                      <Checkbox
+                        checked={selectedStrokes.includes(stroke)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedStrokes([...selectedStrokes, stroke]);
+                          } else {
+                            setSelectedStrokes( selectedStrokes.filter((s) => s !== stroke) );
+                          }
+                        }}
+                      />
+                    }
+                    label={stroke}
+                  />
+                )
+              )}
+            </FormGroup>
+
+            {/* Equipment */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Equipment
+            </Typography>
+
+            <FormGroup>
+              {["Pull Buoy", "Fins", "Paddles", "Kickboard", "Snorkel"].map(
+                (equipment) => (
+                <FormControlLabel
+                  key={equipment}
+                  control={
+                    <Checkbox
+                      checked={selectedEquipment.includes(equipment)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedEquipment([ ...selectedEquipment, equipment, ]);
+                        } else {
+                          setSelectedEquipment( selectedEquipment.filter((item) => item !== equipment) );
+                        }
+                      }}
+                    />
+                  }
+                  label={equipment}
+                /> )
+              )}
+            </FormGroup>
           </DialogContent>
 
           <DialogActions>
@@ -259,7 +373,7 @@ function NavBar({
               Cancel
             </Button>
             <Button onClick={handleGenerate} variant="contained">
-              Generate Week
+              Generate Programmes
             </Button>
           </DialogActions>
         </Dialog>
