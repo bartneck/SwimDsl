@@ -31,6 +31,7 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
+  Slider,
 } from "@mui/material";
 
 import {
@@ -87,6 +88,13 @@ function NavBar({
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [generateOpen, setGenerateOpen] = React.useState(false);
+  const [startDate, setStartDate] = React.useState("");
+  const [weeks, setWeeks] = React.useState(4);
+  const [trainingDays, setTrainingDays] = useState<string[]>([
+    "monday",
+    "wednesday",
+    "friday",
+  ]);
   const [sessionLength, setSessionLength] = React.useState<number>(3000);
   const [phase, setPhase] = useState("base");
   const [focus, setFocus] = useState("speed");
@@ -98,13 +106,27 @@ function NavBar({
     racePace: 95,
     max: 100,
   });
-  const [selectedStrokes, setSelectedStrokes] = useState([
+  const strokes = [
     "Freestyle",
     "Backstroke",
     "Breaststroke",
     "Butterfly",
-  ]);
+  ] as const;
 
+  type Stroke = (typeof strokes)[number];
+
+  const [strokePercentages, setStrokePercentages] = useState<
+    Record<Stroke, number>
+  >({
+    Freestyle: 60,
+    Backstroke: 20,
+    Breaststroke: 15,
+    Butterfly: 5,
+  });
+
+  const totalStrokePercentage = Object.values(
+    strokePercentages
+  ).reduce((sum, value) => sum + value, 0);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const open = Boolean(anchorEl);
 
@@ -127,7 +149,7 @@ function NavBar({
       sessions,
       distance: sessionLength,
       pace: paceValues,
-      strokes: selectedStrokes,
+      strokes: strokePercentages,
       equipment: selectedEquipment,
     };
 
@@ -226,6 +248,81 @@ function NavBar({
               Choose the training requirements for your programme.
             </Typography>
 
+            {/* Start Date*/}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Start Date
+            </Typography>
+
+            <TextField
+              fullWidth
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 3 }}
+            />
+
+            {/* Number of Weeks */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Number of Weeks
+            </Typography>
+
+            <TextField
+              fullWidth
+              type="number"
+              value={weeks}
+              onChange={(e) => setWeeks(Number(e.target.value))}
+              inputProps={{ min: 1, max: 12 }}
+              sx={{ mb: 3 }}
+            />
+
+            {/* Training Days */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Training Days
+            </Typography>
+
+            <FormGroup sx={{ mb: 1 }}>
+              {[
+                { value: "monday", label: "Monday" },
+                { value: "tuesday", label: "Tuesday" },
+                { value: "wednesday", label: "Wednesday" },
+                { value: "thursday", label: "Thursday" },
+                { value: "friday", label: "Friday" },
+                { value: "saturday", label: "Saturday" },
+                { value: "sunday", label: "Sunday" },
+              ].map((day) => (
+                <FormControlLabel
+                  key={day.value}
+                  control={
+                    <Checkbox
+                      checked={trainingDays.includes(day.value)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setTrainingDays([...trainingDays, day.value]);
+                        } else {
+                          setTrainingDays(
+                            trainingDays.filter((d) => d !== day.value)
+                          );
+                        }
+                      }}
+                    />
+                  }
+                  label={day.label}
+                />
+              ))}
+            </FormGroup>
+
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mb: 3 }}
+            >
+              {trainingDays.length} session
+              {trainingDays.length !== 1 ? "s" : ""} per week ·{" "}
+              {trainingDays.length * weeks} total session
+              {trainingDays.length * weeks !== 1 ? "s" : ""}
+            </Typography>
+
             {/* Training Phase */}
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
               Training Phase
@@ -237,7 +334,7 @@ function NavBar({
                 <MenuItem value="base">Base</MenuItem>
                 <MenuItem value="build">Build</MenuItem>
                 <MenuItem value="peak">Peak</MenuItem>
-                <MenuItem value="recovery">Recovery</MenuItem>
+                <MenuItem value="taper">Taper</MenuItem>
               </Select>
             </FormControl>
 
@@ -255,16 +352,20 @@ function NavBar({
               </Select>
             </FormControl>
 
-            {/* Number of Sessions */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Number of Sessions
-            </Typography>
-
-            <TextField fullWidth type="number" value={sessions} onChange={(e) => setSessions(Number(e.target.value))} inputProps={{ min: 1, max: 20 }} sx={{ mb: 3 }}/>
-
             {/* Target Distance */}
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
               Target Distance
+            </Typography>
+
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "block",
+                mb: 2,
+              }}
+            >
+              This is the approximate distance for each generated session
             </Typography>
 
             <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap", gap: 1 }}>
@@ -272,10 +373,6 @@ function NavBar({
                 <Chip key={val} label={`${val} m`} clickable color={sessionLength === val ? "primary" : "default"} onClick={() => setSessionLength(val)} />
               ))}
             </Stack>
-
-            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 3 }}>
-              This is the approximate distance for each generated session
-            </Typography>
 
             {/* Pace Definitions */}
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
@@ -312,37 +409,87 @@ function NavBar({
               Enter 0% to exclude a pace from the generated programme
             </Typography>
 
-            {/* Strokes */}
+            {/* Stroke Distribution */}
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Strokes
+              Stroke Distribution
             </Typography>
 
-            <FormGroup sx={{ mb: 3 }}>
-              {["Freestyle", "Backstroke", "Breaststroke", "Butterfly"].map(
-                (stroke) => (
-                  <FormControlLabel
-                    key={stroke}
-                    control={
-                      <Checkbox
-                        checked={selectedStrokes.includes(stroke)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedStrokes([...selectedStrokes, stroke]);
-                          } else {
-                            setSelectedStrokes( selectedStrokes.filter((s) => s !== stroke) );
-                          }
-                        }}
-                      />
-                    }
-                    label={stroke}
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "block",
+                mb: 2,
+              }}
+            >
+              Set the percentage of the programme for each stroke
+            </Typography>
+
+            <Stack spacing={2} sx={{ mb: 1 }}>
+              {strokes.map((stroke) => (
+                <Stack key={stroke} spacing={0.5}>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Typography variant="body2">
+                      {stroke}
+                    </Typography>
+
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                    >
+                      {strokePercentages[stroke]}%
+                    </Typography>
+                  </Stack>
+
+                  <Slider
+                    value={strokePercentages[stroke]}
+                    onChange={(_, value) => {
+                      setStrokePercentages({
+                        ...strokePercentages,
+                        [stroke]: value as number,
+                      });
+                    }}
+                    min={0}
+                    max={100}
+                    step={5}
+                    valueLabelDisplay="auto"
                   />
-                )
-              )}
-            </FormGroup>
+                </Stack>
+              ))}
+            </Stack>
+
+            <Typography
+              variant="caption"
+              color={
+                totalStrokePercentage === 100
+                  ? "text.secondary"
+                  : "error"
+              }
+              sx={{ display: "block", mb: 3 }}
+            >
+              Total: {totalStrokePercentage}%
+              {totalStrokePercentage !== 100 &&
+                " — percentages must add up to 100%"}
+            </Typography>
 
             {/* Equipment */}
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
               Equipment
+            </Typography>
+
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "block",
+                mb: 2,
+              }}
+            >
+              Set the equipment you want to use in the programmes
             </Typography>
 
             <FormGroup>
