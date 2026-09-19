@@ -379,6 +379,17 @@ function NavBar({
               Pace Definitions
             </Typography>
 
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "block",
+                mb: 2,
+              }}
+            >
+              Enter 0% to exclude a pace from the generated programme
+            </Typography>
+
             <Stack spacing={2} sx={{ mb: 3 }}>
               {[
                 { key: "easy", label: "Easy" },
@@ -404,10 +415,6 @@ function NavBar({
                 />
               ))}
             </Stack>
-
-            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 3 }}>
-              Enter 0% to exclude a pace from the generated programme
-            </Typography>
 
             {/* Stroke Distribution */}
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
