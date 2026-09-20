@@ -8,6 +8,8 @@ export interface GeneratorSettings {
   focus: string;
   distance: number;
   baselineTime: string;
+  poolLength: number;
+  distanceUnit: "metres" | "yards";
   pace: {
     easy: number;
     endurance: number;
@@ -58,18 +60,6 @@ interface SwimGroup {
 
 type SwimItem = SwimSet | SwimGroup;
 
-interface Session {
-  label: string;
-  type: SessionType;
-  items: SwimItem[];
-  totalDistance: number;
-}
-
-const POOL_LENGTH = 25;
-
-const STROKES = ["Freestyle", "Backstroke", "Breaststroke"];
-const STROKE_WEIGHTS = [0.60, 0.25, 0.15];
-
 /**
  * Picks a random item from the list based on the provided weights.
  * @param items list of items to choose from
@@ -98,14 +88,30 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
+function getStrokeDistribution(
+  settings: GeneratorSettings
+): { strokes: string[]; weights: number[] } {
+  const entries = Object.entries(settings.strokes).filter(
+    ([, percentage]) => percentage > 0
+  );
+
+  return {
+    strokes: entries.map(([stroke]) => stroke),
+    weights: entries.map(([, percentage]) => percentage),
+  };
+}
+
 /**
  * Rounds the distance to the nearest pool length, ensuring it's at least one pool length.
  * @param distance distance in metres to round
  * @returns rounded distance that is a multiple of the pool length
  */
-function roundToPool(distance: number): number {
-  return Math.max(POOL_LENGTH, Math.round(distance / POOL_LENGTH) * POOL_LENGTH);
-}
+function roundToPool(
+    distance: number,
+    poolLength: number
+  ): number {
+    return Math.max(poolLength, Math.round(distance / poolLength) * poolLength);
+  }
 
 /**
  * Formats the duration in seconds into a MM:SS string.
@@ -157,19 +163,6 @@ function calculateAfterStop(restSeconds: number): number {
 }
 
 /**
- * Determines the number of sessions to generate based on the target session length.
- * @param sessionLength target session length in metres
- * @returns number of sessions to generate for the week
- */
-function getSessionCount(sessionLength: number): number {
-  if (sessionLength <= 2000) return 5;
-  if (sessionLength <= 3000) return 6;
-  if (sessionLength <= 4000) return 8;
-  if (sessionLength <= 5000) return 9;
-  return 10;
-}
-
-/**
  * Chooses an appropriate warm-up volume based on the total session volume, ensuring a reasonable proportion of the session is allocated to warm-up.
  * @param totalVolume total volume of the session in metres
  * @returns chosen warm-up volume in metres
@@ -192,19 +185,49 @@ function chooseCooldownVolume(totalVolume: number): number {
   return 400;
 }
 
+function getPhaseFactor(phase: string): number {
+  switch (phase) {
+    case "base":
+      return 1.0;
+
+    case "build":
+      return 1.05;
+
+    case "peak":
+      return 0.9;
+
+    case "recovery":
+      return 0.7;
+
+    default:
+      return 1.0;
+  }
+}
+
 /**
  * Resolves an intensity zone to either a specific percentage or a range of percentages based on predefined pace definitions
  * @param zone intensity zone name
  * @returns object containing either intensityPercent or intensityZone
  */
-function resolveIntensity(zone: string): Partial<Pick<SwimSet, "intensityZone" | "intensityPercent" | "intensityPercentEnd">> {
-  const ranges: Record<string, { start: number; end: number }> = {
-    descend: { start: 70, end: 90 },
+function resolveIntensity(
+  zone: string,
+  settings: GeneratorSettings
+): Partial<
+  Pick<
+    SwimSet,
+    "intensityZone" | "intensityPercent" | "intensityPercentEnd"
+  >
+> {
+  if (zone === "descend") {
+    return {
+      intensityPercent: settings.pace.easy,
+      intensityPercentEnd: settings.pace.threshold,
+    };
+  }
+
+  return {
+    intensityZone: zone,
   };
-  const range = ranges[zone];
-  return range
-    ? { intensityPercent: range.start, intensityPercentEnd: range.end }
-    : { intensityZone: zone };
 }
 
 /**
@@ -212,24 +235,35 @@ function resolveIntensity(zone: string): Partial<Pick<SwimSet, "intensityZone" |
  * @param count number of sessions to generate
  * @returns array of session plans with label, type, and volume factor
  */
-function buildSessionPlan(count: number): { label: string; type: SessionType; factor: number }[] {
-  const pattern: SessionType[] = [
-    "volume",
-    "threshold",
-    "mixed",
-    "speed",
-    "volume",
-    "threshold",
-    "mixed",
-    "speed",
-    "volume",
-    "mixed",
-  ];
+function buildSessionPlan(
+  count: number,
+  focus: string,
+  phase: string
+): {
+  label: string;
+  type: SessionType;
+  factor: number;
+}[] {
+  let pattern: SessionType[];
+  const phaseFactor = getPhaseFactor(phase);
+
+  if (focus === "speed") {
+    pattern = ["speed", "speed", "mixed"];
+  } else if (focus === "endurance") {
+    pattern = ["volume", "volume", "threshold"];
+  } else {
+    pattern = [
+      "volume",
+      "threshold",
+      "mixed",
+      "speed",
+    ];
+  }
 
   return Array.from({ length: count }, (_, i) => ({
-    label:  `Session ${i + 1}`,
-    type:   pattern[i % pattern.length]!,
-    factor: 0.95 + Math.random() * 0.1,
+    label: `Session ${i + 1}`,
+    type: pattern[i % pattern.length]!,
+    factor: phaseFactor * (0.95 + Math.random() * 0.1),
   }));
 }
 
@@ -278,11 +312,16 @@ function makeTimedSet(durationSeconds: number, stroke: string, opts: Partial<Omi
  * @param opts optional parameters for intensity and equipment
  * @returns a SwimSet object representing a set of laps
  */
-function makeLapSet(laps: number, stroke: string, opts: Partial<Omit<SwimSet, "kind" | "repetitions" | "distance" | "stroke" | "laps">> = {}): SwimSet {
+function makeLapSet(
+  laps: number,
+  poolLength: number,
+  stroke: string,
+  opts: Partial<Omit<SwimSet, "kind" | "repetitions" | "distance" | "stroke" | "laps">> = {}
+): SwimSet {
   return {
     kind: "set",
     repetitions: 1,
-    distance: laps * POOL_LENGTH,
+    distance: laps * poolLength,
     laps,
     stroke,
     sendoffSeconds: 0,
@@ -308,7 +347,10 @@ function makeGroup(items: SwimItem[], opts: Partial<Omit<SwimGroup, "kind" | "it
  * @param warmupVolume total warm-up volume in metres
  * @returns array of SwimSet objects representing the warm-up sets
  */
-function generateWarmup(warmupVolume: number): SwimItem[] {
+function generateWarmup(
+  warmupVolume: number,
+  settings: GeneratorSettings
+) {
   const template = pickRandom(["standard", "stroke-focus", "progressive", "build-kick"] as const);
   const sets: SwimItem[] = [];
 
@@ -338,7 +380,7 @@ function generateWarmup(warmupVolume: number): SwimItem[] {
   } else if (template === "stroke-focus") {
     // IM-style rotation through strokes
     const strokeOrder = ["Freestyle", "Backstroke", "Breaststroke"];
-    const distPer = roundToPool(warmupVolume / 3);
+    const distPer = roundToPool(warmupVolume / 3, settings.poolLength);
     for (const stroke of strokeOrder) {
       sets.push(makeSet(1, distPer, stroke, { intensityZone: "easy", sendoffSeconds: 0 }));
     }
@@ -346,7 +388,7 @@ function generateWarmup(warmupVolume: number): SwimItem[] {
   } else if (template === "progressive") {
     // Single continuous build swim filling full warmup volume
     sets.push(makeSet(1, warmupVolume, "Freestyle", {
-      ...resolveIntensity("descend"),
+      ...resolveIntensity("descend", settings),
       sendoffSeconds: 0,
       description: "build from easy to aerobic",
     }));
@@ -358,7 +400,7 @@ function generateWarmup(warmupVolume: number): SwimItem[] {
     const kickReps = warmupVolume >= 400 ? 4 : 2;
     sets.push(makeSet(kickReps, 50, "Freestyle", {
       strokeModifier: "Kick",
-      ...resolveIntensity("descend"),
+      ...resolveIntensity("descend", settings),
       sendoffSeconds: calculateSendoff(50, 0.6),
       equipment: ["Board"],
     }));
@@ -380,27 +422,35 @@ function generateWarmup(warmupVolume: number): SwimItem[] {
  * @param volume total pull volume in metres
  * @returns array of SwimSet objects representing the pull sets
  */
-function generatePullSet(volume: number): SwimItem[] {
+function generatePullSet(
+  volume: number,
+  settings: GeneratorSettings
+): SwimItem[] {
+  const availableEquipment = settings.equipment;
   const distOptions = [100, 150, 200, 300];
   const setDist = pickRandom(distOptions.filter(d => volume / d >= 3) as number[]) ?? 100;
   const reps = Math.max(3, Math.round(volume / setDist));
 
-  const equipVariants: string[][] = [
-    ["PullBuoy"],
-    ["PullBuoy", "Pads"],
-    ["PullBuoy", "Snorkel"],
-  ];
-
-  const equipment = pickRandom(equipVariants);
+  const equipment =
+  availableEquipment.length > 0
+    ? [pickRandom(availableEquipment)]
+    : [];
   const hasSnorkel = equipment.includes("Snorkel");
 
-  return [makeSet(reps, setDist, "Freestyle", {
+  return [
+  makeSet(reps, setDist, "Freestyle", {
     intensityZone: "endurance",
     restKind: "on",
-    sendoffSeconds: calculateSendoff(setDist, 0.25),
+    sendoffSeconds: calculateSendoff(
+      setDist,
+      0.25
+    ),
     equipment,
-    ...(!hasSnorkel && { breatheEvery: pickRandom([3, 5]) }),
-  })];
+    ...(!hasSnorkel && {
+      breatheEvery: pickRandom([3, 5]),
+    }),
+  }),
+];
 }
 
 /**
@@ -408,12 +458,15 @@ function generatePullSet(volume: number): SwimItem[] {
  * @param mainVolume total main set volume in metres
  * @returns array of SwimSet objects representing the main sets for a volume-focused session
  */
-function generateVolumeMainSet(mainVolume: number): SwimItem[] {
+function generateVolumeMainSet(
+  mainVolume: number,
+  settings: GeneratorSettings): SwimItem[] {
   const sets: SwimItem[] = [];
+  const { strokes, weights } = getStrokeDistribution(settings);
 
   // 55% of total workout is easy aerobic swimming
   const a1Volume = Math.floor(mainVolume * 0.55);
-  const a1Stroke = pickWeighted(STROKES, STROKE_WEIGHTS);
+  const a1Stroke = pickWeighted(strokes, weights);
   const maxDist = a1Stroke === "Breaststroke" ? 200 : 500;
   const a1Dist = pickRandom([200, 300, 400, 500].filter(d => d <= maxDist && a1Volume / d >= 3) as number[]) ?? 200;// choose distance only if at least 3 reps can be done
   const a1Reps = Math.max(3, Math.round(a1Volume / a1Dist));
@@ -431,7 +484,7 @@ function generateVolumeMainSet(mainVolume: number): SwimItem[] {
   const a2Reps = Math.max(2, Math.round(a2Volume / a2Dist));
 
   sets.push(makeSet(a2Reps, a2Dist, "Freestyle", {
-    intensityPercent: 78,
+    intensityPercent: settings.pace.endurance,
     restKind: "on",
     sendoffSeconds: calculateSendoff(a2Dist, 0.30),
   }));
@@ -443,7 +496,7 @@ function generateVolumeMainSet(mainVolume: number): SwimItem[] {
   const ltSendoff = calculateSendoff(ltDist, 0.35);
 
   sets.push(makeSet(ltReps, ltDist, "Freestyle", {
-    ...resolveIntensity("descend"),
+    ...resolveIntensity("descend", settings),
     restKind: "on",
     sendoffSeconds: ltSendoff,
     description: "negative split each rep",
@@ -457,17 +510,21 @@ function generateVolumeMainSet(mainVolume: number): SwimItem[] {
  * @param mainVolume total main set volume in metres
  * @returns array of SwimSet objects representing the main sets for a threshold-focused session
  */
-function generateThresholdMainSet(mainVolume: number): SwimItem[] {
+function generateThresholdMainSet(
+  mainVolume: number,
+  settings: GeneratorSettings
+): SwimItem[] {
   const sets: SwimSet[] = [];
+  const { strokes, weights } = getStrokeDistribution(settings);
 
   // Aerobic base before threshold, 35% of total volume
   const a2Volume = Math.floor(mainVolume * 0.35);
   const a2Dist = pickRandom([100, 150, 200].filter(d => a2Volume / d >= 3) as number[]) ?? 100;
   const a2Reps = Math.max(3, Math.round(a2Volume / a2Dist));
-  const a2Stroke = pickWeighted(STROKES, STROKE_WEIGHTS);
+  const a2Stroke = pickWeighted(strokes, weights);
 
   sets.push(makeSet(a2Reps, a2Dist, a2Stroke, {
-    intensityPercent: 78,
+    intensityPercent: settings.pace.endurance,
     restKind: "on",
     sendoffSeconds: calculateSendoff(a2Dist, 0.28, a2Stroke),
   }));
@@ -476,7 +533,7 @@ function generateThresholdMainSet(mainVolume: number): SwimItem[] {
   const ltVolume = Math.floor(mainVolume * 0.45);
   const ltDist = pickRandom([100, 150, 200].filter(d => ltVolume / d >= 3) as number[]) ?? 100;
   const ltReps = Math.max(3, Math.round(ltVolume / ltDist));
-  const ltStroke = pickWeighted(["Freestyle", "Backstroke"], [0.70, 0.30]);
+  const ltStroke = pickWeighted(strokes, weights);
   const afterStop = calculateAfterStop(20);
 
   sets.push(makeSet(ltReps, ltDist, ltStroke, {
@@ -493,7 +550,7 @@ function generateThresholdMainSet(mainVolume: number): SwimItem[] {
   const a3BreatheOpts = [3, 5] as const;
 
   sets.push(makeSet(a3Reps, a3Dist, "Freestyle", {
-    intensityPercent: 78,
+    intensityPercent: settings.pace.endurance,
     restKind: "on",
     sendoffSeconds: calculateSendoff(a3Dist, 0.45),
     ...(Math.random() < 0.6 && { breatheEvery: pickRandom([...a3BreatheOpts]) }),
@@ -507,17 +564,20 @@ function generateThresholdMainSet(mainVolume: number): SwimItem[] {
  * @param mainVolume total main set volume in metres
  * @returns array of SwimSet objects representing the main sets for a speed-focused session
  */
-function generateSpeedMainSet(mainVolume: number): SwimItem[] {
+function generateSpeedMainSet(
+  mainVolume: number,
+  poolLength: number
+): SwimItem[] {
   const sets: SwimItem[] = [];
 
   // Light aerobic before sprint, 35% of total volume
   const a1Volume   = Math.floor(mainVolume * 0.35);
-  const a1Rounded  = roundToPool(a1Volume);
-  const a1LapCount = a1Rounded / POOL_LENGTH;
+  const a1Rounded  = roundToPool(a1Volume, poolLength);
+  const a1LapCount = a1Rounded / poolLength;
   const TIDY_LAPS  = new Set([2, 4, 6, 8, 10, 12]);
   // If the aerobic volume can be neatly expressed as a whole number of laps, do that for simplicity and better pacing. Otherwise, do a distance-based set.
   if (TIDY_LAPS.has(a1LapCount)) {
-    sets.push(makeLapSet(a1LapCount, "Freestyle", {
+    sets.push(makeLapSet(a1LapCount, poolLength, "Freestyle", {
       intensityZone: "endurance",
       sendoffSeconds: 0,
     }));
@@ -565,14 +625,17 @@ function generateSpeedMainSet(mainVolume: number): SwimItem[] {
  * @param mainVolume total main set volume in metres
  * @returns array of SwimItem objects representing the main sets for a mixed-focus session
  */
-function generateMixedMainSet(mainVolume: number): SwimItem[] {
+function generateMixedMainSet(
+  mainVolume: number,
+  settings: GeneratorSettings): SwimItem[] {
   const sets: SwimItem[] = [];
+  const { strokes, weights } = getStrokeDistribution(settings);
 
   // Aerobic block
   const a1Volume = Math.floor(mainVolume * 0.40);
   const a1Dist = pickRandom([150, 200, 300].filter(d => a1Volume / d >= 3) as number[]) ?? 200;
   const a1Reps = Math.max(3, Math.round(a1Volume / a1Dist));
-  const a1Stroke = pickWeighted(STROKES, STROKE_WEIGHTS);
+  const a1Stroke = pickWeighted(strokes, weights);
   const a1RestRatio = a1Stroke === "Breaststroke" ? 0.50 : 0.28;
 
   sets.push(makeSet(a1Reps, a1Dist, a1Stroke, {
@@ -609,7 +672,10 @@ function generateMixedMainSet(mainVolume: number): SwimItem[] {
   return sets;
 }
 
-function generateCooldown(cooldownVolume: number): SwimItem[] {
+function generateCooldown(
+  cooldownVolume: number,
+  poolLength: number
+): SwimItem[] {
   const useTimed = Math.random() < 0.25;
   const stroke = Math.random() < 0.4 ? "Backstroke" : "Freestyle";
 
@@ -621,7 +687,7 @@ function generateCooldown(cooldownVolume: number): SwimItem[] {
     })];
   }
 
-  return [makeSet(1, roundToPool(cooldownVolume), stroke, {
+  return [makeSet(1, roundToPool(cooldownVolume, poolLength), stroke, {
     intensityZone: "easy",
     sendoffSeconds: 0,
   })];
@@ -736,21 +802,6 @@ function itemToSwimDsl(item: SwimItem, depth = 0): string {
   return lines.join("\n");
 }
 
-/**
- * Recursively calculates the total volume of a SwimItem
- * @param item SwimItem object to calculate volume for
- * @returns total volume in metres represented by the SwimItem
- */
-function itemVolume(item: SwimItem): number {
-  if (item.kind === "set") {
-    if (item.durationSeconds != null) return 0;
-
-    return item.repetitions * item.distance;
-  }
-  const reps = item.repetitions ?? 1;
-  return reps * item.items.reduce((sum, child) => sum + itemVolume(child), 0);
-}
-
 function getTrainingDates(
   startDate: string,
   weeks: number,
@@ -808,6 +859,8 @@ export function generateWeekProgramme(
     focus,
     distance,
     baselineTime,
+    poolLength,
+    distanceUnit,
     pace,
     strokes,
     equipment,
@@ -819,11 +872,9 @@ export function generateWeekProgramme(
     trainingDays
   );
 
-  const sessionPlan = buildSessionPlan(trainingDates.length);
+  const sessionPlan = buildSessionPlan(trainingDates.length, focus, phase);
 
   const programmes: string[] = [];
-
-  const sessionCount = trainingDays.length * weeks; // number of sessions to generate based on user input of session length
 
   for (let i = 0; i < sessionPlan.length; i++) {
     const plan = sessionPlan[i];
@@ -834,11 +885,12 @@ export function generateWeekProgramme(
     const sessionDate = trainingDates[i];
 
     const totalVolume = roundToPool(
-      distance * plan.factor
+      distance * plan.factor,
+      poolLength
     );
 
     const warmupVolume = chooseWarmupVolume(totalVolume);
-    const pullVolume = roundToPool(totalVolume * 0.12);
+    const pullVolume = roundToPool(totalVolume * 0.12, poolLength);
     const cooldownVolume = chooseCooldownVolume(totalVolume);
     const mainVolume =
       totalVolume -
@@ -848,28 +900,23 @@ export function generateWeekProgramme(
 
     const mainItems: SwimItem[] =
       plan.type === "volume"
-        ? generateVolumeMainSet(mainVolume)
+        ? generateVolumeMainSet(mainVolume, settings)
         : plan.type === "threshold"
-        ? generateThresholdMainSet(mainVolume)
+        ? generateThresholdMainSet(mainVolume, settings)
         : plan.type === "speed"
-        ? generateSpeedMainSet(mainVolume)
-        : generateMixedMainSet(mainVolume);
+        ? generateSpeedMainSet(mainVolume, poolLength)
+        : generateMixedMainSet(mainVolume, settings);
 
     const allItems: SwimItem[] = [
-      ...generateWarmup(warmupVolume),
-      ...generatePullSet(pullVolume),
+      ...generateWarmup(warmupVolume, settings),
+      ...generatePullSet(pullVolume, settings),
       ...mainItems,
-      ...generateCooldown(cooldownVolume),
+      ...generateCooldown(cooldownVolume, poolLength),
     ];
 
-    const actualTotal = allItems.reduce(
-      (sum, item) => sum + itemVolume(item),
-      0
-    );
-
     const lines: string[] = [
-      `set PoolLength ${POOL_LENGTH}`,
-      `set LengthUnit "metres"`,
+      `set PoolLength ${poolLength}`,
+      `set LengthUnit "${distanceUnit}"`,
       `set Title "Generated ${phase} Session"`,
       `set Date "${sessionDate}"`,
       `set Description "Generated ${phase} session. Target session length: ${distance}m"`,
@@ -881,10 +928,6 @@ export function generateWeekProgramme(
       `pace max = ${pace.max}%`,
       "",
     ];
-
-    lines.push(
-      `> ${plan.label} — ${plan.type} (${actualTotal}m)`
-    );
 
     for (const item of allItems) {
       lines.push(itemToSwimDsl(item));

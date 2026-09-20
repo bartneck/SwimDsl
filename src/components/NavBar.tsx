@@ -91,8 +91,10 @@ function NavBar({
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [generateOpen, setGenerateOpen] = React.useState(false);
+  const [poolLength, setPoolLength] = useState(25);
+  const [distanceUnit, setDistanceUnit] =
+    useState<"metres" | "yards">("metres");
   const today = new Date();
-
   const localToday =
     today.getFullYear() +
     "-" +
@@ -165,6 +167,8 @@ function NavBar({
       focus,
       distance: sessionLength,
       baselineTime,
+      poolLength,
+      distanceUnit,
       pace: paceValues,
       strokes: strokePercentages,
       equipment: selectedEquipment,
@@ -287,6 +291,25 @@ function NavBar({
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               Choose the training requirements for your programme.
             </Typography>
+
+            {/* Pool Size */}
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Pool Size</InputLabel>
+              <Select
+                value={`${poolLength}-${distanceUnit}`}
+                label="Pool Size"
+                onChange={(e) => {
+                  const [length, unit] = e.target.value.split("-");
+
+                  setPoolLength(Number(length));
+                  setDistanceUnit(unit as "metres" | "yards");
+                }}
+              >
+                <MenuItem value="25-metres">25 metres</MenuItem>
+                <MenuItem value="50-metres">50 metres</MenuItem>
+                <MenuItem value="50-yards">50 yards</MenuItem>
+              </Select>
+            </FormControl>
 
             {/* Start Date*/}
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
