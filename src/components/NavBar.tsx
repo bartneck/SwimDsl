@@ -88,7 +88,7 @@ function NavBar({
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [generateOpen, setGenerateOpen] = React.useState(false);
-  const [startDate, setStartDate] = React.useState("");
+  const [startDate, setStartDate] = React.useState(new Date().toISOString().split("T")[0]);
   const [weeks, setWeeks] = React.useState(4);
   const [trainingDays, setTrainingDays] = useState<string[]>([
     "monday",
@@ -98,7 +98,7 @@ function NavBar({
   const [sessionLength, setSessionLength] = React.useState<number>(3000);
   const [phase, setPhase] = useState("base");
   const [focus, setFocus] = useState("speed");
-  const [sessions, setSessions] = useState(10);
+  const [baselineTime, setBaselineTime] = useState("1:30");
   const [paceValues, setPaceValues] = useState({
     easy: 65,
     endurance: 72,
@@ -144,10 +144,13 @@ function NavBar({
 
   function handleGenerate() {
     const settings = {
+      startDate,
+      weeks,
+      trainingDays,
       phase,
       focus,
-      sessions,
       distance: sessionLength,
+      baselineTime,
       pace: paceValues,
       strokes: strokePercentages,
       equipment: selectedEquipment,
@@ -373,6 +376,30 @@ function NavBar({
                 <Chip key={val} label={`${val} m`} clickable color={sessionLength === val ? "primary" : "default"} onClick={() => setSessionLength(val)} />
               ))}
             </Stack>
+
+            {/* Starting Performance */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Starting Performance
+            </Typography>
+
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "block",
+                mb: 2,
+              }}
+            >
+              Enter your approximate current time for 100m Freestyle (mm:ss)
+            </Typography>
+
+            <TextField
+              fullWidth
+              label="Current 100m Freestyle Time"
+              value={baselineTime}
+              onChange={(e) => setBaselineTime(e.target.value)}
+              sx={{ mb: 3 }}
+            />
 
             {/* Pace Definitions */}
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
