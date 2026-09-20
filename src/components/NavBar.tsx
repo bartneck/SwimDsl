@@ -42,7 +42,10 @@ import {
   uploadFile,
 } from "../logic/fileIo";
 
-import { generateWeekProgramme } from "../logic/sessionGenerator";
+import {
+  generateWeekProgramme,
+  GeneratorSettings,
+} from "../logic/sessionGenerator";
 
 import { newFile } from "../logic/filePersistence";
 
@@ -88,7 +91,18 @@ function NavBar({
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [generateOpen, setGenerateOpen] = React.useState(false);
-  const [startDate, setStartDate] = React.useState(new Date().toISOString().split("T")[0]);
+  const today = new Date();
+
+  const localToday =
+    today.getFullYear() +
+    "-" +
+    String(today.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(today.getDate()).padStart(2, "0");
+
+  const [startDate, setStartDate] = useState<string>(
+    localToday
+  );
   const [weeks, setWeeks] = React.useState(4);
   const [trainingDays, setTrainingDays] = useState<string[]>([
     "monday",
@@ -143,7 +157,7 @@ function NavBar({
   }
 
   function handleGenerate() {
-    const settings = {
+    const settings: GeneratorSettings = {
       startDate,
       weeks,
       trainingDays,
@@ -156,7 +170,30 @@ function NavBar({
       equipment: selectedEquipment,
     };
 
-    console.log("Generator settings:", settings);
+    const programmes = generateWeekProgramme(settings);
+
+    console.log("Generated programmes:", programmes);
+
+    programmes.forEach((programme, index) => {
+      let counter = 1;
+      let fileName = `Generated Programme ${counter}`;
+
+      while (localStorage.getItem(fileName)) {
+        counter++;
+        fileName = `Generated Programme ${counter}`;
+      }
+
+      console.log(`Creating ${fileName}`);
+
+      newFile(fileName, programme);
+
+      if (index === 0) {
+        setSelectedFile(fileName);
+        setSwimdslProgramme(programme);
+      }
+    });
+
+    setGenerateOpen(false);
   }
 
   const fileMenuOptions: FileMenuItem[] = [

@@ -1,5 +1,28 @@
 type SessionType = "volume" | "threshold" | "speed" | "mixed";
 
+export interface GeneratorSettings {
+  startDate: string;
+  weeks: number;
+  trainingDays: string[];
+  phase: string;
+  focus: string;
+  distance: number;
+  baselineTime: string;
+  pace: {
+    easy: number;
+    endurance: number;
+    threshold: number;
+    racePace: number;
+    max: number;
+  };
+  strokes: {
+    Freestyle: number;
+    Backstroke: number;
+    Breaststroke: number;
+    Butterfly: number;
+  };
+  equipment: string[];
+}
 interface SwimSet {
   kind: "set";
   repetitions: number;
@@ -728,31 +751,109 @@ function itemVolume(item: SwimItem): number {
   return reps * item.items.reduce((sum, child) => sum + itemVolume(child), 0);
 }
 
+function getTrainingDates(
+  startDate: string,
+  weeks: number,
+  trainingDays: string[]
+): string[] {
+  const dates: string[] = [];
+
+  const start = new Date(`${startDate}T00:00:00`);
+
+  const dayMap: Record<string, number> = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+  };
+
+  const totalDays = weeks * 7;
+
+  for (let i = 0; i < totalDays; i++) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+
+    const dayName = Object.keys(dayMap).find(
+      (day) => dayMap[day] === date.getDay()
+    );
+
+    if (dayName && trainingDays.includes(dayName)) {
+      dates.push(
+        `${date.getFullYear()}-${String(
+          date.getMonth() + 1
+        ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+      );
+    }
+  }
+
+  return dates;
+}
+
 /**
  * Main function to generate a week of swim sessions based on a target session length in metres
  * @param sessionLengthMetres target length in metres for each session in the generated week
  * @returns string representing the generated swim sessions in SwimDSL format
  */
-export function generateWeekProgramme(sessionLengthMetres: number): string {
-  const sessions: Session[] = [];
+export function generateWeekProgramme(
+  settings: GeneratorSettings
+): string[] {
+  const {
+    startDate,
+    weeks,
+    trainingDays,
+    phase,
+    focus,
+    distance,
+    baselineTime,
+    pace,
+    strokes,
+    equipment,
+  } = settings;
 
-  const sessionCount = getSessionCount(sessionLengthMetres); // number of sessions to generate based on user input of session length
-  const sessionPlan = buildSessionPlan(sessionCount); // session plans with label, type, and factor
+  const trainingDates = getTrainingDates(
+    startDate,
+    weeks,
+    trainingDays
+  );
 
-  for (const plan of sessionPlan) {
-    const totalVolume = roundToPool(sessionLengthMetres * plan.factor);
+  const sessionPlan = buildSessionPlan(trainingDates.length);
+
+  const programmes: string[] = [];
+
+  const sessionCount = trainingDays.length * weeks; // number of sessions to generate based on user input of session length
+
+  for (let i = 0; i < sessionPlan.length; i++) {
+    const plan = sessionPlan[i];
+    if (!plan) {
+      continue;
+    }
+
+    const sessionDate = trainingDates[i];
+
+    const totalVolume = roundToPool(
+      distance * plan.factor
+    );
 
     const warmupVolume = chooseWarmupVolume(totalVolume);
     const pullVolume = roundToPool(totalVolume * 0.12);
     const cooldownVolume = chooseCooldownVolume(totalVolume);
-    const mainVolume = totalVolume - warmupVolume - pullVolume - cooldownVolume;
+    const mainVolume =
+      totalVolume -
+      warmupVolume -
+      pullVolume -
+      cooldownVolume;
 
-    // generate main set based on session type
     const mainItems: SwimItem[] =
-      plan.type === "volume" ? generateVolumeMainSet(mainVolume)
-      : plan.type === "threshold" ? generateThresholdMainSet(mainVolume)
-      : plan.type === "speed" ? generateSpeedMainSet(mainVolume)
-      : generateMixedMainSet(mainVolume);
+      plan.type === "volume"
+        ? generateVolumeMainSet(mainVolume)
+        : plan.type === "threshold"
+        ? generateThresholdMainSet(mainVolume)
+        : plan.type === "speed"
+        ? generateSpeedMainSet(mainVolume)
+        : generateMixedMainSet(mainVolume);
 
     const allItems: SwimItem[] = [
       ...generateWarmup(warmupVolume),
@@ -761,40 +862,36 @@ export function generateWeekProgramme(sessionLengthMetres: number): string {
       ...generateCooldown(cooldownVolume),
     ];
 
-    // Total volume of the session
-    const actualTotal = allItems.reduce((sum, item) => sum + itemVolume(item), 0);
+    const actualTotal = allItems.reduce(
+      (sum, item) => sum + itemVolume(item),
+      0
+    );
 
-    sessions.push({
-      label: plan.label,
-      type: plan.type,
-      items: allItems,
-      totalDistance: actualTotal,
-    });
-  }
+    const lines: string[] = [
+      `set PoolLength ${POOL_LENGTH}`,
+      `set LengthUnit "metres"`,
+      `set Title "Generated ${phase} Session"`,
+      `set Date "${sessionDate}"`,
+      `set Description "Generated ${phase} session. Target session length: ${distance}m"`,
+      "",
+      `pace easy = ${pace.easy}%`,
+      `pace endurance = ${pace.endurance}%`,
+      `pace threshold = ${pace.threshold}%`,
+      `pace racePace = ${pace.racePace}%`,
+      `pace max = ${pace.max}%`,
+      "",
+    ];
 
-  // Declare items at the top of the file
-  const lines: string[] = [
-    `set PoolLength ${POOL_LENGTH}`,
-    `set LengthUnit "metres"`,
-    `set Title "Generated Base Phase Week"`,
-    `set Description "Adaptive base phase week. Target session length: ${sessionLengthMetres}m"`,
-    "",
-    "pace easy = 65%",
-    "pace endurance = 72%",
-    "pace threshold = 88%",
-    "pace racePace = 95%",
-    "pace max = 100%",
-    "",
-  ];
+    lines.push(
+      `> ${plan.label} — ${plan.type} (${actualTotal}m)`
+    );
 
-  // Render each session with a header and its items in SwimDSL format
-  for (const session of sessions) {
-    lines.push(`> ${session.label} — ${session.type} (${session.totalDistance}m)`);
-    for (const item of session.items) {
+    for (const item of allItems) {
       lines.push(itemToSwimDsl(item));
     }
-    lines.push("");
+
+    programmes.push(lines.join("\n"));
   }
 
-  return lines.join("\n");
+  return programmes;
 }
