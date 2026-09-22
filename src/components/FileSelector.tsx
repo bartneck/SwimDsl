@@ -33,7 +33,9 @@ export default function FileSelector
 
   const [contextMenu, setContextMenu] = React.useState<ContextMenuPosition>(null);
   const [targetKey, setTargetKey] = React.useState("");
-  const allKeys = Object.keys(localStorage);
+  const allKeys = Object.keys(localStorage).sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true })
+  );
 
   const handleContextMenu = (e: React.MouseEvent, key: string) => {
     e.preventDefault();

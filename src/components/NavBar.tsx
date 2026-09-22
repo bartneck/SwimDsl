@@ -201,9 +201,6 @@ function NavBar({
     };
 
     const programmes = generateProgrammes(settings);
-
-    console.log("Generated programmes:", programmes);
-
     programmes.forEach((programme, index) => {
       let counter = 1;
       let fileName = `Generated Programme ${counter}`;
@@ -212,8 +209,6 @@ function NavBar({
         counter++;
         fileName = `Generated Programme ${counter}`;
       }
-
-      console.log(`Creating ${fileName}`);
 
       newFile(fileName, programme);
 
