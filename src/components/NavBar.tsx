@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import React from "react";
 import AddIcon from "@mui/icons-material/Add";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
@@ -43,7 +43,7 @@ import {
 } from "../logic/fileIo";
 
 import {
-  generateWeekProgramme,
+  generateProgrammes,
   GeneratorSettings,
 } from "../logic/sessionGenerator";
 
@@ -112,8 +112,8 @@ function NavBar({
     "friday",
   ]);
   const [sessionLength, setSessionLength] = React.useState<number>(3000);
-  const [phase, setPhase] = useState("base");
-  const [focus, setFocus] = useState("speed");
+  const [phase, setPhase] = useState<GeneratorSettings["phase"]>("base");
+  const [focus, setFocus] = useState<GeneratorSettings["focus"]>("speed");
   const [baselineTime, setBaselineTime] = useState("1:30");
   const [paceValues, setPaceValues] = useState({
     easy: 65,
@@ -144,6 +144,32 @@ function NavBar({
     strokePercentages
   ).reduce((sum, value) => sum + value, 0);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
+
+  const isFormValid = useMemo(() => {
+    return (
+      poolLength > 0 &&
+      !!distanceUnit &&
+      startDate.trim() !== "" &&
+      weeks > 0 &&
+      trainingDays.length > 0 &&
+      !!phase &&
+      !!focus &&
+      sessionLength > 0 &&
+      /^\d{1,2}:\d{2}$/.test(baselineTime.trim()) &&
+      totalStrokePercentage === 100
+    );
+  }, [
+    poolLength,
+    distanceUnit,
+    startDate,
+    weeks,
+    trainingDays,
+    phase,
+    focus,
+    sessionLength,
+    baselineTime,
+    totalStrokePercentage,
+  ]);
   const open = Boolean(anchorEl);
 
   function openFileMenu(event: React.MouseEvent<HTMLButtonElement>) {
@@ -174,7 +200,7 @@ function NavBar({
       equipment: selectedEquipment,
     };
 
-    const programmes = generateWeekProgramme(settings);
+    const programmes = generateProgrammes(settings);
 
     console.log("Generated programmes:", programmes);
 
@@ -613,7 +639,7 @@ function NavBar({
             <Button onClick={() => setGenerateOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleGenerate} variant="contained">
+            <Button onClick={handleGenerate} variant="contained" disabled={!isFormValid}>
               Generate Programmes
             </Button>
           </DialogActions>
