@@ -24,6 +24,7 @@ export interface GeneratorSettings {
     Butterfly: number;
   };
   equipment: string[];
+  weeklyRampPercent: number;
 }
 interface SwimSet {
   kind: "set";
@@ -143,6 +144,17 @@ function pacePer100(stroke: string, settings: GeneratorSettings): number {
   return baseline * (STROKE_PACE_RATIO[stroke] ?? 1);
 }
 
+const AEROBIC_TRANSITION_SECONDS = 160;
+const SPRINT_FADE_EXPONENT = 1.06;
+const AEROBIC_FADE_EXPONENT = 1.025;
+
+function swimTimeSeconds(distance: number, stroke: string, settings: GeneratorSettings): number {
+  const per100 = pacePer100(stroke, settings);
+  const roughSeconds = per100 * (distance / 100);
+  const exponent = roughSeconds <= AEROBIC_TRANSITION_SECONDS ? SPRINT_FADE_EXPONENT : AEROBIC_FADE_EXPONENT;
+  return per100 * Math.pow(distance / 100, exponent);
+}
+
 /**
  * Calculates a sendoff interval (swim time + rest) for a given distance and stroke.
  * @param distance distance in metres
@@ -151,7 +163,7 @@ function pacePer100(stroke: string, settings: GeneratorSettings): number {
  * @returns rest time in seconds
  */
 function calculateSendoff(distance: number, restRatio: number, settings: GeneratorSettings, stroke: string = "Freestyle"): number {
-  const swimTime = (distance / 100) * pacePer100(stroke, settings);
+  const swimTime = swimTimeSeconds(distance, stroke, settings);
   const sendoff = swimTime * (1 + restRatio);
   return Math.max(45, Math.round(sendoff / 5) * 5);
 }
@@ -267,12 +279,27 @@ function getPhaseFactor(phase: string): number {
     case "peak":
       return 0.9;
 
-    case "recovery":
+    case "taper":
       return 0.7;
 
     default:
       return 1.0;
   }
+}
+
+function getWeekProgressionFactor(
+  weekIndex: number,
+  totalWeeks: number,
+  phase: GeneratorSettings["phase"],
+  rampPercent: number
+): number {
+  if (totalWeeks <= 1) return 1;
+
+  const rampRange = Math.max(0, rampPercent) / 100;
+  let progress = weekIndex / (totalWeeks - 1); // 0 in week 1, 1 in the final week
+  if (phase === "taper") progress = 1 - progress; // taper unloads rather than builds
+
+  return 1 - rampRange / 2 + rampRange * progress;
 }
 
 /**
@@ -282,8 +309,10 @@ function getPhaseFactor(phase: string): number {
  */
 function buildSessionPlan(
   count: number,
+  totalWeeks: number,
   focus: GeneratorSettings["focus"],
-  phase: GeneratorSettings["phase"]
+  phase: GeneratorSettings["phase"],
+  rampPercent: number
 ): { type: SessionType; factor: number }[] {
   const pattern: SessionType[] =
     focus === "speed"
@@ -294,10 +323,16 @@ function buildSessionPlan(
 
   const phaseFactor = getPhaseFactor(phase);
 
-  return Array.from({ length: count }, (_, i) => ({
-    type: pattern[i % pattern.length]!,
-    factor: phaseFactor * (0.95 + Math.random() * 0.1), // small session-to-session variation
-  }));
+  const sessionsPerWeek = totalWeeks > 0 ? count / totalWeeks : count;
+
+  return Array.from({ length: count }, (_, i) => {
+    const weekIndex = sessionsPerWeek > 0 ? Math.floor(i / sessionsPerWeek) : 0;
+    const weekFactor = getWeekProgressionFactor(weekIndex, totalWeeks, phase, rampPercent);
+    return {
+      type: pattern[i % pattern.length]!,
+      factor: phaseFactor * weekFactor * (0.97 + Math.random() * 0.06),
+    };
+  });
 }
 
 // Volume budgeting
@@ -658,13 +693,13 @@ function generateMixedMainSet(
   const speedVolume = Math.floor(mainVolume * 0.25);
   const speedReps = Math.min(8, Math.max(4, Math.round(speedVolume / 50)));
   const fastStroke = pickStroke(settings, "Freestyle");
-  const recoveryStroke = strokes.find((s) => s !== fastStroke) ?? fastStroke;
+  const taperStroke = strokes.find((s) => s !== fastStroke) ?? fastStroke;
 
   sets.push(
     makeGroup(
       [
         makeSet(1, 25, fastStroke, { intensityZone: "max", restKind: "in-out", inOutCount: 2, sendoffSeconds: 0 }),
-        makeSet(1, 25, recoveryStroke, { intensityZone: "endurance", restKind: "in-out", inOutCount: 2, sendoffSeconds: 0 }),
+        makeSet(1, 25, taperStroke, { intensityZone: "endurance", restKind: "in-out", inOutCount: 2, sendoffSeconds: 0 }),
       ],
       { repetitions: speedReps, description: "fast/easy alternating" }
     )
@@ -824,7 +859,7 @@ export function generateProgrammes(
   );
 
   // Session type
-  const sessionPlan = buildSessionPlan(trainingDates.length, focus, phase);
+  const sessionPlan = buildSessionPlan(trainingDates.length, weeks, focus, phase, settings.weeklyRampPercent);
 
   const programmes: string[] = [];
 

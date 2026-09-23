@@ -144,6 +144,7 @@ function NavBar({
     strokePercentages
   ).reduce((sum, value) => sum + value, 0);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
+  const [weeklyRampPercent, setWeeklyRampPercent] = useState(16);
 
   const isFormValid = useMemo(() => {
     return (
@@ -198,6 +199,7 @@ function NavBar({
       pace: paceValues,
       strokes: strokePercentages,
       equipment: selectedEquipment,
+      weeklyRampPercent,
     };
 
     const programmes = generateProgrammes(settings);
@@ -435,6 +437,47 @@ function NavBar({
                 <MenuItem value="mixed">Mixed</MenuItem>
               </Select>
             </FormControl>
+
+            {/* Weekly Progression */}
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Weekly Progression
+            </Typography>
+
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "block",
+                mb: 2,
+              }}
+            >
+              {phase === "taper"
+                ? `Volume eases off by ${weeklyRampPercent}% from the first week to the last`
+                : `Volume ramps up by ${weeklyRampPercent}% from the first week to the last`}
+            </Typography>
+
+            <Stack spacing={0.5} sx={{ mb: 3 }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="body2">Ramp</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {weeklyRampPercent}%
+                </Typography>
+              </Stack>
+
+              <Slider
+                value={weeklyRampPercent}
+                onChange={(_, value) => setWeeklyRampPercent(value as number)}
+                min={0}
+                max={40}
+                step={2}
+                valueLabelDisplay="auto"
+                disabled={weeks <= 1}
+              />
+            </Stack>
 
             {/* Target Distance */}
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
