@@ -4,6 +4,7 @@ import { generateProgrammes, GeneratorSettings } from "../src/logic/sessionGener
 import parseProgramme from "../src/evaluation/parseProgramme.ts";
 import { evaluateVolume } from "../src/evaluation/volumeEvaluator.ts";
 import { evaluateIntensity } from "../src/evaluation/intensityEvaluator.ts";
+import { evaluateProgression, ProgressionResult } from "../src/evaluation/progressionEvaluator.ts";
 
 const NUMBER_OF_PROGRAMMES = 20
 
@@ -80,6 +81,8 @@ interface ProgrammeResult {
     };
   };
 
+  progression: ProgressionResult;
+
   source: string;
 }
 
@@ -105,6 +108,10 @@ const results: ProgrammeResult[] = [];
 
 for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
   const programmes = generateProgrammes(settings);
+  const sessionVolumes: {
+    date: string;
+    actualVolume: number;
+  }[] = [];
   let totalActualVolume = 0
   let totalEasy = 0;
   let totalEndurance = 0;
@@ -118,6 +125,20 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
     const volumeResult = evaluateVolume(programme, settings.distance);
     totalActualVolume += volumeResult.actualVolume;
 
+    const dateMatch = source.match(
+      /set Date\s+"(\d{4}-\d{2}-\d{2})"/
+    );
+    if (!dateMatch || !dateMatch[1]) {
+      throw new Error(
+        `Could not find a date in generated session:\n${source}`
+      );
+    }
+
+    sessionVolumes.push({
+      date: dateMatch[1],
+      actualVolume: volumeResult.actualVolume,
+    });
+
     const intensityResult = evaluateIntensity(programme);
 
     totalEasy += intensityResult.easy;
@@ -127,6 +148,14 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
     totalMax += intensityResult.max;
     totalUnknown += intensityResult.unknown;
   }
+
+  const progression = evaluateProgression(
+    sessionVolumes,
+    settings.startDate,
+    settings.weeklyRampPercent,
+    settings.weeks,
+    settings.phase
+  );
 
   const totalTargetVolume = settings.distance * programmes.length;
   const absoluteError = Math.abs(totalActualVolume - totalTargetVolume);
@@ -161,6 +190,8 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
       percentages: intensityPercentages,
     },
 
+    progression,
+
     source: programmes.join("\n\n"),
   })
 }
@@ -179,7 +210,7 @@ const percentageErrors = results.map(
 
 const output: EvaluationOutput = {
   experiment: {
-    name: "Baseline Volume Evaluation",
+    name: "Baseline Evaluation",
     numberOfProgrammes: NUMBER_OF_PROGRAMMES,
     settings,
   },

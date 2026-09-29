@@ -287,7 +287,7 @@ function getPhaseFactor(phase: string): number {
   }
 }
 
-function getWeekProgressionFactor(
+export function getWeekProgressionFactor(
   weekIndex: number,
   totalWeeks: number,
   phase: GeneratorSettings["phase"],
