@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { generateProgrammes, GeneratorSettings } from "../logic/sessionGenerator";
 import parseProgramme from "./parseProgramme";
-import { evaluateVolume } from "./programmeEvaluator";
+import { evaluateVolume } from "./volumeEvaluator";
 
 const NUMBER_OF_PROGRAMMES = 20
 
