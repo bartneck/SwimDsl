@@ -6,6 +6,31 @@ import { evaluateVolume } from "../src/evaluation/volumeEvaluator.ts";
 import { evaluateIntensity } from "../src/evaluation/intensityEvaluator.ts";
 import { evaluateProgression, ProgressionResult } from "../src/evaluation/progressionEvaluator.ts";
 import { evaluateVariation, extractSessionVariation, evaluateBetweenProgrammeVariation, type SessionVariation, type VariationResult, type BetweenProgrammeVariation, } from "../src/evaluation/variationEvaluator";
+import { evaluateResponsiveness, type ResponsivenessCase, type ResponsivenessResult } from "../src/evaluation/responsivenessEvaluator.ts";
+
+function getProgrammeMetrics(
+  settings: GeneratorSettings
+) {
+  const programmes = generateProgrammes(settings);
+
+  let totalVolume = 0;
+
+  for (const source of programmes) {
+    const programme = parseProgramme(source);
+
+    const volumeResult = evaluateVolume(
+      programme,
+      settings.distance
+    );
+
+    totalVolume += volumeResult.actualVolume;
+  }
+
+  return {
+    sessionCount: programmes.length,
+    totalVolume,
+  };
+}
 
 const NUMBER_OF_PROGRAMMES = 20
 
@@ -104,6 +129,7 @@ interface EvaluationOutput {
     minimumActualVolume: number;
     maximumActualVolume: number;
     betweenProgrammeVariation: BetweenProgrammeVariation;
+    responsiveness: ResponsivenessResult;
   };
 }
 
@@ -216,6 +242,96 @@ const betweenProgrammeVariation =
     allProgrammeVariations
   );
 
+const baselineMetrics = getProgrammeMetrics(settings);
+const responsivenessCases: ResponsivenessCase[] = [];
+const distanceSettings: GeneratorSettings = {
+  ...settings,
+  distance: 4000,
+};
+const distanceMetrics = getProgrammeMetrics(distanceSettings);
+
+responsivenessCases.push({
+  name: "Distance",
+  changedSetting: "distance",
+  baselineValue: settings.distance,
+  modifiedValue: distanceSettings.distance,
+  baselineMetric: baselineMetrics.totalVolume,
+  modifiedMetric: distanceMetrics.totalVolume,
+  direction: "increase",
+  responded:
+    distanceMetrics.totalVolume >
+    baselineMetrics.totalVolume,
+});
+
+// Training days: 5 -> 3
+const trainingDaysSettings: GeneratorSettings = {
+  ...settings,
+  trainingDays: [
+    "monday",
+    "wednesday",
+    "friday",
+  ],
+};
+
+const trainingDaysMetrics = getProgrammeMetrics(trainingDaysSettings);
+
+responsivenessCases.push({
+  name: "Training days",
+  changedSetting: "trainingDays",
+  baselineValue: settings.trainingDays.length,
+  modifiedValue: trainingDaysSettings.trainingDays.length,
+  baselineMetric: baselineMetrics.sessionCount,
+  modifiedMetric: trainingDaysMetrics.sessionCount,
+  direction: "decrease",
+  responded:
+    trainingDaysMetrics.sessionCount <
+    baselineMetrics.sessionCount,
+});
+
+// Phase: base -> taper
+const taperSettings: GeneratorSettings = {
+  ...settings,
+  phase: "taper",
+};
+
+const taperMetrics = getProgrammeMetrics(taperSettings);
+
+responsivenessCases.push({
+  name: "Training phase",
+  changedSetting: "phase",
+  baselineValue: settings.phase,
+  modifiedValue: taperSettings.phase,
+  baselineMetric: baselineMetrics.totalVolume,
+  modifiedMetric: taperMetrics.totalVolume,
+  direction: "decrease",
+  responded:
+    taperMetrics.totalVolume <
+    baselineMetrics.totalVolume,
+});
+
+// Programme duration: 4 -> 6 weeks
+const weeksSettings: GeneratorSettings = {
+  ...settings,
+  weeks: 6,
+};
+
+const weeksMetrics = getProgrammeMetrics(weeksSettings);
+
+responsivenessCases.push({
+  name: "Programme duration",
+  changedSetting: "weeks",
+  baselineValue: settings.weeks,
+  modifiedValue: weeksSettings.weeks,
+  baselineMetric: baselineMetrics.sessionCount,
+  modifiedMetric: weeksMetrics.sessionCount,
+  direction: "increase",
+  responded:
+    weeksMetrics.sessionCount >
+    baselineMetrics.sessionCount,
+});
+
+const responsiveness = evaluateResponsiveness(responsivenessCases);
+
 const actualVolumes = results.map(
   (result) => result.actualVolume
 );
@@ -260,6 +376,7 @@ const output: EvaluationOutput = {
 
     maximumActualVolume: Math.max(...actualVolumes),
     betweenProgrammeVariation,
+    responsiveness,
   },
 };
 
