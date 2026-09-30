@@ -5,6 +5,7 @@ import parseProgramme from "../src/evaluation/parseProgramme.ts";
 import { evaluateVolume } from "../src/evaluation/volumeEvaluator.ts";
 import { evaluateIntensity } from "../src/evaluation/intensityEvaluator.ts";
 import { evaluateProgression, ProgressionResult } from "../src/evaluation/progressionEvaluator.ts";
+import { evaluateVariation, extractSessionVariation, evaluateBetweenProgrammeVariation, type SessionVariation, type VariationResult, type BetweenProgrammeVariation, } from "../src/evaluation/variationEvaluator";
 
 const NUMBER_OF_PROGRAMMES = 20
 
@@ -82,6 +83,7 @@ interface ProgrammeResult {
   };
 
   progression: ProgressionResult;
+  variation: VariationResult;
 
   source: string;
 }
@@ -101,10 +103,12 @@ interface EvaluationOutput {
     meanPercentageError: number;
     minimumActualVolume: number;
     maximumActualVolume: number;
+    betweenProgrammeVariation: BetweenProgrammeVariation;
   };
 }
 
 const results: ProgrammeResult[] = [];
+const allProgrammeVariations: SessionVariation[][] = [];
 
 for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
   const programmes = generateProgrammes(settings);
@@ -112,6 +116,7 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
     date: string;
     actualVolume: number;
   }[] = [];
+  const sessionVariations: SessionVariation[] = [];
   let totalActualVolume = 0
   let totalEasy = 0;
   let totalEndurance = 0;
@@ -139,6 +144,10 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
       actualVolume: volumeResult.actualVolume,
     });
 
+    sessionVariations.push(
+      extractSessionVariation(source, dateMatch[1])
+    );
+
     const intensityResult = evaluateIntensity(programme);
 
     totalEasy += intensityResult.easy;
@@ -149,6 +158,8 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
     totalUnknown += intensityResult.unknown;
   }
 
+  allProgrammeVariations.push(sessionVariations);
+
   const progression = evaluateProgression(
     sessionVolumes,
     settings.startDate,
@@ -156,6 +167,8 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
     settings.weeks,
     settings.phase
   );
+
+  const variation = evaluateVariation(sessionVariations);
 
   const totalTargetVolume = settings.distance * programmes.length;
   const absoluteError = Math.abs(totalActualVolume - totalTargetVolume);
@@ -191,10 +204,17 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
     },
 
     progression,
+    variation,
+
 
     source: programmes.join("\n\n"),
   })
 }
+
+const betweenProgrammeVariation =
+  evaluateBetweenProgrammeVariation(
+    allProgrammeVariations
+  );
 
 const actualVolumes = results.map(
   (result) => result.actualVolume
@@ -239,6 +259,7 @@ const output: EvaluationOutput = {
     minimumActualVolume: Math.min(...actualVolumes),
 
     maximumActualVolume: Math.max(...actualVolumes),
+    betweenProgrammeVariation,
   },
 };
 
