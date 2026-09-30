@@ -7,6 +7,7 @@ import { evaluateIntensity } from "../src/evaluation/intensityEvaluator.ts";
 import { evaluateProgression, ProgressionResult } from "../src/evaluation/progressionEvaluator.ts";
 import { evaluateVariation, extractSessionVariation, evaluateBetweenProgrammeVariation, type SessionVariation, type VariationResult, type BetweenProgrammeVariation, } from "../src/evaluation/variationEvaluator";
 import { evaluateResponsiveness, type ResponsivenessCase, type ResponsivenessResult } from "../src/evaluation/responsivenessEvaluator.ts";
+import { evaluatePeriodisation, getExpectedPhaseFactor, type TrainingPhase, type PhaseMetrics, type PeriodisationResult } from "../src/evaluation/periodisationEvaluator.ts";
 
 function getProgrammeMetrics(
   settings: GeneratorSettings
@@ -130,6 +131,7 @@ interface EvaluationOutput {
     maximumActualVolume: number;
     betweenProgrammeVariation: BetweenProgrammeVariation;
     responsiveness: ResponsivenessResult;
+    periodisation: PeriodisationResult;
   };
 }
 
@@ -332,6 +334,63 @@ responsivenessCases.push({
 
 const responsiveness = evaluateResponsiveness(responsivenessCases);
 
+const phases: TrainingPhase[] = [
+  "base",
+  "build",
+  "peak",
+  "taper",
+];
+
+const phaseMetrics: PhaseMetrics[] = [];
+
+const PERIODISATION_REPEATS = 20;
+
+for (const phase of phases) {
+  let totalVolume = 0;
+  let totalSessions = 0;
+
+  for (let i = 0; i < PERIODISATION_REPEATS; i++) {
+    const phaseSettings: GeneratorSettings = {
+      ...settings,
+      phase,
+    };
+
+    const metrics = getProgrammeMetrics(phaseSettings);
+
+    totalVolume += metrics.totalVolume;
+    totalSessions += metrics.sessionCount;
+  }
+
+  const averageSessionVolume =
+  totalSessions === 0 ? 0 : totalVolume / totalSessions;
+
+  phaseMetrics.push({
+    phase,
+    phaseFactor: getExpectedPhaseFactor(phase),
+    totalProgrammes: PERIODISATION_REPEATS,
+    totalSessions,
+    totalVolume,
+    averageSessionVolume,
+    reductionFromBase: 0
+  });
+}
+
+const basePhase = phaseMetrics.find(
+  (phase) => phase.phase === "base"
+);
+
+if (basePhase && basePhase.averageSessionVolume > 0) {
+  for (const phase of phaseMetrics) {
+    phase.reductionFromBase =
+      ((basePhase.averageSessionVolume -
+        phase.averageSessionVolume) /
+        basePhase.averageSessionVolume) *
+      100;
+  }
+}
+
+const periodisation = evaluatePeriodisation(phaseMetrics);
+
 const actualVolumes = results.map(
   (result) => result.actualVolume
 );
@@ -377,6 +436,7 @@ const output: EvaluationOutput = {
     maximumActualVolume: Math.max(...actualVolumes),
     betweenProgrammeVariation,
     responsiveness,
+    periodisation,
   },
 };
 

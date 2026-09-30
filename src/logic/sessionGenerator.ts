@@ -274,13 +274,13 @@ function getPhaseFactor(phase: string): number {
       return 1.0;
 
     case "build":
-      return 1.05;
-
-    case "peak":
       return 0.9;
 
+    case "peak":
+      return 0.5;
+
     case "taper":
-      return 0.7;
+      return 0.3;
 
     default:
       return 1.0;
