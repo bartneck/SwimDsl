@@ -8,6 +8,9 @@ import { evaluateProgression, ProgressionResult } from "../src/evaluation/progre
 import { evaluateVariation, extractSessionVariation, evaluateBetweenProgrammeVariation, type SessionVariation, type VariationResult, type BetweenProgrammeVariation, } from "../src/evaluation/variationEvaluator";
 import { evaluateResponsiveness, type ResponsivenessCase, type ResponsivenessResult } from "../src/evaluation/responsivenessEvaluator.ts";
 import { evaluatePeriodisation, getExpectedPhaseFactor, type TrainingPhase, type PhaseMetrics, type PeriodisationResult } from "../src/evaluation/periodisationEvaluator.ts";
+import { evaluateSessionLoad, evaluateLoad, type SessionLoad, type LoadResult, } from "../src/evaluation/loadEvaluator.ts";
+
+type SessionType = "volume" | "threshold" | "speed" | "mixed";
 
 function getProgrammeMetrics(
   settings: GeneratorSettings
@@ -15,6 +18,13 @@ function getProgrammeMetrics(
   const programmes = generateProgrammes(settings);
 
   let totalVolume = 0;
+
+  const sessionTypeCounts: Record<SessionType, number> = {
+    volume: 0,
+    threshold: 0,
+    speed: 0,
+    mixed: 0,
+  };
 
   for (const source of programmes) {
     const programme = parseProgramme(source);
@@ -25,11 +35,21 @@ function getProgrammeMetrics(
     );
 
     totalVolume += volumeResult.actualVolume;
+
+    const typeMatch = source.match(
+      /set Title "Generated \w+ (volume|threshold|speed|mixed) Session"/
+    );
+
+    if (typeMatch) {
+      const sessionType = typeMatch[1] as SessionType;
+      sessionTypeCounts[sessionType]++;
+    }
   }
 
   return {
     sessionCount: programmes.length,
     totalVolume,
+    sessionTypeCounts,
   };
 }
 
@@ -110,6 +130,7 @@ interface ProgrammeResult {
 
   progression: ProgressionResult;
   variation: VariationResult;
+  load: LoadResult;
 
   source: string;
 }
@@ -140,6 +161,7 @@ const allProgrammeVariations: SessionVariation[][] = [];
 
 for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
   const programmes = generateProgrammes(settings);
+const sessionLoads: SessionLoad[] = [];
   const sessionVolumes: {
     date: string;
     actualVolume: number;
@@ -166,6 +188,14 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
         `Could not find a date in generated session:\n${source}`
       );
     }
+
+    const sessionLoad = evaluateSessionLoad(
+      programme,
+      volumeResult.actualVolume,
+      dateMatch[1]
+    );
+
+    sessionLoads.push(sessionLoad);
 
     sessionVolumes.push({
       date: dateMatch[1],
@@ -213,6 +243,11 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
     unknown: intensityTotal === 0 ? 0 : (totalUnknown / intensityTotal) * 100,
   };
 
+  const load = evaluateLoad(
+    sessionLoads,
+    settings.startDate
+  );
+
   results.push({
     programmeId: i + 1,
     targetVolume: totalTargetVolume,
@@ -233,7 +268,7 @@ for (let i = 0; i < NUMBER_OF_PROGRAMMES; i++) {
 
     progression,
     variation,
-
+    load,
 
     source: programmes.join("\n\n"),
   })
@@ -330,6 +365,27 @@ responsivenessCases.push({
   responded:
     weeksMetrics.sessionCount >
     baselineMetrics.sessionCount,
+});
+
+// Focus: mixed -> speed
+const speedSettings: GeneratorSettings = {
+  ...settings,
+  focus: "speed",
+};
+
+const speedMetrics = getProgrammeMetrics(speedSettings);
+
+responsivenessCases.push({
+  name: "Training focus",
+  changedSetting: "focus",
+  baselineValue: settings.focus,
+  modifiedValue: speedSettings.focus,
+  baselineMetric: baselineMetrics.sessionTypeCounts.speed,
+  modifiedMetric: speedMetrics.sessionTypeCounts.speed,
+  direction: "increase",
+  responded:
+    speedMetrics.sessionTypeCounts.speed >
+    baselineMetrics.sessionTypeCounts.speed,
 });
 
 const responsiveness = evaluateResponsiveness(responsivenessCases);

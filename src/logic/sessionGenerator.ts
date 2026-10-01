@@ -896,7 +896,7 @@ export function generateProgrammes(
     const lines: string[] = [
       `set PoolLength ${poolLength}`,
       `set LengthUnit "${distanceUnit}"`,
-      `set Title "Generated ${phase} Session"`,
+      `set Title "Generated ${phase} ${plan.type} Session"`,
       `set Date "${sessionDate}"`,
       `set Description "Generated ${phase} session. Target session length: ${distance}m"`,
       "",
