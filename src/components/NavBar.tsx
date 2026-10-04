@@ -22,6 +22,7 @@ import {
   downloadHtml,
   uploadFile,
 } from "../logic/fileIo";
+import ModificationDialog from "./ModificationDialog.tsx";
 
 interface FileMenuItem {
   text: string;
@@ -30,9 +31,11 @@ interface FileMenuItem {
 }
 
 interface NavBarProps {
+  selectedFile: string;
   swimdslProgramme: string;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
   setNewProgrammeOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedFile: React.Dispatch<React.SetStateAction<string>>;
   swimlXml: string;
   htmlString: string;
   renderNode: React.RefObject<HTMLIFrameElement | null>;
@@ -46,6 +49,9 @@ interface NavBarProps {
  * @param swimdslProgramme - The UTF-8 text contents of the code editor.
  * @param setSwimdslProgramme - A function which takes UTF-8 text and replaces the
  *    contents of the code editor with the given text.
+ * @param swimlXml - The swiML XML of the swimDSL content.
+ * @param htmlString - The HTML file for the swiML HTML render.
+ * @param renderNode - The HTML render for the swiML session.
  * @param setNewProgrammeOpen - A function which takes a boolean and sets the state of the new programme modal.
  * @param children - React nodes to place on the right hand side of the NavBar.
  *    Currently used to display the SidePanelSwitcher.
@@ -53,8 +59,10 @@ interface NavBarProps {
  * @returns The react element used to render the Navigation bar.
  */
 function NavBar({
+  selectedFile,
   swimdslProgramme,
   setSwimdslProgramme,
+  setSelectedFile,
   setNewProgrammeOpen,
   swimlXml,
   htmlString,
@@ -136,6 +144,11 @@ function NavBar({
         <Button id="basic-button" onClick={openFileMenu} color="inherit">
           File
         </Button>
+        <ModificationDialog
+          swimdslProgramme={swimdslProgramme}
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
+        />
 
         <Menu open={open} anchorEl={anchorEl} onClose={closeFileMenu}>
           {fileMenuOptions.map(({ text, icon, onclick }, index) => (

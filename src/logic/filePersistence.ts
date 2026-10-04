@@ -1,10 +1,11 @@
 
 
-function newFile(key: string, value: string): void {
+function newFile(selectedFile: string, setSelectedFile: (newFile: string)=>void, key: string, value: string): void {
   if (localStorage.getItem(key)) {
     console.log(key, " already exist");
   } else {
     localStorage.setItem(key, value);
+    setSelectedFile(selectedFile);
   }
 }
 
