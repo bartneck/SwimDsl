@@ -1,6 +1,5 @@
 import React from "react";
 import AddIcon from "@mui/icons-material/Add";
-import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import CodeIcon from "@mui/icons-material/Code";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import SaveAsIcon from "@mui/icons-material/SaveAs";

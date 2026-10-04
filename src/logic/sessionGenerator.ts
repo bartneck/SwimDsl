@@ -181,7 +181,7 @@ function pacePer100(stroke: string, settings: GeneratorSettings): number {
   const baseline = parseBaselineSeconds(settings.baselineTime);
   const ratio = STROKE_PACE_RATIO[stroke];
 
-return baseline * (ratio !== undefined ? ratio : 1);
+  return baseline * (ratio ?? 1);
 }
 
 const AEROBIC_TRANSITION_SECONDS = 160;
@@ -243,7 +243,7 @@ function getStrokeDistribution(
  * @returns
  */
 function pickStroke(settings: GeneratorSettings, preferred: string, fallbackPool?: string[]): string {
-  if ((settings.strokes[preferred as keyof typeof settings.strokes] ?? 0) > 0) {
+  if (settings.strokes[preferred as keyof typeof settings.strokes] > 0) {
     return preferred;
   }
   const { strokes, weights } = getStrokeDistribution(settings);
@@ -801,10 +801,11 @@ function generateCooldown(
 function formatIntensity(s: SwimSet | SwimGroup): string {
   if (s.intensityZone) return s.intensityZone;
 
-  if ("intensityPercent" in s && s.intensityPercent != null) {
-    if ("intensityPercentEnd" in s && s.intensityPercentEnd != null) {
+  if ("intensityPercent" in s) {
+    if ("intensityPercentEnd" in s) {
       return `${s.intensityPercent}% -> ${s.intensityPercentEnd}%`;
     }
+
     return `${s.intensityPercent}%`;
   }
 

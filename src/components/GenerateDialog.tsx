@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 import React from "react";
 
-import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Checkbox from "@mui/material/Checkbox";
@@ -341,7 +339,7 @@ function GenerateDialog({
               label="Phase"
               onChange={(e) => {
                 setPhase(
-                  e.target.value as GeneratorSettings["phase"]
+                  e.target.value
                 );
               }}
             >
@@ -365,7 +363,7 @@ function GenerateDialog({
               label="Focus"
               onChange={(e) => {
                 setFocus(
-                  e.target.value as GeneratorSettings["focus"]
+                  e.target.value
                 );
               }}
             >

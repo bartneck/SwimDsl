@@ -181,9 +181,7 @@ const sessionLoads: SessionLoad[] = [];
     const volumeResult = evaluateVolume(programme, settings.distance);
     totalActualVolume += volumeResult.actualVolume;
 
-    const dateMatch = source.match(
-      /set Date\s+"(\d{4}-\d{2}-\d{2})"/
-    );
+    const dateMatch = /set Date\s+"(\d{4}-\d{2}-\d{2})"/.exec(source);
     if (!dateMatch?.[1]) {
       throw new Error(
         `Could not find a date in generated session:\n${source}`
