@@ -157,7 +157,6 @@ export function evaluateBetweenProgrammeVariation(programmes: SessionVariation[]
     };
   }
 
-  let variedPositions = 0;
   let uniqueSessionInstances = 0;
 
   for (let sessionIndex = 0; sessionIndex < sessionCount; sessionIndex++) {
@@ -181,10 +180,6 @@ export function evaluateBetweenProgrammeVariation(programmes: SessionVariation[]
     }
 
     uniqueSessionInstances += signatures.size;
-
-    if (signatures.size > 1) {
-      variedPositions++;
-    }
   }
 
   const totalSessionPositions =

@@ -69,7 +69,13 @@ export function evaluateWeeklyLoad(sessions: SessionLoad[], startDate: string): 
       weeklyLoads.set(week, []);
     }
 
-    weeklyLoads.get(week)!.push(session);
+    const existingSessions = weeklyLoads.get(week);
+
+    if (existingSessions) {
+      existingSessions.push(session);
+    } else {
+      weeklyLoads.set(week, [session]);
+    }
   }
 
   const weeks = Array.from(weeklyLoads.entries())
@@ -89,16 +95,20 @@ export function evaluateWeeklyLoad(sessions: SessionLoad[], startDate: string): 
     let changeFromPreviousWeek: number | null = null;
 
     if (index > 0) {
-      const previousWeekSessions = weeks[index - 1]![1];
+      const previousWeek = weeks[index - 1];
 
-      const previousTotalLoad = previousWeekSessions.reduce(
-        (sum, session) => sum + session.trainingLoad,
-        0
-      );
+      if (previousWeek) {
+        const previousWeekSessions = previousWeek[1];
 
-      if (previousTotalLoad !== 0) {
-        changeFromPreviousWeek =
-          ((totalLoad - previousTotalLoad) / previousTotalLoad) * 100;
+        const previousTotalLoad = previousWeekSessions.reduce(
+          (sum, session) => sum + session.trainingLoad,
+          0
+        );
+
+        if (previousTotalLoad !== 0) {
+          changeFromPreviousWeek =
+            ((totalLoad - previousTotalLoad) / previousTotalLoad) * 100;
+        }
       }
     }
 

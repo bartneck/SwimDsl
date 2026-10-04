@@ -1,4 +1,3 @@
-import { useState, useMemo } from "react";
 import React from "react";
 import AddIcon from "@mui/icons-material/Add";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
@@ -6,33 +5,16 @@ import CodeIcon from "@mui/icons-material/Code";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import SaveAsIcon from "@mui/icons-material/SaveAs";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import {
-  AppBar,
-  Box,
-  Button,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Paper,
-  Toolbar,
-  Typography,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Stack,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  TextField,
-  InputAdornment,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
-  Slider,
-} from "@mui/material";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 
 import {
   downloadPdf,
@@ -43,12 +25,7 @@ import {
 } from "../logic/fileIo";
 import ModificationDialog from "./ModificationDialog.tsx";
 
-import {
-  generateProgrammes,
-  GeneratorSettings,
-} from "../logic/sessionGenerator";
-
-import { newFile } from "../logic/filePersistence";
+import GenerateDialog from "./GenerateDialog.tsx";
 
 interface FileMenuItem {
   text: string;
@@ -66,7 +43,6 @@ interface NavBarProps {
   htmlString: string;
   renderNode: React.RefObject<HTMLIFrameElement | null>;
   children?: React.ReactNode;
-  setSelectedFile: (selectedFile: string) => void;
 }
 
 /**
@@ -91,94 +67,12 @@ function NavBar({
   setSwimdslProgramme,
   setSelectedFile,
   setNewProgrammeOpen,
-  setSelectedFile,
   swimlXml,
   htmlString,
   renderNode,
   children,
 }: NavBarProps): React.ReactElement {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [generateOpen, setGenerateOpen] = React.useState(false);
-  const [poolLength, setPoolLength] = useState(25);
-  const [distanceUnit, setDistanceUnit] =
-    useState<"metres" | "yards">("metres");
-  const today = new Date();
-  const localToday =
-    today.getFullYear() +
-    "-" +
-    String(today.getMonth() + 1).padStart(2, "0") +
-    "-" +
-    String(today.getDate()).padStart(2, "0");
-
-  const [startDate, setStartDate] = useState<string>(
-    localToday
-  );
-  const [weeks, setWeeks] = React.useState(4);
-  const [trainingDays, setTrainingDays] = useState<string[]>([
-    "monday",
-    "wednesday",
-    "friday",
-  ]);
-  const [sessionLength, setSessionLength] = React.useState<number>(3000);
-  const [phase, setPhase] = useState<GeneratorSettings["phase"]>("base");
-  const [focus, setFocus] = useState<GeneratorSettings["focus"]>("speed");
-  const [baselineTime, setBaselineTime] = useState("1:30");
-  const [paceValues, setPaceValues] = useState({
-    easy: 65,
-    endurance: 72,
-    threshold: 88,
-    racePace: 95,
-    max: 100,
-  });
-  const strokes = [
-    "Freestyle",
-    "Backstroke",
-    "Breaststroke",
-    "Butterfly",
-  ] as const;
-
-  type Stroke = (typeof strokes)[number];
-
-  const [strokePercentages, setStrokePercentages] = useState<
-    Record<Stroke, number>
-  >({
-    Freestyle: 60,
-    Backstroke: 20,
-    Breaststroke: 15,
-    Butterfly: 5,
-  });
-
-  const totalStrokePercentage = Object.values(
-    strokePercentages
-  ).reduce((sum, value) => sum + value, 0);
-  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
-  const [weeklyRampPercent, setWeeklyRampPercent] = useState(16);
-
-  const isFormValid = useMemo(() => {
-    return (
-      poolLength > 0 &&
-      !!distanceUnit &&
-      startDate.trim() !== "" &&
-      weeks > 0 &&
-      trainingDays.length > 0 &&
-      !!phase &&
-      !!focus &&
-      sessionLength > 0 &&
-      /^\d{1,2}:\d{2}$/.test(baselineTime.trim()) &&
-      totalStrokePercentage === 100
-    );
-  }, [
-    poolLength,
-    distanceUnit,
-    startDate,
-    weeks,
-    trainingDays,
-    phase,
-    focus,
-    sessionLength,
-    baselineTime,
-    totalStrokePercentage,
-  ]);
   const open = Boolean(anchorEl);
 
   function openFileMenu(event: React.MouseEvent<HTMLButtonElement>) {
@@ -191,44 +85,6 @@ function NavBar({
 
   function newProgramme() {
     setNewProgrammeOpen(true);
-  }
-
-  function handleGenerate() {
-    const settings: GeneratorSettings = {
-      startDate,
-      weeks,
-      trainingDays,
-      phase,
-      focus,
-      distance: sessionLength,
-      baselineTime,
-      poolLength,
-      distanceUnit,
-      pace: paceValues,
-      strokes: strokePercentages,
-      equipment: selectedEquipment,
-      weeklyRampPercent,
-    };
-
-    const programmes = generateProgrammes(settings);
-    programmes.forEach((programme, index) => {
-      let counter = 1;
-      let fileName = `Generated Programme ${counter}`;
-
-      while (localStorage.getItem(fileName)) {
-        counter++;
-        fileName = `Generated Programme ${counter}`;
-      }
-
-      newFile(fileName, programme);
-
-      if (index === 0) {
-        setSelectedFile(fileName);
-        setSwimdslProgramme(programme);
-      }
-    });
-
-    setGenerateOpen(false);
   }
 
   const fileMenuOptions: FileMenuItem[] = [
@@ -291,10 +147,16 @@ function NavBar({
         <Button id="basic-button" onClick={openFileMenu} color="inherit">
           File
         </Button>
+
         <ModificationDialog
           swimdslProgramme={swimdslProgramme}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
+        />
+
+        <GenerateDialog
+          setSelectedFile={setSelectedFile}
+          setSwimdslProgramme={setSwimdslProgramme}
         />
 
         <Menu open={open} anchorEl={anchorEl} onClose={closeFileMenu}>
@@ -305,396 +167,6 @@ function NavBar({
             </MenuItem>
           ))}
         </Menu>
-
-        <Button
-          color="inherit"
-          startIcon={<AutoFixHighIcon />}
-          onClick={() => setGenerateOpen(true)}
-        >
-          Generate
-        </Button>
-
-        <Dialog
-          open={generateOpen}
-          onClose={() => setGenerateOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Generate Programmes</DialogTitle>
-
-          <DialogContent>
-
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Choose the training requirements for your programme.
-            </Typography>
-
-            {/* Pool Size */}
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Pool Size</InputLabel>
-              <Select
-                value={`${poolLength}-${distanceUnit}`}
-                label="Pool Size"
-                onChange={(e) => {
-                  const [length, unit] = e.target.value.split("-");
-
-                  setPoolLength(Number(length));
-                  setDistanceUnit(unit as "metres" | "yards");
-                }}
-              >
-                <MenuItem value="25-metres">25 metres</MenuItem>
-                <MenuItem value="50-metres">50 metres</MenuItem>
-                <MenuItem value="50-yards">50 yards</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Start Date*/}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Start Date
-            </Typography>
-
-            <TextField
-              fullWidth
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              sx={{ mb: 3 }}
-            />
-
-            {/* Number of Weeks */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Number of Weeks
-            </Typography>
-
-            <TextField
-              fullWidth
-              type="number"
-              value={weeks}
-              onChange={(e) => setWeeks(Number(e.target.value))}
-              inputProps={{ min: 1, max: 12 }}
-              sx={{ mb: 3 }}
-            />
-
-            {/* Training Days */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Training Days
-            </Typography>
-
-            <FormGroup sx={{ mb: 1 }}>
-              {[
-                { value: "monday", label: "Monday" },
-                { value: "tuesday", label: "Tuesday" },
-                { value: "wednesday", label: "Wednesday" },
-                { value: "thursday", label: "Thursday" },
-                { value: "friday", label: "Friday" },
-                { value: "saturday", label: "Saturday" },
-                { value: "sunday", label: "Sunday" },
-              ].map((day) => (
-                <FormControlLabel
-                  key={day.value}
-                  control={
-                    <Checkbox
-                      checked={trainingDays.includes(day.value)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setTrainingDays([...trainingDays, day.value]);
-                        } else {
-                          setTrainingDays(
-                            trainingDays.filter((d) => d !== day.value)
-                          );
-                        }
-                      }}
-                    />
-                  }
-                  label={day.label}
-                />
-              ))}
-            </FormGroup>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mb: 3 }}
-            >
-              {trainingDays.length} session
-              {trainingDays.length !== 1 ? "s" : ""} per week ·{" "}
-              {trainingDays.length * weeks} total session
-              {trainingDays.length * weeks !== 1 ? "s" : ""}
-            </Typography>
-
-            {/* Training Phase */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Training Phase
-            </Typography>
-
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Phase</InputLabel>
-              <Select value={phase} label="Phase" onChange={(e) => setPhase(e.target.value)} >
-                <MenuItem value="base">Base</MenuItem>
-                <MenuItem value="build">Build</MenuItem>
-                <MenuItem value="peak">Peak</MenuItem>
-                <MenuItem value="taper">Taper</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Training Focus */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Training Focus
-            </Typography>
-
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Focus</InputLabel>
-              <Select value={focus} label="Focus" onChange={(e) => setFocus(e.target.value)} >
-                <MenuItem value="speed">Speed</MenuItem>
-                <MenuItem value="endurance">Endurance</MenuItem>
-                <MenuItem value="mixed">Mixed</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Weekly Progression */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Weekly Progression
-            </Typography>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                display: "block",
-                mb: 2,
-              }}
-            >
-              {phase === "taper"
-                ? `Volume eases off by ${weeklyRampPercent}% from the first week to the last`
-                : `Volume ramps up by ${weeklyRampPercent}% from the first week to the last`}
-            </Typography>
-
-            <Stack spacing={0.5} sx={{ mb: 3 }}>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Typography variant="body2">Ramp</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {weeklyRampPercent}%
-                </Typography>
-              </Stack>
-
-              <Slider
-                value={weeklyRampPercent}
-                onChange={(_, value) => setWeeklyRampPercent(value as number)}
-                min={0}
-                max={40}
-                step={2}
-                valueLabelDisplay="auto"
-                disabled={weeks <= 1}
-              />
-            </Stack>
-
-            {/* Target Distance */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Target Distance
-            </Typography>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                display: "block",
-                mb: 2,
-              }}
-            >
-              This is the approximate distance for each generated session
-            </Typography>
-
-            <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap", gap: 1 }}>
-              {[1500, 2000, 3000, 4000, 5000].map((val) => (
-                <Chip key={val} label={`${val} m`} clickable color={sessionLength === val ? "primary" : "default"} onClick={() => setSessionLength(val)} />
-              ))}
-            </Stack>
-
-            {/* Starting Performance */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Starting Performance
-            </Typography>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                display: "block",
-                mb: 2,
-              }}
-            >
-              Enter your approximate current time for 100m Freestyle (mm:ss)
-            </Typography>
-
-            <TextField
-              fullWidth
-              label="Current 100m Freestyle Time"
-              value={baselineTime}
-              onChange={(e) => setBaselineTime(e.target.value)}
-              sx={{ mb: 3 }}
-            />
-
-            {/* Pace Definitions */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Pace Definitions
-            </Typography>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                display: "block",
-                mb: 2,
-              }}
-            >
-              Enter 0% to exclude a pace from the generated programme
-            </Typography>
-
-            <Stack spacing={2} sx={{ mb: 3 }}>
-              {[
-                { key: "easy", label: "Easy" },
-                { key: "endurance", label: "Endurance" },
-                { key: "threshold", label: "Threshold" },
-                { key: "racePace", label: "Race Pace" },
-                { key: "max", label: "Max" }, ].map((pace) => (
-                <TextField
-                  key={pace.key}
-                  label={pace.label}
-                  type="number"
-                  value={paceValues[pace.key as keyof typeof paceValues]}
-                  onChange={(e) => setPaceValues({
-                     ...paceValues,
-                     [pace.key]: Number(e.target.value),
-                    })
-                  }
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                  }}
-                  inputProps={{ min: 0, max: 100 }}
-                  fullWidth
-                />
-              ))}
-            </Stack>
-
-            {/* Stroke Distribution */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Stroke Distribution
-            </Typography>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                display: "block",
-                mb: 2,
-              }}
-            >
-              Set the percentage of the programme for each stroke
-            </Typography>
-
-            <Stack spacing={2} sx={{ mb: 1 }}>
-              {strokes.map((stroke) => (
-                <Stack key={stroke} spacing={0.5}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Typography variant="body2">
-                      {stroke}
-                    </Typography>
-
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      {strokePercentages[stroke]}%
-                    </Typography>
-                  </Stack>
-
-                  <Slider
-                    value={strokePercentages[stroke]}
-                    onChange={(_, value) => {
-                      setStrokePercentages({
-                        ...strokePercentages,
-                        [stroke]: value as number,
-                      });
-                    }}
-                    min={0}
-                    max={100}
-                    step={5}
-                    valueLabelDisplay="auto"
-                  />
-                </Stack>
-              ))}
-            </Stack>
-
-            <Typography
-              variant="caption"
-              color={
-                totalStrokePercentage === 100
-                  ? "text.secondary"
-                  : "error"
-              }
-              sx={{ display: "block", mb: 3 }}
-            >
-              Total: {totalStrokePercentage}%
-              {totalStrokePercentage !== 100 &&
-                " — percentages must add up to 100%"}
-            </Typography>
-
-            {/* Equipment */}
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              Equipment
-            </Typography>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                display: "block",
-                mb: 2,
-              }}
-            >
-              Set the equipment you want to use in the programmes
-            </Typography>
-
-            <FormGroup>
-              {["Pull Buoy", "Fins", "Paddles", "Kickboard", "Snorkel"].map(
-                (equipment) => (
-                <FormControlLabel
-                  key={equipment}
-                  control={
-                    <Checkbox
-                      checked={selectedEquipment.includes(equipment)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedEquipment([ ...selectedEquipment, equipment, ]);
-                        } else {
-                          setSelectedEquipment( selectedEquipment.filter((item) => item !== equipment) );
-                        }
-                      }}
-                    />
-                  }
-                  label={equipment}
-                /> )
-              )}
-            </FormGroup>
-          </DialogContent>
-
-          <DialogActions>
-            <Button onClick={() => setGenerateOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleGenerate} variant="contained" disabled={!isFormValid}>
-              Generate Programmes
-            </Button>
-          </DialogActions>
-        </Dialog>
 
         <Box sx={{ ml: "auto" }}>{children}</Box>
       </Toolbar>

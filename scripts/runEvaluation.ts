@@ -36,8 +36,9 @@ function getProgrammeMetrics(
 
     totalVolume += volumeResult.actualVolume;
 
-    const typeMatch = source.match(
-      /set Title "Generated \w+ (volume|threshold|speed|mixed) Session"/
+    const typeMatch =
+    /set Title "Generated \w+ (volume|threshold|speed|mixed) Session"/.exec(
+      source
     );
 
     if (typeMatch) {
@@ -183,7 +184,7 @@ const sessionLoads: SessionLoad[] = [];
     const dateMatch = source.match(
       /set Date\s+"(\d{4}-\d{2}-\d{2})"/
     );
-    if (!dateMatch || !dateMatch[1]) {
+    if (!dateMatch?.[1]) {
       throw new Error(
         `Could not find a date in generated session:\n${source}`
       );

@@ -64,7 +64,14 @@ type SwimItem = SwimSet | SwimGroup;
  * @returns randomly selected item from the array
  */
 function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]!;
+  const index = Math.floor(Math.random() * arr.length);
+  const item = arr[index];
+
+  if (item === undefined) {
+    throw new Error("Cannot pick a random item from an empty array");
+  }
+
+  return item;
 }
 
 /**
@@ -79,11 +86,28 @@ function pickWeighted(items: string[], weights: number[]): string {
   let r = Math.random() * total;
 
   for (let i = 0; i < items.length; i++) {
-    r -= weights[i]!;
-    if (r <= 0) return items[i]!;
+    const weight = weights[i];
+
+    if (weight !== undefined) {
+      r -= weight;
+
+      if (r <= 0) {
+        const item = items[i];
+
+        if (item !== undefined) {
+          return item;
+        }
+      }
+    }
   }
 
-  return items[items.length - 1]!;
+  const fallback = items[items.length - 1];
+
+  if (fallback === undefined) {
+    throw new Error("Cannot pick from an empty item list");
+  }
+
+  return fallback;
 }
 
 /**
@@ -116,15 +140,29 @@ function formatDuration(seconds: number): string {
 function parseBaselineSeconds(baselineTime: string): number {
   const parts = baselineTime.split(":").map((p) => parseFloat(p));
 
-  if (parts.length === 2 && parts.every((p) => !Number.isNaN(p))) {
-    return parts[0]! * 60 + parts[1]!;
+  if (parts.length === 2) {
+    const minutes = parts[0];
+    const seconds = parts[1];
+
+    if (
+      minutes !== undefined &&
+      seconds !== undefined &&
+      !Number.isNaN(minutes) &&
+      !Number.isNaN(seconds)
+    ) {
+      return minutes * 60 + seconds;
+    }
   }
 
-  if (parts.length === 1 && !Number.isNaN(parts[0])) {
-    return parts[0]!;
+  if (parts.length === 1) {
+    const seconds = parts[0];
+
+    if (seconds !== undefined && !Number.isNaN(seconds)) {
+      return seconds;
+    }
   }
 
-  return 95
+  return 95;
 }
 
 const STROKE_PACE_RATIO: Record<string, number> = {
@@ -141,7 +179,9 @@ const STROKE_PACE_RATIO: Record<string, number> = {
  */
 function pacePer100(stroke: string, settings: GeneratorSettings): number {
   const baseline = parseBaselineSeconds(settings.baselineTime);
-  return baseline * (STROKE_PACE_RATIO[stroke] ?? 1);
+  const ratio = STROKE_PACE_RATIO[stroke];
+
+return baseline * (ratio !== undefined ? ratio : 1);
 }
 
 const AEROBIC_TRANSITION_SECONDS = 160;
@@ -162,7 +202,7 @@ function swimTimeSeconds(distance: number, stroke: string, settings: GeneratorSe
  * @param stroke stroke type
  * @returns rest time in seconds
  */
-function calculateSendoff(distance: number, restRatio: number, settings: GeneratorSettings, stroke: string = "Freestyle"): number {
+function calculateSendoff(distance: number, restRatio: number, settings: GeneratorSettings, stroke = "Freestyle"): number {
   const swimTime = swimTimeSeconds(distance, stroke, settings);
   const sendoff = swimTime * (1 + restRatio);
   return Math.max(45, Math.round(sendoff / 5) * 5);
@@ -209,7 +249,12 @@ function pickStroke(settings: GeneratorSettings, preferred: string, fallbackPool
   const { strokes, weights } = getStrokeDistribution(settings);
   const pool = fallbackPool ? strokes.filter((s) => fallbackPool.includes(s)) : strokes;
   if (pool.length === 0) return preferred;
-  const poolWeights = pool.map((s) => weights[strokes.indexOf(s)]!);
+    const poolWeights = pool.map((s) => {
+    const index = strokes.indexOf(s);
+    const weight = weights[index];
+
+    return weight ?? 0;
+  });
   return pickWeighted(pool, poolWeights);
 }
 
@@ -326,10 +371,25 @@ function buildSessionPlan(
   const sessionsPerWeek = totalWeeks > 0 ? count / totalWeeks : count;
 
   return Array.from({ length: count }, (_, i) => {
-    const weekIndex = sessionsPerWeek > 0 ? Math.floor(i / sessionsPerWeek) : 0;
-    const weekFactor = getWeekProgressionFactor(weekIndex, totalWeeks, phase, rampPercent);
+    const weekIndex =
+      sessionsPerWeek > 0 ? Math.floor(i / sessionsPerWeek) : 0;
+
+    const weekFactor = getWeekProgressionFactor(
+      weekIndex,
+      totalWeeks,
+      phase,
+      rampPercent
+    );
+
+    const patternIndex = i % pattern.length;
+    const sessionType = pattern[patternIndex];
+
+    if (sessionType === undefined) {
+      throw new Error("Session pattern is empty");
+    }
+
     return {
-      type: pattern[i % pattern.length]!,
+      type: sessionType,
       factor: phaseFactor * weekFactor * (0.97 + Math.random() * 0.06),
     };
   });
@@ -815,7 +875,8 @@ function itemToLines(item: SwimItem, depth = 0): string {
   if (item.kind === "set") return indent + setToLine(item, depth > 0);
 
   const lines: string[] = [];
-  const repPrefix = item.repetitions && item.repetitions > 1 ? `${item.repetitions} x ` : ""; // only show repetition count on group if more than 1
+  const repetitions = item.repetitions ?? 0;
+  const repPrefix = repetitions > 1 ? `${repetitions} x ` : ""; // only show repetition count on group if more than 1
   lines.push(`${indent}${repPrefix}{`);
 
   // recursively render child items with increased indentation
@@ -864,8 +925,12 @@ export function generateProgrammes(
   const programmes: string[] = [];
 
   for (let i = 0; i < sessionPlan.length; i++) {
-    const plan = sessionPlan[i]!;
+    const plan = sessionPlan[i];
     const sessionDate = trainingDates[i];
+
+    if (plan === undefined || sessionDate === undefined) {
+      throw new Error(`Missing session data at index ${i}`);
+    }
 
     // Volume budget
     const totalVolume = roundToPool(distance * plan.factor, poolLength);
