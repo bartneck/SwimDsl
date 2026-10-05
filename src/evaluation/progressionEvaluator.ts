@@ -1,4 +1,4 @@
-import { getWeekProgressionFactor } from "../../src/logic/sessionGenerator"
+import { getWeekProgressionFactor } from "../../src/logic/sessionGenerator.ts"
 
 export interface SessionVolume {
   date: string;

@@ -1,5 +1,5 @@
-import { Programme } from "../../codemirror-swimdsl/src/astTypes";
-import { evaluateIntensity } from "./intensityEvaluator";
+import { Programme } from "../../codemirror-swimdsl/src/astTypes.ts";
+import { evaluateIntensity } from "./intensityEvaluator.ts";
 
 export interface SessionLoad {
   date: string;

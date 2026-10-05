@@ -109,7 +109,6 @@ function App(): React.ReactElement {
           setSelectedFile={setSelectedFile}
           setSwimdslProgramme={setSwimdslProgramme}
           setNewProgrammeOpen={setNewProgrammeOpen}
-          setSelectedFile={setSelectedFile}
           swimlXml={swimlXml}
           htmlString={htmlString}
           renderNode={renderNode}

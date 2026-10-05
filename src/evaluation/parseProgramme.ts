@@ -1,6 +1,6 @@
 import { EditorState } from "@codemirror/state"
 import { syntaxTree } from "@codemirror/language"
-import buildAst from "../../codemirror-swimdsl/src/buildAst"
+import buildAst from "../../codemirror-swimdsl/src/buildAst.ts"
 import { swimdslLanguage } from "codemirror-lang-swimdsl"
 
 export default function parseProgramme(source: string) {

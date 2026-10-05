@@ -1,4 +1,4 @@
-import { Programme, SwimInstruction, Statements, InstructionModifiers, Pace, } from "../../codemirror-swimdsl/src/astTypes";
+import { Programme, SwimInstruction, Statements, Instruction, InstructionModifier, InstructionModifiers, Pace, } from "../../codemirror-swimdsl/src/astTypes";
 
 export interface IntensityResult {
   totalVolume: number;
@@ -27,12 +27,13 @@ function getDistance(instruction: SwimInstruction): number {
   if (instruction.instruction.isBlock) {
     return (
       instruction.instruction.instructions.reduce(
-        (total, child) => {
+        (total: number, child: Instruction) => {
           if (child.statement === Statements.SWIM_INSTRUCTION) {
             return total + getDistance(child);
           }
           return total;
-        }, 0
+        },
+        0
       ) * repetitions
     );
   }
@@ -53,7 +54,7 @@ function getDistance(instruction: SwimInstruction): number {
 
 function getIntensity(instruction: SwimInstruction): number | null {
   const paceModifier = instruction.instructionModifiers.find(
-    (modifier): modifier is Pace =>
+    (modifier: InstructionModifier): modifier is Pace =>
       modifier.modifier === InstructionModifiers.PACE
   );
 

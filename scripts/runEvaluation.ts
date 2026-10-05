@@ -5,7 +5,7 @@ import parseProgramme from "../src/evaluation/parseProgramme.ts";
 import { evaluateVolume } from "../src/evaluation/volumeEvaluator.ts";
 import { evaluateIntensity } from "../src/evaluation/intensityEvaluator.ts";
 import { evaluateProgression, ProgressionResult } from "../src/evaluation/progressionEvaluator.ts";
-import { evaluateVariation, extractSessionVariation, evaluateBetweenProgrammeVariation, type SessionVariation, type VariationResult, type BetweenProgrammeVariation, } from "../src/evaluation/variationEvaluator";
+import { evaluateVariation, extractSessionVariation, evaluateBetweenProgrammeVariation, type SessionVariation, type VariationResult, type BetweenProgrammeVariation, } from "../src/evaluation/variationEvaluator.ts";
 import { evaluateResponsiveness, type ResponsivenessCase, type ResponsivenessResult } from "../src/evaluation/responsivenessEvaluator.ts";
 import { evaluatePeriodisation, getExpectedPhaseFactor, type TrainingPhase, type PhaseMetrics, type PeriodisationResult } from "../src/evaluation/periodisationEvaluator.ts";
 import { evaluateSessionLoad, evaluateLoad, type SessionLoad, type LoadResult, } from "../src/evaluation/loadEvaluator.ts";
