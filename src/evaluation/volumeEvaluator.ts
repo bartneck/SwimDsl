@@ -1,4 +1,4 @@
-import { Programme, SwimInstruction, Statements } from "../../codemirror-swimdsl/src/astTypes";
+import { Programme, Instruction, SwimInstruction, Statements } from "../../codemirror-swimdsl/src/astTypes";
 
 export interface VolumeResult {
   inputVolume: number;
@@ -13,7 +13,7 @@ function calculateInstructionVolume(instruction: SwimInstruction): number {
   // Handle blocks
   if (instruction.instruction.isBlock) {
     const blockVolume = instruction.instruction.instructions.reduce(
-      (total, child) => {
+      (total: number, child: Instruction) => {
         if (child.statement === Statements.SWIM_INSTRUCTION) {
           return total + calculateInstructionVolume(child);
         }
@@ -22,7 +22,6 @@ function calculateInstructionVolume(instruction: SwimInstruction): number {
     return blockVolume * repetitions;
   }
 
-
   // Calculate volume if it is specified as a distance
   const length = instruction.instruction.length;
 
@@ -30,17 +29,17 @@ function calculateInstructionVolume(instruction: SwimInstruction): number {
     return 0;
   }
 
-  const distance = Number(length.value)
+  const distance = Number(length.value);
 
   if (Number.isNaN(distance)) {
-    return 0
+    return 0;
   }
 
-  return distance * repetitions
+  return distance * repetitions;
 }
 
 export function calculateProgrammeVolume(programme: Programme): number {
-  return programme.statements.reduce((total, statement) => {
+  return programme.statements.reduce((total: number, statement) => {
     if (statement.statement === Statements.SWIM_INSTRUCTION) {
       return total + calculateInstructionVolume(statement);
     }
@@ -57,6 +56,6 @@ export function evaluateVolume(programme: Programme, targetVolume: number): Volu
     inputVolume: targetVolume,
     actualVolume,
     absoluteError,
-    percentageError
-  }
+    percentageError,
+  };
 }
