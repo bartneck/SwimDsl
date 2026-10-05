@@ -1,4 +1,4 @@
-import { Programme, SwimInstruction, Statements, Instruction, InstructionModifier, InstructionModifiers, Pace, } from "../../codemirror-swimdsl/src/astTypes";
+import { Programme, SwimInstruction, Statements, Instruction, InstructionModifier, InstructionModifiers, Pace, } from "../../codemirror-swimdsl/src/astTypes.ts";
 
 export interface IntensityResult {
   totalVolume: number;

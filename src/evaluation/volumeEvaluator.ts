@@ -1,4 +1,4 @@
-import { Programme, Instruction, SwimInstruction, Statements } from "../../codemirror-swimdsl/src/astTypes";
+import { Programme, Instruction, SwimInstruction, Statement, Statements } from "../../codemirror-swimdsl/src/astTypes.ts";
 
 export interface VolumeResult {
   inputVolume: number;
@@ -39,7 +39,7 @@ function calculateInstructionVolume(instruction: SwimInstruction): number {
 }
 
 export function calculateProgrammeVolume(programme: Programme): number {
-  return programme.statements.reduce((total: number, statement) => {
+  return programme.statements.reduce((total: number, statement: Statement) => {
     if (statement.statement === Statements.SWIM_INSTRUCTION) {
       return total + calculateInstructionVolume(statement);
     }
