@@ -6,18 +6,22 @@ it was built this way.
 
 The feature takes one SwimDSL programme and writes out a version of it for
 each swimmer pace entered in the modification dialog. Each version gets
-intervals recalculated for that pace and is then fitted to the session's
-duration and/or volume. Fitting works one of two ways:
+intervals recalculated for that pace and is then fitted to the session. The
+session is fitted **by duration** (every swimmer fills the same time) or **by
+distance** (every swimmer swims the same distance), and the other of the two
+can be given as a limit. Fitting works one of two ways:
 
 - **Adjust the sets to fit** (`rescale`, the default). Sets are resized, down
   or up. The main set is protected, later sets change before earlier ones,
   and extra volume goes mostly to repeated sets.
-- **Stop when the time runs out** (`trim`). Sets are kept exactly as written,
-  and the programme ends at the point where the session runs out.
+- **Stop when the time runs out** / **Stop when the distance is reached**
+  (`trim`). Sets are kept exactly as written, and the programme ends at the
+  point where the session runs out.
 
-Because each pace's version fills the same session, the training load
-(average pace × volume) stays close to equal across swimmers of different
-speeds.
+Fitted by duration, each pace's version fills the same session, so the
+training load (average pace × volume) stays close to equal across swimmers
+of different speeds. Fitted by distance, each pace's version has the same
+sets and only the intervals differ.
 
 ## Contents
 
@@ -27,13 +31,14 @@ speeds.
 4. [How a programme is timed](#how-a-programme-is-timed)
 5. [Rescale: fitting by resizing sets](#rescale-fitting-by-resizing-sets)
 6. [Trim: stopping when the time runs out](#trim-stopping-when-the-time-runs-out)
-7. [Training load across paces](#training-load-across-paces)
-8. [The summary comment](#the-summary-comment)
-9. [Compatibility](#compatibility)
-10. [Verification](#verification)
-11. [Known defects](#known-defects)
-12. [Known limitations and assumptions](#known-limitations-and-assumptions)
-13. [Tunable constants](#tunable-constants)
+7. [Fitting by distance](#fitting-by-distance)
+8. [Training load across paces](#training-load-across-paces)
+9. [The summary comment](#the-summary-comment)
+10. [Compatibility](#compatibility)
+11. [Verification](#verification)
+12. [Known defects](#known-defects)
+13. [Known limitations and assumptions](#known-limitations-and-assumptions)
+14. [Tunable constants](#tunable-constants)
 
 ## Summary of changes
 
@@ -41,9 +46,9 @@ speeds.
 | --- | --- | --- |
 | `src/logic/swimTime.ts` | New | `m:ss` conversions and the constant-pace model. `getIntervalTime` and `getRestTime` moved here. |
 | `src/logic/programmeParsing.ts` | New | Line-oriented parser that keeps the source intact, classifies sections, and rewrites text in place. |
-| `src/logic/programmeAdjustment.ts` | New | Timing model, the `rescale` and `trim` fitting methods, and the summary comment. |
+| `src/logic/programmeAdjustment.ts` | New | Timing model, the duration and distance goals, the `rescale` and `trim` fitting methods, and the summary comment. |
 | `src/logic/programmeModification.ts` | Rewritten | Runs the steps above once per pace and saves the results. The public API is kept. |
-| `src/components/ModificationDialog.tsx` | Modified | Adds the "Fitting the session" choice between the two methods. |
+| `src/components/ModificationDialog.tsx` | Modified | Adds the "Fit the session by" choice between duration and distance, and the "Fitting the session" choice between the two methods. |
 
 The original `programmeModification.ts` was one 268-line file doing string
 manipulation. The new code is split into four modules of about 1,870 lines,
@@ -135,7 +140,7 @@ works on source lines and edits only the characters that change.
 
 ```mermaid
 flowchart TD
-    D[ModificationDialog<br/>paces, duration, volume, fit] --> M[modifiedProgrammes]
+    D[ModificationDialog<br/>paces, goal, duration, volume, fit] --> M[modifiedProgrammes]
     M --> S[withoutAdjustmentSummary<br/>drop the comment from an earlier run]
     S --> P[parseProgramme<br/>elements + sections]
     P --> R[measureIntervalRatios<br/>once, from the authored programme]
@@ -143,7 +148,7 @@ flowchart TD
     L --> F[fitProgramme]
     F --> C[cloneProgramme + buildUnits]
     C --> Q{fit method}
-    Q -- rescale --> RS[fitToTargets<br/>shrinkToFit / growToFit]
+    Q -- rescale --> RS[fitToTargets<br/>shrinkToFit / growToFit<br/>+ settleOnDistance]
     Q -- trim --> TR[cutToTargets]
     RS --> I[rewriteIntervals]
     TR --> I
@@ -200,7 +205,8 @@ Design points:
 
 ### `programmeAdjustment.ts`
 
-Holds the timing model and both fitting methods (described below), plus
+Holds the timing model, the `FitGoal` (`duration` or `distance`), and both
+fitting methods (described below), plus
 `describeAdjustment` / `withoutAdjustmentSummary` for the summary comment and
 `parseTarget` for the dialog fields. Every parsed instruction becomes an
 *adjustable unit*. Instructions that cannot be resized (time-based lengths,
@@ -217,9 +223,16 @@ through `newFile`, as before.
 
 ### `ModificationDialog.tsx`
 
-Adds a labelled radio group, **Fitting the session**, with **Adjust the sets
-to fit** (`rescale`, selected by default) and **Stop when the time runs out**
-(`trim`). The choice is stored as `fit` on `ModificationParameters`.
+Adds two labelled radio groups:
+
+- **Fit the session by**: **Duration** (selected by default) or **Distance**,
+  stored as `goal` on `ModificationParameters`. The field for the chosen goal
+  is shown first. The other is relabelled as an optional limit: "Distance
+  Limit (metres, optional)" when fitting by duration, and "Time Limit (mins,
+  optional)" when fitting by distance.
+- **Fitting the session**: **Adjust the sets to fit** (`rescale`, selected by
+  default) or **Stop when the time runs out** (`trim`), which reads **Stop
+  when the distance is reached** when fitting by distance. Stored as `fit`.
 
 ## How a programme is timed
 
@@ -399,11 +412,78 @@ The same session at a 1:30 pace, both methods:
 | 60 min | 3400 m, 59:40. Main set grows | 2100 m, 36:30. Unchanged |
 | 12 min | 625 m, 11:43 | 650 m, 11:24. Warm up only (`8 x 50` → `5 x 50`) |
 
+## Fitting by distance
+
+Choosing **Distance** under *Fit the session by* makes the session's volume
+the goal. It uses the same resizing machinery as duration: the same tiers,
+passes, allowances and whole-unit steps. What changes is what the programme
+is fitted to and how close it tries to land.
+
+### Same sets at every pace
+
+A distance doesn't depend on pace. With no time limit, every pace gets
+exactly the same sets, and only the `on` intervals are recalculated. The
+example session fitted to 1840 m:
+
+| Pace | Warm up | Main set | Warm down | Result |
+| --- | --- | --- | --- | --- |
+| 1:10 | 300, 6 x 50 | 5 x 100, 4 x 50, **425** | 125 | 1850 m, 26:03 |
+| 1:30 | 300, 6 x 50 | 5 x 100, 4 x 50, **425** | 125 | 1850 m, 32:13 |
+| 2:15 | 300, 6 x 50 | 5 x 100, 4 x 50, **425** | 125 | 1850 m, 46:08 |
+
+So the training load is *not* equal across paces in this mode: a slower
+swimmer is in the water for longer. That is the point of fitting by
+distance.
+
+### Landing on the distance
+
+As a limit, the volume is never exceeded. As a goal, stopping short can be
+the worse result: a programme that only moves in 100 m steps would finish
+90 m short of a target it could pass by 10. So after resizing,
+`settleOnDistance` takes **one more step** when that step lands nearer the
+distance than the programme already is:
+
+- It looks at each set's smallest single step up: one more repetition, or
+  one more pool length per repetition (a repetition wins a tie).
+- Tiers are tried in growth order (main set, *other*, then warm up + warm
+  down), and within a tier the smallest step that qualifies is taken.
+- The step must leave the programme strictly nearer the distance. When going
+  over and staying under are equally close, the programme stays under.
+- The step must fit within the warm up and warm down budget, and must not
+  take the session past its time limit. A step that would is undone and the
+  next candidate is tried.
+
+| Target | As a limit | As a goal |
+| --- | --- | --- |
+| 1830 m (example session) | 1825 m | 1825 m |
+| 1840 m (example session) | 1825 m | **1850 m** (10 over beats 15 under) |
+| 7777 m (50 m pool, repeated sets) | 7700 m | **7800 m** |
+| 5050 m (50 m pool, repeated sets) | 5000 m | 5000 m (a tie stays under) |
+
+Duration is never fitted this way. The session's time is a hard limit, so
+fitting by duration behaves exactly as before.
+
+### With a time limit
+
+A time limit is honoured the same way a volume limit is honoured when
+fitting by duration: whichever is stricter applies. The example session
+fitted to 1840 m with a 40-minute limit gives 1850 m in 26:03 at 1:10, but
+only 1600 m in 39:58 at 2:15, where the time runs out first. In that case
+the sets differ between paces again.
+
+### Trim
+
+**Stop when the distance is reached** uses `cutToTargets` unchanged. Sets
+are kept as written until one would pass the distance. That set is reduced
+to the whole repetitions that still fit, and the programme ends there. Trim
+never goes over the distance and never adds volume.
+
 ## Training load across paces
 
-Each pace's version fills the same session, so volume goes up for faster
-swimmers and down for slower ones. For the example session fitted to 45
-minutes:
+When fitting by duration, each pace's version fills the same session, so
+volume goes up for faster swimmers and down for slower ones. (Fitting by
+distance deliberately does not; see [above](#same-sets-at-every-pace).) For
+the example session fitted to 45 minutes:
 
 | Pace | Volume | Session time | Training load |
 | --- | --- | --- | --- |
@@ -422,10 +502,13 @@ session resting. A 100 at 1:10 is 82% swimming, while at 2:15 it is 90%.
 
 ## The summary comment
 
-Each generated programme starts with a comment saying what it was fitted to:
+Each generated programme starts with a comment saying what it was fitted to.
+Each target that was given, as the goal or as a limit, is shown after
+`of`:
 
 ```swimdsl
 # Fitted to a 1:30 per 100 pace: 1700 metres in 29:43 of 30:00, training load 25:30.
+# Fitted to a 1:10 per 100 pace: 1850 metres of 1840 in 26:03 of 40:00, training load 21:35.
 ```
 
 Coaches and swimmers can see from this what a version was built for,
@@ -438,6 +521,12 @@ doesn't pile up comments.
 
 - `modifyProgram(program, selectedFile, setSelectedFile, params)` keeps
   its signature. Output files are still named `"<pace> (<file>)"`.
+- `ModificationParameters` and `SessionTargets` gain a required
+  `goal: "duration" | "distance"`. The dialog defaults it to `duration`. At
+  runtime, any value other than `"distance"` fits by duration. With
+  `goal: "duration"`, the fitted sets and intervals are identical to those
+  produced before distance fitting was added. Only the summary comment
+  changes, and only when a volume is given.
 - `ModificationParameters` gains a required `fit: "rescale" | "trim"`. The
   dialog defaults it to `rescale`. At runtime, any value other than `"trim"`
   is treated as `rescale`, so a missing value adjusts rather than silently
@@ -468,6 +557,15 @@ doesn't pile up comments.
   - training load across four paces varies by less than 15% (actual: 7.2%);
   - re-running on an already fitted programme leaves exactly one summary
     comment;
+  - fitting by duration gives the same programme as the version before
+    distance fitting was added. This was checked for every combination
+    tested of no duration or 12 to 60 minutes with no volume or 1000 to
+    5000 m, at three paces, with both methods;
+  - fitting by distance gives the same sets at every pace, never lands
+    further from the distance than treating it as a limit would, stays
+    within the time limit whenever that limit is reachable, and never goes
+    over the distance with `trim`. Checked on the example session and on a
+    50 m pool programme made only of repeated sets and a block;
   - an edge-case programme (nested and single-line blocks, laps, a
     time-based length, `with` / `in-out` rests, `on` inside a description
     and inside a trailing comment) and a programme with no headers produce
@@ -549,7 +647,9 @@ this document. They are not fixed yet. Each fix is small and local.
    Instructions with no rest are timed as continuous, with no turnaround
    time. Recalculated intervals always use the 15 s endurance rest.
 6. **Time-based lengths count as 0 m** towards volume, because the distance
-   depends on the swimmer. Their time still counts towards duration.
+   depends on the swimmer. Their time still counts towards duration. When
+   fitting by distance, a programme with a `5:00 Freestyle` is therefore
+   longer than the distance it reports.
 7. **Intervals are rounded to the nearest second**, not to the nearest 5 s
    as coaches often do.
 8. **Section detection uses keywords.** Headers are matched on the words
@@ -560,6 +660,14 @@ this document. They are not fixed yet. Each fix is small and local.
 10. **The 50% budget also limits growth** of the warm up and warm down. They
     are the last tier to grow, and can grow by at most half their combined
     original volume.
+11. **Distance fitting settles with a single step.** When no single step
+    lands nearer, the programme stays where resizing left it. For example,
+    the 50 m pool programme fitted to 1830 m stays at 1800 m, because no set
+    can take a step small enough to land nearer.
+12. **Distance has the same floor as duration.** The blocks and timed swims
+    that can't shrink (limitation 1) also stop a short distance from being
+    reached. The 50 m pool programme can't get below 1050 m, so a 1000 m
+    target gives 1050 m.
 
 ## Tunable constants
 

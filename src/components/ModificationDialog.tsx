@@ -14,7 +14,7 @@ import TextField from "@mui/material/TextField";
 
 // import {TextField} from "@mui/material";
 import {modifyProgram, ModificationParameters} from "../logic/programmeModification.ts";
-import {FitMethod} from "../logic/programmeAdjustment.ts";
+import {FitGoal, FitMethod} from "../logic/programmeAdjustment.ts";
 
 
 
@@ -34,12 +34,38 @@ export default function ModificationDialog(
   const [modificationParameters, setModificationParameters] = useState<ModificationParameters>({
     group: '',
     paces: [],
+    goal: 'duration',
     duration: '',
     volume: '',
     fit: 'rescale',
   })
 
   const [addPace, setAddPace] = useState('')
+
+  const byDistance = modificationParameters.goal === 'distance';
+
+  const durationField = (
+    <TextField
+      label={byDistance ? "Time Limit (mins, optional)" : "Session Duration (mins)"}
+      name="sessionDuration"
+      type="number"
+      value={modificationParameters.duration}
+      onChange={(e) => {
+        setModificationParameters(prev => ({ ...prev, duration: e.target.value }));
+      }}
+    />
+  );
+  const volumeField = (
+    <TextField
+      label={byDistance ? "Session Distance (metres)" : "Distance Limit (metres, optional)"}
+      name="sessionVolume"
+      type="number"
+      value={modificationParameters.volume}
+      onChange={(e) => {
+        setModificationParameters(prev => ({ ...prev, volume: e.target.value }));
+      }}
+    />
+  );
 
   const handleOpen = () => { setOpen(true); };
   const handleClose = () => { setOpen(false); };
@@ -82,6 +108,21 @@ export default function ModificationDialog(
               </RadioGroup>
             </FormControl>
             <FormControl>
+              <FormLabel id="fit-goal-label">Fit the session by</FormLabel>
+              <RadioGroup
+                row
+                aria-labelledby="fit-goal-label"
+                name="FitGoal"
+                value={modificationParameters.goal}
+                onChange={(e) => {
+                  setModificationParameters(prev => ({ ...prev, goal: e.target.value as FitGoal }));
+                }}
+              >
+                <FormControlLabel value={'duration'} control={<Radio />} label="Duration"></FormControlLabel>
+                <FormControlLabel value={'distance'} control={<Radio />} label="Distance"></FormControlLabel>
+              </RadioGroup>
+            </FormControl>
+            <FormControl>
               <FormLabel id="fit-method-label">Fitting the session</FormLabel>
               <RadioGroup
                 row
@@ -100,7 +141,7 @@ export default function ModificationDialog(
                 <FormControlLabel
                   value={'trim'}
                   control={<Radio />}
-                  label="Stop when the time runs out"
+                  label={byDistance ? "Stop when the distance is reached" : "Stop when the time runs out"}
                 ></FormControlLabel>
               </RadioGroup>
             </FormControl>
@@ -137,24 +178,9 @@ export default function ModificationDialog(
                 aria-readonly={true}
               />
 
-              <TextField
-                label="Session Duration (mins)"
-                name="sessionDuration"
-                type="number"
-                value={modificationParameters.duration}
-                onChange={(e) => {
-                  setModificationParameters(prev => ({ ...prev, duration: e.target.value }));
-                }}
-              />
-              <TextField
-                label="Session Volume (meters)"
-                name="sessionVolume"
-                type="number"
-                value={modificationParameters.volume}
-                onChange={(e) => {
-                  setModificationParameters(prev => ({ ...prev, volume: e.target.value }));
-                }}
-              />
+              {/* The field the session is fitted to comes first, and the other is an optional limit. */}
+              {byDistance ? volumeField : durationField}
+              {byDistance ? durationField : volumeField}
             </Stack>
           </form>
         </DialogContent>

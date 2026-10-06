@@ -4,7 +4,7 @@
  * One programme is turned into one variant per pace given in the
  * modification dialog. Each variant keeps the shape of the original, has its
  * intervals recalculated for that swimmer's pace, and has its volume fitted
- * to the session's duration and volume by
+ * to the session's duration or distance by
  * {@link "./programmeAdjustment.ts"}.
  */
 
@@ -16,6 +16,7 @@ import {
   parseTarget,
   withoutAdjustmentSummary,
   type AdjustmentSummary,
+  type FitGoal,
   type FitMethod,
   type SessionTargets,
 } from "./programmeAdjustment.ts";
@@ -28,6 +29,11 @@ export { getIntervalTime, getRestTime } from "./swimTime.ts";
 export interface ModificationParameters {
   group: string;
   paces: string[];
+  /**
+   * Whether the programme is fitted to the session's duration or to its
+   * distance. The other of the two, when given, is kept as a limit.
+   */
+  goal: FitGoal;
   /** The session duration in minutes, as typed. Empty when unconstrained. */
   duration: string;
   /** The session volume in metres, as typed. Empty when unconstrained. */
@@ -66,6 +72,7 @@ export function modifiedProgrammes(
   const intervalRatios = measureIntervalRatios(elements, poolLength);
 
   const targets: SessionTargets = {
+    goal: parameters.goal,
     durationSeconds: parseTarget(parameters.duration, 60),
     volumeMetres: parseTarget(parameters.volume, 1),
   };
