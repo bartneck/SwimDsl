@@ -15,14 +15,14 @@ import { example_programme } from "../example_programme";
  */
 function TutorialPane(): React.ReactElement {
   const [value, setValue] = React.useState(example_programme);
-
   const theme = useTheme();
 
   return (
     <CodeMirror
       value={value}
-      height={`calc(100vh - ${theme.mixins.toolbar.minHeight}px)`}
+      height="100%"
       width="100%"
+      style={{ height: "100%" }}
       theme={theme.palette.mode}
       extensions={[swimdsl()]}
       onChange={(textContent: string) => {

@@ -1,3 +1,4 @@
+import React from "react";
 import AddIcon from "@mui/icons-material/Add";
 import CodeIcon from "@mui/icons-material/Code";
 import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded";
@@ -15,7 +16,6 @@ import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
-import React from "react";
 
 import {
   downloadPdf,
@@ -24,6 +24,9 @@ import {
   downloadHtml,
   uploadFile,
 } from "../logic/fileIo";
+import ModificationDialog from "./ModificationDialog.tsx";
+
+import GenerateDialog from "./GenerateDialog.tsx";
 
 interface FileMenuItem {
   text: string;
@@ -32,8 +35,11 @@ interface FileMenuItem {
 }
 
 interface NavBarProps {
+  selectedFile: string;
   swimdslProgramme: string;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
+  setNewProgrammeOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedFile: React.Dispatch<React.SetStateAction<string>>;
   swimlXml: string;
   htmlString: string;
   renderNode: React.RefObject<HTMLIFrameElement | null>;
@@ -80,14 +86,21 @@ function SwimDslLogo(): React.ReactElement {
  * @param swimdslProgramme - The UTF-8 text contents of the code editor.
  * @param setSwimdslProgramme - A function which takes UTF-8 text and replaces the
  *    contents of the code editor with the given text.
+ * @param swimlXml - The swiML XML of the swimDSL content.
+ * @param htmlString - The HTML file for the swiML HTML render.
+ * @param renderNode - The HTML render for the swiML session.
+ * @param setNewProgrammeOpen - A function which takes a boolean and sets the state of the new programme modal.
  * @param children - React nodes to place on the right hand side of the NavBar.
  *    Currently used to display the SidePanelSwitcher.
  *
  * @returns The react element used to render the Navigation bar.
  */
 function NavBar({
+  selectedFile,
   swimdslProgramme,
   setSwimdslProgramme,
+  setSelectedFile,
+  setNewProgrammeOpen,
   swimlXml,
   htmlString,
   renderNode,
@@ -105,7 +118,7 @@ function NavBar({
   }
 
   function newProgramme() {
-    window.open("./", "_blank")?.focus();
+    setNewProgrammeOpen(true);
   }
 
   function runFileAction(action: () => void | Promise<void>) {

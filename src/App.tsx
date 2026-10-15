@@ -12,6 +12,9 @@ import SidePaneSwitcher from "./components/SidePanelSwitcher";
 import SwimlDisplay from "./components/SwimlDisplay";
 import TutorialPane from "./components/TutorialPane";
 import PanelPage from "./types/PanelPage";
+import FileSelector from "./components/FileSelector.tsx";
+import NewProgrammeModal from "./components/NewProgrammeModal.tsx";
+import {handleSelectFile} from "./logic/filePersistence.ts";
 
 /**
  * The App compoent is the primary component of the SwimDSL web editor.
@@ -21,11 +24,14 @@ import PanelPage from "./types/PanelPage";
  * @returns The react element used to render the application.
  */
 function App(): React.ReactElement {
+  const [newProgrammeOpen, setNewProgrammeOpen] = React.useState(false);
+  const [selectedFile, setSelectedFile] = React.useState("");
   const [swimdslProgramme, setSwimdslProgramme] = React.useState("");
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [panelPage, setPanelPage] = React.useState<PanelPage | null>(
     PanelPage.RENDER,
   );
+  const [selectorOpen, setSelectorOpen] = React.useState(true);
   const [swimlXml, setSwimlXml] = React.useState("");
   const [htmlString, setHtmlString] = React.useState("");
   const renderNode = React.useRef<HTMLIFrameElement>(null);
@@ -41,9 +47,17 @@ function App(): React.ReactElement {
     [prefersDarkMode],
   );
 
-  const onChange = React.useCallback((val: string) => {
-    setSwimdslProgramme(val);
-  }, []);
+  const handleProgrammeChange = React.useCallback((value: string) => {
+    setSwimdslProgramme(value);
+    if (selectedFile) {
+      localStorage.setItem(selectedFile, value);
+    }
+  }, [selectedFile]);
+
+  if (localStorage.length === 0) {
+    localStorage.setItem("First Programme", "");
+    handleSelectFile("First Programme", selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
+  }
 
   /**
    * Renders the content for the currently selected side panel.
@@ -81,9 +95,20 @@ function App(): React.ReactElement {
           height: "100vh",
         }}
       >
-        <NavBar
+        <NewProgrammeModal
+          newProgrammeOpen={newProgrammeOpen}
+          setNewProgrammeOpen={setNewProgrammeOpen}
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
           swimdslProgramme={swimdslProgramme}
           setSwimdslProgramme={setSwimdslProgramme}
+        />
+        <NavBar
+          selectedFile={selectedFile}
+          swimdslProgramme={swimdslProgramme}
+          setSelectedFile={setSelectedFile}
+          setSwimdslProgramme={setSwimdslProgramme}
+          setNewProgrammeOpen={setNewProgrammeOpen}
           swimlXml={swimlXml}
           htmlString={htmlString}
           renderNode={renderNode}
@@ -91,11 +116,19 @@ function App(): React.ReactElement {
           <SidePaneSwitcher
             activePanelPage={panelPage}
             setPanelPage={setPanelPage}
+            selectorOpen={selectorOpen}
+            setSelectorOpen={setSelectorOpen}
           />
         </NavBar>
-        <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <Box
+          sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}
+        >
           <Box
-            sx={{ width: panelPage !== null ? "50%" : "100%" }}
+            sx={{
+              width: panelPage !== null ? "50%" : "100%",
+              minWidth: 0,
+              minHeight: 0,
+            }}
             borderRight="1px solid"
           >
             <CodeMirror
@@ -105,14 +138,35 @@ function App(): React.ReactElement {
               height="100%"
               theme={prefersDarkMode ? "dark" : "light"}
               extensions={[languageSupport, compiler]}
-              onChange={onChange}
+              onChange={handleProgrammeChange}
             />
           </Box>
           {panelPage !== null && (
-            <Box sx={{ width: "50%", overflow: "auto" }}>
+            <Box
+              sx={{
+                width: "50%",
+                overflow: "hidden",
+                minWidth: 0,
+                minHeight: 0,
+                flexGrow: 1,
+                transition: (theme) =>
+                  theme.transitions.create('margin', {
+                    easing: theme.transitions.easing.sharp,
+                    duration: theme.transitions.duration.leavingScreen,
+                  }),
+                marginRight: selectorOpen ? 0 : `-250px`,
+              }}
+            >
               {showPanel(panelPage)}
             </Box>
           )}
+          <FileSelector
+            selectedFile={selectedFile}
+            setSelectedFile={setSelectedFile}
+            swimdslProgramme={swimdslProgramme}
+            setSwimdslProgramme={setSwimdslProgramme}
+            selectorOpen={selectorOpen}
+          />
         </Box>
       </Box>
     </ThemeProvider>

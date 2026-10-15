@@ -10,6 +10,8 @@ import Typography from "@mui/material/Typography";
 import React from "react";
 
 import PanelPage from "../types/PanelPage";
+import MenuIcon from "@mui/icons-material/Menu";
+import IconButton from "@mui/material/IconButton";
 
 interface SidePanelItem {
   page: PanelPage | null;
@@ -55,6 +57,8 @@ const sideBarItems: SidePanelItem[] = [
 interface SidePaneSwitcherProps {
   activePanelPage: PanelPage | null;
   setPanelPage: React.Dispatch<React.SetStateAction<PanelPage | null>>;
+  selectorOpen: boolean;
+  setSelectorOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
@@ -70,6 +74,8 @@ interface SidePaneSwitcherProps {
 function SidePaneSwitcher({
   setPanelPage,
   activePanelPage,
+  selectorOpen,
+  setSelectorOpen,
 }: SidePaneSwitcherProps): React.ReactElement {
   const activePanelItem =
     sideBarItems.find(({ page }) => page === activePanelPage) ?? hiddenPanelItem;
