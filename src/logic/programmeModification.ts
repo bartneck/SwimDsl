@@ -8,22 +8,17 @@
  * {@link "./programmeAdjustment.ts"}.
  */
 
-import { newFile } from "./filePersistence.ts";
 import {
   describeAdjustment,
-  fitProgramme,
-  measureIntervalRatios,
-  parseTarget,
   withoutAdjustmentSummary,
   type AdjustmentSummary,
-  type FitGoal,
-  type FitMethod,
-  type SessionTargets,
-} from "./programmeAdjustment.ts";
+} from "./adjustmentSummary.ts";
+import { newFile } from "./filePersistence.ts";
+import { measureIntervalRatios } from "./intervalRatios.ts";
+import { fitProgramme, parseTarget } from "./programmeAdjustment.ts";
 import { getPoolLength, parseProgramme } from "./programmeParsing.ts";
+import type { FitGoal, FitMethod, SessionTargets } from "./programmeTypes.ts";
 import { timeToSeconds } from "./swimTime.ts";
-
-export { getIntervalTime, getRestTime } from "./swimTime.ts";
 
 /** The details collected by the modification dialog. */
 export interface ModificationParameters {
@@ -69,7 +64,7 @@ export function modifiedProgrammes(
   const source = withoutAdjustmentSummary(programme);
   const poolLength = getPoolLength(source);
   const elements = parseProgramme(source, poolLength);
-  const intervalRatios = measureIntervalRatios(elements, poolLength);
+  const intervalRatios = measureIntervalRatios(elements);
 
   const targets: SessionTargets = {
     goal: parameters.goal,

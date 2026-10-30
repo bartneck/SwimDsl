@@ -44,15 +44,22 @@ sets and only the intervals differ.
 
 | File | Status | Purpose |
 | --- | --- | --- |
-| `src/logic/swimTime.ts` | New | `m:ss` conversions and the constant-pace model. `getIntervalTime` and `getRestTime` moved here. |
-| `src/logic/programmeParsing.ts` | New | Line-oriented parser that keeps the source intact, classifies sections, and rewrites text in place. |
-| `src/logic/programmeAdjustment.ts` | New | Timing model, the duration and distance goals, the `rescale` and `trim` fitting methods, and the summary comment. |
-| `src/logic/programmeModification.ts` | Rewritten | Runs the steps above once per pace and saves the results. The public API is kept. |
+| `src/logic/swimTime.ts` | New | `m:ss` conversions and the constant-pace model. |
+| `src/logic/programmeTypes.ts` | New | Types shared across the modules: parsed programme elements, and the goal, targets and fit method of a session. |
+| `src/logic/programmeParsing.ts` | New | Line-oriented parser that keeps the source intact and classifies sections. |
+| `src/logic/programmeRewriting.ts` | New | Writes parsed programmes back out, editing text in place. |
+| `src/logic/programmeTiming.ts` | New | Timing model: how long a programme takes and how far it goes at a pace. |
+| `src/logic/intervalRatios.ts` | New | Measures how each written interval compares with the average for its distance. |
+| `src/logic/setResizing.ts` | New | Resizes a single set, by repetitions or by pool lengths. |
+| `src/logic/programmeAdjustment.ts` | New | Fits a programme to its targets: the duration and distance goals, the `rescale` method, and choosing between `rescale` and `trim`. |
+| `src/logic/programmeTrim.ts` | New | The `trim` method. |
+| `src/logic/adjustmentSummary.ts` | New | The summary comment. |
+| `src/logic/programmeModification.ts` | Rewritten | Runs the steps above once per pace and saves the results. `modifyProgram` keeps its signature. |
 | `src/components/ModificationDialog.tsx` | Modified | Adds the "Fit the session by" choice between duration and distance, and the "Fitting the session" choice between the two methods. |
 
 The original `programmeModification.ts` was one 268-line file doing string
-manipulation. The new code is split into four modules of about 1,870 lines,
-most of which is documentation comments.
+manipulation. The new code is split into eleven modules of about 1,840 lines,
+about 1,060 of them code and the rest comments and blank lines.
 
 ## Why the modifier was rewritten
 
@@ -146,7 +153,7 @@ flowchart TD
     P --> R[measureIntervalRatios<br/>once, from the authored programme]
     R --> L{for each pace}
     L --> F[fitProgramme]
-    F --> C[cloneProgramme + buildUnits]
+    F --> C[structuredClone + buildUnits]
     C --> Q{fit method}
     Q -- rescale --> RS[fitToTargets<br/>shrinkToFit / growToFit<br/>+ settleOnDistance]
     Q -- trim --> TR[cutToTargets]
@@ -159,9 +166,14 @@ flowchart TD
 ### `swimTime.ts`
 
 Small, pure helpers: `timeToSeconds`, `secondsToTime` (now rounds to whole
-seconds and zero-pads), `addTimes`, `swimSeconds`, `swimMetres`, and
-`restSecondsFor`. The old `getIntervalTime` and `getRestTime` live here now,
-with their signatures unchanged.
+seconds and zero-pads), and `swimSeconds`, plus the
+`ENDURANCE_REST_SECONDS` constant.
+
+### `programmeTypes.ts`
+
+Holds only types, so that any module can use them without depending on
+another: `ProgrammeElement` and the shapes inside it, `FitGoal` (`duration` or
+`distance`), `SessionTargets`, and `FitMethod` (`rescale` or `trim`).
 
 ### `programmeParsing.ts`
 
@@ -195,23 +207,58 @@ Design points:
   `warmdown`, `cooldown` or `swimdown`, and the main set if it contains
   `main`. Anything else, including instructions before the first header,
   counts as *other*.
-- **In-place rewriting.** `rewriteHead` changes only the repetition count or
-  the length token, keeping the original spacing and laps wording.
-  `rewriteRestDuration` changes only the duration after `on`/`with` on a
-  given line. A missing `N x` is never added, because that would change how
-  the instruction reads.
 - **Pool length.** Read from `set PoolLength`, defaulting to 25. All length
   changes are in whole pool lengths.
 
+### `programmeRewriting.ts`
+
+Writes a parsed programme back out, sharing `maskLine` and the head patterns
+with the parser.
+
+- `renderProgramme` joins the elements' source lines back together.
+- `rewriteHead` changes only the repetition count or the length token, keeping
+  the original spacing and laps wording. A missing `N x` is never added,
+  because that would change how the instruction reads.
+- `rewriteOnInterval` changes only the duration after `on` on a given line.
+
+### `programmeTiming.ts`
+
+Defines the *adjustable unit* (`AdjustableUnit`) and the timing model
+described [below](#how-a-programme-is-timed). `unitSeconds`, `unitMetres` and
+`totals` measure a unit or a whole programme at a pace.
+
+### `intervalRatios.ts`
+
+`measureIntervalRatios` works out the interval ratio of every `on` interval
+in the programme.
+
+### `setResizing.ts`
+
+Changes the size of one set (see
+[Resizing a single set](#resizing-a-single-set)). `shrinkUnit` and `growUnit`
+take volume out and add it, `resizeUnit` rewrites the set, `smallestStepUp`
+finds the step used to land on a distance, and the warm up and warm down
+budget is checked and spent here.
+
 ### `programmeAdjustment.ts`
 
-Holds the timing model, the `FitGoal` (`duration` or `distance`), and both
-fitting methods (described below), plus
-`describeAdjustment` / `withoutAdjustmentSummary` for the summary comment and
-`parseTarget` for the dialog fields. Every parsed instruction becomes an
-*adjustable unit*. Instructions that cannot be resized (time-based lengths,
-blocks with no `N x`) are still units, so their time counts towards the
-session.
+`fitProgramme` is the entry point for one pace. It builds the adjustable
+units, runs one of the fitting methods (described below), rewrites the
+intervals, and summarises the result. Every parsed instruction becomes a
+unit. Instructions that cannot be resized (time-based lengths, blocks with no
+`N x`) are still units, so their time counts towards the session. This file
+also holds all of `rescale` except the resizing itself (the tiers, passes and
+`settleOnDistance`), and `parseTarget` for the dialog fields.
+
+### `programmeTrim.ts`
+
+`cutToTargets` is the `trim` method.
+
+### `adjustmentSummary.ts`
+
+`describeAdjustment` writes the [summary comment](#the-summary-comment) and
+`withoutAdjustmentSummary` removes it. `summarise` totals up what the fitted
+programme asks of the swimmer.
 
 ### `programmeModification.ts`
 
@@ -531,8 +578,8 @@ doesn't pile up comments.
   dialog defaults it to `rescale`. At runtime, any value other than `"trim"`
   is treated as `rescale`, so a missing value adjusts rather than silently
   cutting.
-- `getIntervalTime` and `getRestTime` are still exported from
-  `programmeModification.ts`, re-exported from `swimTime.ts`.
+- `getIntervalTime` and `getRestTime` have been removed, along with the
+  re-export from `programmeModification.ts`, because nothing called them.
 - Behaviour kept unchanged on purpose: `newFile` still won't overwrite an
   existing file with the same name, `group` (Individual/Group) is still
   unused, and intervals still use the "endurance" rest of 15 s.
@@ -540,9 +587,16 @@ doesn't pile up comments.
 
 ## Verification
 
-- `tsc -b` (strict settings, including `noUncheckedIndexedAccess` and
-  `exactOptionalPropertyTypes`), `eslint` (`strictTypeChecked`), and
-  `npm run build` all pass.
+- `tsc -p tsconfig.app.json` (strict settings, including
+  `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`), `eslint`
+  (`strictTypeChecked`), and `vite build` all pass.
+- `tsc -b`, and so `npm run build`, stops on an error in
+  `codemirror-swimdsl/src/buildAst.ts` when the submodule is on `201aa1b`,
+  which is behind the commit this repository records (`d853cae`). A full build
+  has not been confirmed with the submodule on `d853cae`.
+- Splitting the modification code into the current modules changed no
+  behaviour: `modifiedProgrammes` gave byte-identical output before and after
+  across 64,064 generated programmes.
 - The project has no test runner, so behaviour was checked with scripts that
   call `modifiedProgrammes` directly and parse every output with the real
   SwimDSL grammar (the Lezer parser from `codemirror-lang-swimdsl`). They
@@ -642,7 +696,7 @@ this document. They are not fixed yet. Each fix is small and local.
    `1 x 75 Freestyle`. That is valid, but reads oddly.
 4. **Constant pace.** Every distance and stroke, including kick and drill,
    is timed at the same pace per 100 m (see the existing TODO in
-   `getIntervalTime`).
+   `swimSeconds`).
 5. **Rest assumptions.** `in-out N` is timed as 5 s per swimmer waited on.
    Instructions with no rest are timed as continuous, with no turnaround
    time. Recalculated intervals always use the 15 s endurance rest.
@@ -677,7 +731,7 @@ this document. They are not fixed yet. Each fix is small and local.
 | `SWEEP_FRACTIONS` | 0.25, 0.5, 1, ∞ | `programmeAdjustment.ts` | Cumulative per-set allowance for each cutting pass |
 | `GROWTH_FIRST_FRACTION` / `GROWTH_LAST_FRACTION` | 0.25 / 64 | `programmeAdjustment.ts` | Growth allowance, doubling between these values |
 | `REPEATED_SET_GROWTH_WEIGHT` | 2 | `programmeAdjustment.ts` | Growth allowance multiplier for sets with `N x` |
-| `IN_OUT_SECONDS_PER_SWIMMER` | 5 | `programmeAdjustment.ts` | Assumed wait per swimmer for `in-out` |
+| `IN_OUT_SECONDS_PER_SWIMMER` | 5 | `programmeTiming.ts` | Assumed wait per swimmer for `in-out` |
 | `TOLERANCE_SECONDS` | 0.5 | `programmeAdjustment.ts` | Allowance for rounding when comparing against the duration |
 | `ENDURANCE_REST_SECONDS` | 15 | `swimTime.ts` | Rest added when an interval is recalculated |
 | `DEFAULT_POOL_LENGTH` | 25 | `programmeParsing.ts` | Used when the programme has no `set PoolLength` |

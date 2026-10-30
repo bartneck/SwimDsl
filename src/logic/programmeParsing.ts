@@ -9,91 +9,34 @@
  * repetition count, the length, and the interval) are rewritten in place.
  */
 
+import type {
+  InnerInstruction,
+  InstructionLength,
+  InstructionRest,
+  ProgrammeElement,
+  SectionKind,
+} from "./programmeTypes.ts";
 import { timeToSeconds } from "./swimTime.ts";
 
-/**
- * The part a set plays in the session, taken from the `>` headers a
- * programme is divided up with.
- */
-export type SectionKind = "warmUp" | "mainSet" | "warmDown" | "other";
-
-/** How the length of an instruction is written in the source. */
-export type InstructionLength =
-  | { kind: "distance"; metres: number }
-  | { kind: "laps"; laps: number; metres: number }
-  | { kind: "time"; seconds: number }
-  | { kind: "block"; metres: number; fixedSeconds: number };
-
-/** How an instruction specifies rest, if it specifies any at all. */
-export type InstructionRest =
-  | { kind: "sinceStart"; seconds: number }
-  | { kind: "afterStop"; seconds: number }
-  | { kind: "inOut"; swimmers: number }
-  | { kind: "none" };
-
-/**
- * An instruction written inside a `{ ... }` block. The lines of a block are
- * not resized on their own, but they still have to be timed, and their
- * intervals still have to be rewritten when the pace changes.
- */
-export interface InnerInstruction {
-  /** Where the instruction sits among the block's own lines. */
-  lineIndex: number;
-  /** The repetitions applied by any blocks nested around this line. */
-  multiplier: number;
-  repetitions: number;
-  /** The distance of one repetition, in metres. */
-  metres: number;
-  /** The time of one repetition, when it is written as a length of time. */
-  fixedSeconds: number;
-  rest: InstructionRest;
-}
-
-/** A line carried through to the output exactly as it was written. */
-export interface VerbatimElement {
-  kind: "verbatim";
-  lines: string[];
-}
-
-/** A `> Some Heading` line, which starts a new section of the programme. */
-export interface HeaderElement {
-  kind: "header";
-  lines: string[];
-  section: SectionKind;
-}
-
-/**
- * A swim instruction, either a single line or a whole `{ ... }` block. The
- * source lines are kept alongside the parsed values so that an instruction
- * can be rewritten without regenerating the rest of its line.
- */
-export interface InstructionElement {
-  kind: "instruction";
-  lines: string[];
-  section: SectionKind;
-  repetitions: number;
-  /** Whether the source spells out an `N x` repetition count. */
-  hasRepetitionOperator: boolean;
-  length: InstructionLength;
-  rest: InstructionRest;
-  /** The instructions inside a `{ ... }` block, and empty for a single line. */
-  inner: InnerInstruction[];
-}
-
-export type ProgrammeElement =
-  | VerbatimElement
-  | HeaderElement
-  | InstructionElement;
-
 /** The pool length assumed when a programme does not set one. */
-export const DEFAULT_POOL_LENGTH = 25;
+const DEFAULT_POOL_LENGTH = 25;
 
-// The head of an instruction: an optional repetition count followed by the
-// length. The separators are captured too, so that a rewritten head keeps the
-// spacing of the original.
-const HEAD_PATTERN = /^(?:(\d+)(\s*x\s+))?(\d+:\d+|\d+(?:\s+laps?)?)(\s+)(?=\S)/;
-const BLOCK_OPEN_PATTERN = /^(?:(\d+)(\s*x\s+))?\{/;
+// The optional repetition count an instruction or a block opens with. The
+// separator is captured too, so that a rewritten head keeps the spacing of the
+// original.
+const REPETITIONS_PATTERN = String.raw`^(?:(\d+)(\s*x\s+))?`;
+export const HEAD_PATTERN = new RegExp(
+  REPETITIONS_PATTERN + String.raw`(\d+:\d+|\d+(?:\s+laps?)?)(\s+)(?=\S)`,
+);
+export const BLOCK_OPEN_PATTERN = new RegExp(REPETITIONS_PATTERN + String.raw`\{`);
 const POOL_LENGTH_PATTERN = /^\s*set\s+PoolLength\s+(\d+)/;
+// A quoted string, capturing its closing quote, or a comment to the line's end.
+const STRING_OR_COMMENT_PATTERN = /"(?:\\[\s\S]|[^"])*("?)|#[\s\S]*/g;
+
+/** Build the pattern for a rest keyword, capturing the duration after it. */
+export function restDurationPattern(keyword: "on" | "with"): RegExp {
+  return new RegExp(String.raw`(?:^|\s)${keyword}\s+(\d+:\d+)`);
+}
 
 /**
  * Blank out everything a parser should not look inside, keeping the length of
@@ -106,43 +49,13 @@ const POOL_LENGTH_PATTERN = /^\s*set\s+PoolLength\s+(\d+)/;
  * @returns The line with strings and comments blanked out.
  */
 export function maskLine(line: string): string {
-  let masked = "";
-  let inString = false;
-
-  for (let index = 0; index < line.length; index++) {
-    const character = line[index] ?? "";
-
-    if (inString) {
-      if (character === "\\" && index + 1 < line.length) {
-        masked += "  ";
-        index++;
-        continue;
-      }
-      if (character === '"') {
-        inString = false;
-        masked += '"';
-      } else {
-        masked += " ";
-      }
-      continue;
-    }
-
-    if (character === '"') {
-      inString = true;
-      masked += '"';
-      continue;
-    }
-
-    if (character === "#") {
-      // Everything from here to the end of the line is a comment.
-      masked += " ".repeat(line.length - index);
-      break;
-    }
-
-    masked += character;
-  }
-
-  return masked;
+  return line.replace(
+    STRING_OR_COMMENT_PATTERN,
+    (text: string, closing: string | undefined) =>
+      closing === undefined
+        ? " ".repeat(text.length)
+        : `"${" ".repeat(text.length - 1 - closing.length)}${closing}`,
+  );
 }
 
 /**
@@ -161,25 +74,19 @@ export function getPoolLength(programme: string): number {
   return DEFAULT_POOL_LENGTH;
 }
 
-/**
- * Work out which part of the session a `>` header introduces.
- *
- * @param header The text of the header line, including the `>`.
- * @returns The section the header starts.
- */
+/** Work out which part of the session a `>` header line introduces. */
 function classifyHeader(header: string): SectionKind {
   const words = header.toLowerCase().replace(/[^a-z]/g, "");
 
   if (words.includes("warmup")) return "warmUp";
-  if (
-    words.includes("warmdown") ||
-    words.includes("cooldown") ||
-    words.includes("swimdown")
-  ) {
-    return "warmDown";
-  }
+  if (/warmdown|cooldown|swimdown/.test(words)) return "warmDown";
   if (words.includes("main")) return "mainSet";
   return "other";
+}
+
+/** Read a repetition count, which is one when none is spelled out. */
+function parseRepetitions(count: string | undefined): number {
+  return Number(count ?? "1") || 1;
 }
 
 /**
@@ -204,6 +111,20 @@ function parseLengthToken(token: string, poolLength: number): InstructionLength 
 }
 
 /**
+ * The distance a length covers, in metres. Lengths written as a time swim an
+ * unknown distance, so they count as none.
+ */
+export function lengthMetres(length: InstructionLength): number {
+  return length.kind === "time" ? 0 : length.metres;
+}
+
+/** The part of a length that is written as a time, in seconds. */
+export function lengthFixedSeconds(length: InstructionLength): number {
+  if (length.kind === "time") return length.seconds;
+  return length.kind === "block" ? length.fixedSeconds : 0;
+}
+
+/**
  * Read the rest specification of an instruction, if it has one.
  *
  * @param line The line carrying the instruction's modifiers. The modifiers of
@@ -214,12 +135,12 @@ function parseLengthToken(token: string, poolLength: number): InstructionLength 
 function parseRest(line: string): InstructionRest {
   const masked = maskLine(line);
 
-  const sinceStart = /(?:^|\s)on\s+(\d+:\d+)/.exec(masked);
+  const sinceStart = restDurationPattern("on").exec(masked);
   if (sinceStart?.[1] !== undefined) {
     return { kind: "sinceStart", seconds: timeToSeconds(sinceStart[1]) };
   }
 
-  const afterStop = /(?:^|\s)with\s+(\d+:\d+)/.exec(masked);
+  const afterStop = restDurationPattern("with").exec(masked);
   if (afterStop?.[1] !== undefined) {
     return { kind: "afterStop", seconds: timeToSeconds(afterStop[1]) };
   }
@@ -232,19 +153,9 @@ function parseRest(line: string): InstructionRest {
   return { kind: "none" };
 }
 
-/**
- * Count how far a line opens or closes `{ ... }` blocks.
- *
- * @param masked A masked line, so that braces inside strings are ignored.
- * @returns The change in block nesting depth the line causes.
- */
+/** The change in block nesting depth a masked line causes. */
 function braceDepthChange(masked: string): number {
-  let depth = 0;
-  for (const character of masked) {
-    if (character === "{") depth++;
-    if (character === "}") depth--;
-  }
-  return depth;
+  return masked.split("{").length - masked.split("}").length;
 }
 
 /**
@@ -271,7 +182,7 @@ function parseBlockContents(
 
     const opening = BLOCK_OPEN_PATTERN.exec(masked);
     if (opening) {
-      multipliers.push(multiplier * (Number(opening[1] ?? "1") || 1));
+      multipliers.push(multiplier * parseRepetitions(opening[1]));
       continue;
     }
 
@@ -288,9 +199,9 @@ function parseBlockContents(
     contents.push({
       lineIndex,
       multiplier,
-      repetitions: Number(head[1] ?? "1") || 1,
-      metres: length.kind === "distance" || length.kind === "laps" ? length.metres : 0,
-      fixedSeconds: length.kind === "time" ? length.seconds : 0,
+      repetitions: parseRepetitions(head[1]),
+      metres: lengthMetres(length),
+      fixedSeconds: lengthFixedSeconds(length),
       rest: parseRest(line),
     });
   }
@@ -298,13 +209,7 @@ function parseBlockContents(
   return contents;
 }
 
-/**
- * Total up the distance and the fixed time of one pass through a block.
- *
- * @param contents The instructions inside the block.
- * @returns The distance swum, and the time spent on lengths written as a
- *   time, in one pass through the block.
- */
+/** Total up the distance and the fixed time of one pass through a block. */
 function measureBlockContents(contents: InnerInstruction[]): {
   metres: number;
   fixedSeconds: number;
@@ -370,7 +275,7 @@ export function parseProgramme(
         kind: "instruction",
         lines: blockLines,
         section,
-        repetitions: Number(opening[1] ?? "1") || 1,
+        repetitions: parseRepetitions(opening[1]),
         hasRepetitionOperator: opening[1] !== undefined,
         length: { kind: "block", ...measureBlockContents(contents) },
         rest: parseRest(blockLines[blockLines.length - 1] ?? ""),
@@ -385,7 +290,7 @@ export function parseProgramme(
         kind: "instruction",
         lines: [line],
         section,
-        repetitions: Number(head[1] ?? "1") || 1,
+        repetitions: parseRepetitions(head[1]),
         hasRepetitionOperator: head[1] !== undefined,
         length: parseLengthToken(head[3], poolLength),
         rest: parseRest(line),
@@ -398,140 +303,4 @@ export function parseProgramme(
   }
 
   return elements;
-}
-
-/**
- * Take a copy of a parsed programme, so that it can be rewritten once per
- * pace without disturbing the original.
- *
- * @param elements The parsed programme.
- * @returns An independent copy of the elements.
- */
-export function cloneProgramme(
-  elements: ProgrammeElement[],
-): ProgrammeElement[] {
-  return elements.map(element => {
-    if (element.kind !== "instruction") {
-      return { ...element, lines: [...element.lines] };
-    }
-    return {
-      ...element,
-      lines: [...element.lines],
-      length: { ...element.length },
-      rest: { ...element.rest },
-      inner: element.inner.map(inner => ({ ...inner, rest: { ...inner.rest } })),
-    };
-  });
-}
-
-/**
- * Write a parsed programme back out as SwimDSL source.
- *
- * @param elements The parsed programme.
- * @returns The source text of the programme.
- */
-export function renderProgramme(elements: ProgrammeElement[]): string {
-  return elements.flatMap(element => element.lines).join("\n");
-}
-
-/**
- * Write a length back out in the style it was written in originally.
- *
- * @param length The new length.
- * @param original The length token as it appeared in the source.
- * @returns The new length token.
- */
-function formatLength(length: InstructionLength, original: string): string {
-  switch (length.kind) {
-    case "distance":
-      return String(length.metres);
-    case "laps":
-      return original.replace(/^\d+/, String(length.laps));
-    default:
-      return original;
-  }
-}
-
-/**
- * Rewrite the repetition count and the length in the head of an instruction,
- * keeping the spacing, and everything that follows, exactly as it was. An
- * instruction that does not spell out an `N x` repetition count keeps its
- * implied single repetition, since inventing one changes how the instruction
- * reads.
- *
- * @param instruction The instruction to rewrite, modified in place.
- * @param repetitions The new repetition count.
- * @param length The new length, or null to leave the length alone.
- */
-export function rewriteHead(
-  instruction: InstructionElement,
-  repetitions: number,
-  length: InstructionLength | null,
-): void {
-  const line = instruction.lines[0] ?? "";
-  const indent = /^\s*/.exec(line)?.[0] ?? "";
-  const body = line.slice(indent.length);
-  const maskedBody = maskLine(line).slice(indent.length);
-
-  const opening = BLOCK_OPEN_PATTERN.exec(maskedBody);
-  if (opening) {
-    if (opening[1] !== undefined) {
-      const head = opening[1] + (opening[2] ?? " x ");
-      instruction.lines[0] =
-        indent + String(repetitions) + (opening[2] ?? " x ") + body.slice(head.length);
-      instruction.repetitions = repetitions;
-    }
-    return;
-  }
-
-  const match = HEAD_PATTERN.exec(maskedBody);
-  if (match?.[3] === undefined) return;
-
-  const repetitionPart =
-    match[1] === undefined ? "" : String(repetitions) + (match[2] ?? " x ");
-  const lengthToken =
-    length === null ? match[3] : formatLength(length, match[3]);
-
-  instruction.lines[0] =
-    indent +
-    repetitionPart +
-    lengthToken +
-    (match[4] ?? " ") +
-    body.slice(match[0].length);
-
-  if (match[1] !== undefined) instruction.repetitions = repetitions;
-  if (length !== null) instruction.length = length;
-}
-
-/**
- * Rewrite the duration of a rest specification.
- *
- * @param instruction The instruction to rewrite, modified in place.
- * @param keyword The rest keyword whose duration should change.
- * @param duration The new duration, written as `m:ss`.
- * @param lineIndex Which of the instruction's lines to rewrite. The modifiers
- *   of a block sit on its closing line, so the last line is the default.
- */
-export function rewriteRestDuration(
-  instruction: InstructionElement,
-  keyword: "on" | "with",
-  duration: string,
-  lineIndex = instruction.lines.length - 1,
-): void {
-  const line = instruction.lines[lineIndex] ?? "";
-  const match = new RegExp(`(^|\\s)(${keyword})(\\s+)(\\d+:\\d+)`).exec(
-    maskLine(line),
-  );
-  if (!match) return;
-
-  const start =
-    match.index +
-    (match[1] ?? "").length +
-    (match[2] ?? "").length +
-    (match[3] ?? "").length;
-
-  instruction.lines[lineIndex] =
-    line.slice(0, start) +
-    duration +
-    line.slice(start + (match[4] ?? "").length);
 }
