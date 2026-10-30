@@ -24,6 +24,8 @@ import {
 } from "../logic/fileIo";
 import ModificationDialog from "./ModificationDialog.tsx";
 
+import GenerateDialog from "./GenerateDialog.tsx";
+
 interface FileMenuItem {
   text: string;
   icon: React.ReactElement;
@@ -148,6 +150,11 @@ function NavBar({
           swimdslProgramme={swimdslProgramme}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
+        />
+
+        <GenerateDialog
+          setSelectedFile={setSelectedFile}
+          setSwimdslProgramme={setSwimdslProgramme}
         />
 
         <Menu open={open} anchorEl={anchorEl} onClose={closeFileMenu}>

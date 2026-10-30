@@ -13,7 +13,8 @@
     "noImplicitThis": true,
     "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
-    "allowUnreachableCode": false
+    "allowUnreachableCode": false,
+    "types": ["node"]
   },
   "files": [],
   "references": [
