@@ -1,5 +1,5 @@
 /**
- * Fitting a swim programme to a session's duration and volume.
+ * Fitting a swim programme to a session's duration or distance.
  *
  * A programme is written once, but it has to work for swimmers of different
  * speeds and for pools booked for different lengths of time. Rewriting the
@@ -26,6 +26,11 @@
  *   twice as readily, since another 100 on the end of `5 x 100` is the same
  *   set asked for a little longer where the same metres on a lone 400 make a
  *   swim the coach never wrote.
+ *
+ * A session is fitted either to a duration or to a distance (see
+ * {@link FitGoal}). Fitted to a duration, every swimmer fills the same time
+ * and swims a distance to suit their pace. Fitted to a distance, every
+ * swimmer swims the same sets, and only the intervals change with pace.
  */
 
 import {
@@ -47,8 +52,21 @@ import {
   timeToSeconds,
 } from "./swimTime.ts";
 
+/**
+ * What a programme is fitted to.
+ *
+ * `duration` fills the session's time, so that swimmers of different speeds
+ * swim different distances for about the same training load. `distance`
+ * brings the programme to the session's volume, so that every swimmer swims
+ * the same distance whatever their pace. Whichever of the two targets is not
+ * the goal still applies as a limit the programme is kept within.
+ */
+export type FitGoal = "duration" | "distance";
+
 /** What the session has to fit into. */
 export interface SessionTargets {
+  /** Which of the two targets the programme is fitted to. */
+  goal: FitGoal;
   /** The length of the session in seconds, or null when it is open ended. */
   durationSeconds: number | null;
   /** The volume of the session in metres, or null when it is unconstrained. */
@@ -78,8 +96,9 @@ export interface FittedProgramme {
  *
  * `rescale` resizes the sets of the programme, keeping its shape from the
  * first length to the last. `trim` leaves the sets as the coach wrote them
- * and simply stops the programme where the session runs out, which is the
- * blunter option but the one that leaves every set that survives untouched.
+ * and simply stops the programme where the session runs out, or where the
+ * distance is reached, which is the blunter option but the one that leaves
+ * every set that survives untouched.
  */
 export type FitMethod = "rescale" | "trim";
 
@@ -227,7 +246,8 @@ export function measureIntervalRatios(
  * @param elements The parsed programme, which is left untouched.
  * @param intervalRatios The interval ratios from {@link measureIntervalRatios}.
  * @param paceSecondsPer100 The swimmer's pace, in seconds per 100 metres.
- * @param targets The duration and volume the session has to fit into.
+ * @param targets The goal the programme is fitted to, and the duration and
+ *   volume the session has to fit into.
  * @param poolLength The pool length the programme is written for.
  * @param method Whether to resize the sets of the programme or simply to stop
  *   the programme where the session runs out.
@@ -280,15 +300,18 @@ export function describeAdjustment(
   summary: AdjustmentSummary,
   targets: SessionTargets,
 ): string {
-  const target =
+  const volumeTarget =
+    targets.volumeMetres === null ? "" : ` of ${String(targets.volumeMetres)}`;
+  const durationTarget =
     targets.durationSeconds === null
       ? ""
       : ` of ${secondsToTime(targets.durationSeconds)}`;
 
   return (
     `${SUMMARY_PREFIX}${secondsToTime(summary.paceSecondsPer100)} per 100 pace: ` +
-    `${summary.totalMetres} metres in ${secondsToTime(summary.totalSeconds)}` +
-    `${target}, training load ${secondsToTime(summary.loadSeconds)}.`
+    `${String(summary.totalMetres)} metres${volumeTarget} ` +
+    `in ${secondsToTime(summary.totalSeconds)}${durationTarget}, ` +
+    `training load ${secondsToTime(summary.loadSeconds)}.`
   );
 }
 
@@ -491,6 +514,18 @@ function totals(
 function secondsPerMetre(unit: AdjustableUnit, pace: number): number {
   const metres = unitMetres(unit);
   return metres > 0 ? unitSeconds(unit, pace) / metres : 0;
+}
+
+/** Whether the programme currently runs past the session's duration. */
+function exceedsDuration(
+  units: AdjustableUnit[],
+  pace: number,
+  targets: SessionTargets,
+): boolean {
+  return (
+    targets.durationSeconds !== null &&
+    totals(units, pace).seconds > targets.durationSeconds + TOLERANCE_SECONDS
+  );
 }
 
 /** Whether the programme is currently longer or bigger than the targets. */
@@ -937,11 +972,123 @@ function growToFit(
   }
 }
 
+/** The smallest single step a set can take up, and how to take it back. */
+interface StepUp {
+  unit: AdjustableUnit;
+  metres: number;
+  apply: () => void;
+  undo: () => void;
+}
+
+/**
+ * The smallest amount of volume a set can take on in one go: one more
+ * repetition, or one more length of the pool on each repetition. A
+ * repetition is preferred when the two are the same size, as it is whenever
+ * volume is added.
+ */
+function smallestStepUp(
+  unit: AdjustableUnit,
+  poolLength: number,
+): StepUp | null {
+  const instruction = unit.instruction;
+  const repetitions = instruction.repetitions;
+  const perRepetition = unit.perRepetitionMetres;
+  if (perRepetition <= 0) return null;
+
+  const originalLength = instruction.length;
+  const lengthened = unit.canChangeLength
+    ? lengthOf(unit, perRepetition + poolLength, poolLength)
+    : null;
+  const lengthStep = repetitions * poolLength;
+
+  if (
+    unit.canChangeRepetitions &&
+    (lengthened === null || perRepetition <= lengthStep)
+  ) {
+    return {
+      unit,
+      metres: perRepetition,
+      apply: () => {
+        rewriteHead(instruction, repetitions + 1, null);
+      },
+      undo: () => {
+        rewriteHead(instruction, repetitions, null);
+      },
+    };
+  }
+
+  if (lengthened === null) return null;
+
+  return {
+    unit,
+    metres: lengthStep,
+    apply: () => {
+      rewriteHead(instruction, repetitions, lengthened);
+      unit.perRepetitionMetres = perRepetition + poolLength;
+    },
+    undo: () => {
+      rewriteHead(instruction, repetitions, originalLength);
+      unit.perRepetitionMetres = perRepetition;
+    },
+  };
+}
+
+/**
+ * Bring a programme fitted to a distance as close to that distance as its
+ * sets allow.
+ *
+ * Resizing stops at or under the volume, which is right for a limit but not
+ * for a distance the coach asked for: a programme that only moves in steps
+ * of 100 would otherwise finish 90 metres short of a target it could have
+ * passed by 10. One more step is taken when it lands nearer the distance
+ * than the programme already is, as long as the session still fits its
+ * duration. Tiers are offered the step in the order they take on volume, and
+ * within a tier the smallest step is taken.
+ *
+ * @param tiers The tiers of the programme, in the order they take on volume.
+ */
+function settleOnDistance(
+  units: AdjustableUnit[],
+  tiers: AdjustableUnit[][],
+  pace: number,
+  targets: SessionTargets,
+  poolLength: number,
+  budget: ScaffoldBudget,
+): void {
+  if (targets.volumeMetres === null) return;
+
+  const shortfall = targets.volumeMetres - totals(units, pace).metres;
+  if (shortfall <= 0) return;
+
+  for (const tier of tiers) {
+    const steps = growthOrder(tier)
+      .map(unit => smallestStepUp(unit, poolLength))
+      .filter(
+        (step): step is StepUp =>
+          step !== null &&
+          // Going past the distance must still leave the programme nearer it.
+          step.metres - shortfall < shortfall &&
+          step.metres <= budgetFor(step.unit, budget),
+      )
+      .sort((a, b) => a.metres - b.metres);
+
+    for (const step of steps) {
+      step.apply();
+      if (exceedsDuration(units, pace, targets)) {
+        step.undo();
+        continue;
+      }
+      spend(step.unit, budget, step.metres);
+      return;
+    }
+  }
+}
+
 /**
  * Stop a programme where the session runs out, rather than resizing it.
  *
  * The sets are swum as written until one of them would take the session past
- * its duration or its volume. That set is cut down to however many
+ * its duration or its distance. That set is cut down to however many
  * repetitions still fit, and the programme ends there. A set that is swum
  * once, and so cannot be cut down, is dropped along with everything after it.
  *
@@ -1030,10 +1177,18 @@ function fitToTargets(
     remaining: SCAFFOLD_BUDGET_FRACTION * (scaffoldMetres ?? 0),
   };
 
+  const growthTiers = [...tiers].reverse();
+
   if (exceedsTargets(units, pace, targets)) {
     shrinkToFit(units, tiers, pace, targets, poolLength, budget);
   } else {
-    growToFit(units, [...tiers].reverse(), pace, targets, poolLength, budget);
+    growToFit(units, growthTiers, pace, targets, poolLength, budget);
+  }
+
+  // A duration is a limit the session cannot run past, but a distance is
+  // something to arrive at, so it is allowed to land just beyond.
+  if (targets.goal === "distance") {
+    settleOnDistance(units, growthTiers, pace, targets, poolLength, budget);
   }
 }
 

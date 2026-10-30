@@ -1,4 +1,3 @@
-import React from "react";
 import AddIcon from "@mui/icons-material/Add";
 import CodeIcon from "@mui/icons-material/Code";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
@@ -14,6 +13,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import React from "react";
 
 import {
   downloadPdf,
@@ -146,7 +146,6 @@ function NavBar({
         <Button id="basic-button" onClick={openFileMenu} color="inherit">
           File
         </Button>
-
         <ModificationDialog
           swimdslProgramme={swimdslProgramme}
           selectedFile={selectedFile}
