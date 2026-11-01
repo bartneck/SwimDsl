@@ -14,7 +14,7 @@ import TextField from "@mui/material/TextField";
 
 // import {TextField} from "@mui/material";
 import {modifyProgram, ModificationParameters} from "../logic/programmeModification.ts";
-import {FitGoal, FitMethod} from "../logic/programmeAdjustment.ts";
+import {FitGoal, FitMethod} from "../logic/programmeTypes.ts";
 
 
 
