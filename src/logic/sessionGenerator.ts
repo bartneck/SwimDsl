@@ -26,6 +26,22 @@ export interface GeneratorSettings {
   equipment: string[];
   weeklyRampPercent: number;
 }
+type PaceZone = keyof GeneratorSettings["pace"];
+
+const PACE_ZONES: PaceZone[] = ["easy", "endurance", "threshold", "racePace", "max"];
+
+/** Resolve disabled zones by effort order, preferring the lower zone on ties. */
+function resolvePace(settings: GeneratorSettings, requested: PaceZone): PaceZone {
+  const enabled = PACE_ZONES.filter((zone) => settings.pace[zone] > 0);
+  const nearest = enabled.reduce<PaceZone | undefined>((best, zone) => {
+    const difference = Math.abs(PACE_ZONES.indexOf(zone) - PACE_ZONES.indexOf(requested));
+    return best === undefined || difference < Math.abs(PACE_ZONES.indexOf(best) - PACE_ZONES.indexOf(requested))
+      ? zone : best;
+  }, undefined);
+  if (nearest === undefined) throw new Error("Enable at least one pace to generate programmes");
+  return nearest;
+}
+
 interface SwimSet {
   kind: "set";
   repetitions: number;
@@ -36,7 +52,7 @@ interface SwimSet {
   strokeModifier?: string;
   intensityPercent?: number;
   intensityPercentEnd?: number;
-  intensityZone?: string;
+  intensityZone?: PaceZone;
   restKind?: "on" | "with" | "in-out";
   sendoffSeconds: number;
   inOutCount?: number;
@@ -50,7 +66,7 @@ interface SwimGroup {
   kind: "group";
   repetitions?: number;
   items: SwimItem[];
-  intensityZone?: string;
+  intensityZone?: PaceZone;
   description?: string;
 }
 
@@ -190,14 +206,15 @@ const AEROBIC_FADE_EXPONENT = 1.025;
 
 function swimTimeSeconds(distance: number, stroke: string, settings: GeneratorSettings): number {
   const per100 = pacePer100(stroke, settings);
-  const roughSeconds = per100 * (distance / 100);
+  const distanceMetres = settings.distanceUnit === "yards" ? distance * 0.9144 : distance;
+  const roughSeconds = per100 * (distanceMetres / 100);
   const exponent = roughSeconds <= AEROBIC_TRANSITION_SECONDS ? SPRINT_FADE_EXPONENT : AEROBIC_FADE_EXPONENT;
-  return per100 * Math.pow(distance / 100, exponent);
+  return per100 * Math.pow(distanceMetres / 100, exponent);
 }
 
 /**
  * Calculates a sendoff interval (swim time + rest) for a given distance and stroke.
- * @param distance distance in metres
+ * @param distance distance in the selected programme unit
  * @param restRatio ratio of rest time to swim time
  * @param stroke stroke type
  * @returns rest time in seconds
@@ -226,7 +243,7 @@ function getStrokeDistribution(
   );
 
   if (entries.length === 0) {
-    return { strokes: ["Freestyle"], weights: [1] };
+    throw new Error("Enable at least one stroke to generate programmes");
   }
 
   return {
@@ -248,7 +265,7 @@ function pickStroke(settings: GeneratorSettings, preferred: string, fallbackPool
   }
   const { strokes, weights } = getStrokeDistribution(settings);
   const pool = fallbackPool ? strokes.filter((s) => fallbackPool.includes(s)) : strokes;
-  if (pool.length === 0) return preferred;
+  if (pool.length === 0) return pickWeighted(strokes, weights);
     const poolWeights = pool.map((s) => {
     const index = strokes.indexOf(s);
     const weight = weights[index];
@@ -468,16 +485,17 @@ function generateWarmup(
   const sets: SwimItem[] = [];
 
   if (template === "standard") {
-    // Easy swim + kick + underwater activation
+    const stroke = pickStroke(settings, "Freestyle");
+    // Easy swim and kick
     const mainDist = warmupVolume >= 500 ? 400 : warmupVolume >= 400 ? 300 : 200;
-    sets.push(makeSet(1, mainDist, "Freestyle", { intensityZone: "easy", sendoffSeconds: 0 }));
+    sets.push(makeSet(1, mainDist, stroke, { intensityZone: resolvePace(settings, "easy"), sendoffSeconds: 0 }));
     const rem = warmupVolume - mainDist;
 
     if (rem >= 100) {
-      sets.push(makeSet(Math.round(rem / 50), 50, "Freestyle", {
+      sets.push(makeSet(Math.round(rem / 50), 50, stroke, {
         strokeModifier: "Kick",
-        intensityZone: "easy",
-        sendoffSeconds: calculateSendoff(50, 0.5, settings),
+        intensityZone: resolvePace(settings, "easy"),
+        sendoffSeconds: calculateSendoff(50, 0.5, settings, stroke),
         equipment: pickEquipment(KICK_EQUIPMENT, settings.equipment),
       }));
     }
@@ -485,15 +503,15 @@ function generateWarmup(
     const { strokes } = getStrokeDistribution(settings);
     const distPer = roundToPool(warmupVolume / strokes.length, settings.poolLength);
     for (const stroke of strokes) {
-      sets.push(makeSet(1, distPer, stroke, { intensityZone: "easy", sendoffSeconds: 0 }));
+      sets.push(makeSet(1, distPer, stroke, { intensityZone: resolvePace(settings, "easy"), sendoffSeconds: 0 }));
     }
   } else {
     sets.push(
-      makeSet(1, warmupVolume, "Freestyle", {
-        intensityPercent: settings.pace.easy,
-        intensityPercentEnd: settings.pace.endurance,
+      makeSet(1, warmupVolume, pickStroke(settings, "Freestyle"), {
+        intensityPercent: settings.pace[resolvePace(settings, "easy")],
+        intensityPercentEnd: settings.pace[resolvePace(settings, "endurance")],
         sendoffSeconds: 0,
-        description: "build from easy to aerobic",
+        description: "effort progression",
       })
     );
   }
@@ -522,7 +540,7 @@ function generatePullSet(
 
   return [
     makeSet(reps, setDist, stroke, {
-      intensityZone: "endurance",
+      intensityZone: resolvePace(settings, "endurance"),
       restKind: "on",
       sendoffSeconds: calculateSendoff(setDist, 0.25, settings, stroke),
       equipment,
@@ -554,7 +572,7 @@ function generateVolumeMainSet(
 
   sets.push(
     makeSet(aerobicReps, aerobicDist, aerobicStroke, {
-      intensityZone: "endurance",
+      intensityZone: resolvePace(settings, "endurance"),
       restKind: "on",
       sendoffSeconds: calculateSendoff(aerobicDist, 0.25, settings, aerobicStroke),
       ...(aerobicStroke === "Freestyle" && { breatheEvery: pickRandom([3, 5]) }),
@@ -564,14 +582,14 @@ function generateVolumeMainSet(
   // Descend block, 25% main block
   const descendVolume = Math.floor(mainVolume * 0.25);
   const descendStroke = pickStroke(settings, "Freestyle", ["Freestyle", "Backstroke"]);
-  const descendDistOptions = [50, 75, 100].filter((d) => descendVolume / d >= 2);
+  const descendDistOptions = [50, 75, 100].map((d) => roundToPool(d, settings.poolLength)).filter((d) => descendVolume / d >= 2);
   const descendDist = descendDistOptions.length ? pickRandom(descendDistOptions) : 50;
   const descendReps = Math.max(2, Math.round(descendVolume / descendDist));
 
   sets.push(
     makeSet(descendReps, descendDist, descendStroke, {
-      intensityPercent: settings.pace.easy,
-      intensityPercentEnd: settings.pace.threshold,
+      intensityPercent: settings.pace[resolvePace(settings, "easy")],
+      intensityPercentEnd: settings.pace[resolvePace(settings, "threshold")],
       restKind: "on",
       sendoffSeconds: calculateSendoff(descendDist, 0.35, settings, descendStroke),
       description: "negative split each rep",
@@ -584,7 +602,7 @@ function generateVolumeMainSet(
     const finishStroke = pickWeighted(strokes, weights);
     sets.push(
       makeSet(1, roundToPool(remainingVolume, settings.poolLength), finishStroke, {
-        intensityPercent: settings.pace.endurance,
+        intensityPercent: settings.pace[resolvePace(settings, "endurance")],
         sendoffSeconds: 0,
       })
     );
@@ -614,7 +632,7 @@ function generateThresholdMainSet(
 
   sets.push(
     makeSet(baseReps, baseDist, baseStroke, {
-      intensityPercent: settings.pace.endurance,
+      intensityPercent: settings.pace[resolvePace(settings, "endurance")],
       restKind: "on",
       sendoffSeconds: calculateSendoff(baseDist, 0.28, settings, baseStroke),
     })
@@ -629,7 +647,7 @@ function generateThresholdMainSet(
 
   sets.push(
     makeSet(thresholdReps, thresholdDist, thresholdStroke, {
-      intensityZone: "threshold",
+      intensityZone: resolvePace(settings, "threshold"),
       restKind: "with",
       sendoffSeconds: calculateAfterStop(20),
       description: "hold pace every rep",
@@ -645,7 +663,7 @@ function generateThresholdMainSet(
 
   sets.push(
     makeSet(finishReps, finishDist, finishStroke, {
-      intensityPercent: settings.pace.endurance,
+      intensityPercent: settings.pace[resolvePace(settings, "endurance")],
       restKind: "on",
       sendoffSeconds: calculateSendoff(finishDist, 0.45, settings, finishStroke),
       ...(finishStroke === "Freestyle" && Math.random() < 0.6 && { breatheEvery: pickRandom([3, 5]) }),
@@ -674,7 +692,7 @@ function generateSpeedMainSet(
 
   sets.push(
     makeSet(floatReps, 100, speedStroke, {
-      intensityZone: "endurance",
+      intensityZone: resolvePace(settings, "endurance"),
       restKind: "on",
       sendoffSeconds: calculateSendoff(100, 0.25, settings, speedStroke),
     })
@@ -682,19 +700,20 @@ function generateSpeedMainSet(
 
   // Descending distance speed ladder, 65%
   const speedVolume = mainVolume * 0.65;
-  const ladder: { dist: number; zone: string }[] = [
+  const ladder: { dist: number; zone: PaceZone }[] = [
     { dist: 100, zone: "endurance" },
     { dist: 75, zone: "racePace" },
     { dist: 50, zone: "max" },
     { dist: 25, zone: "max" },
   ];
+  for (const step of ladder) step.dist = roundToPool(step.dist, settings.poolLength);
   const ladderVolume = ladder.reduce((s, d) => s + d.dist, 0);
   const outerReps = Math.max(2, Math.min(6, Math.floor(speedVolume / ladderVolume)));
   const finsEquipment = pickEquipment(["Fins"], settings.equipment);
 
   const innerItems: SwimItem[] = ladder.map(({ dist, zone }) =>
     makeSet(1, dist, speedStroke, {
-      intensityZone: zone,
+      intensityZone: resolvePace(settings, zone),
       restKind: "with",
       sendoffSeconds: calculateAfterStop(dist <= 25 ? 25 : 15),
       underwater: dist === 25,
@@ -702,7 +721,7 @@ function generateSpeedMainSet(
     })
   );
 
-  sets.push(makeGroup(innerItems, { repetitions: outerReps, description: "max effort on every 25" }));
+  sets.push(makeGroup(innerItems, { repetitions: outerReps, description: "distance ladder" }));
 
   return sets;
 }
@@ -728,7 +747,7 @@ function generateMixedMainSet(
 
   sets.push(
     makeSet(aerobicReps, aerobicDist, aerobicStroke, {
-      intensityZone: "endurance",
+      intensityZone: resolvePace(settings, "endurance"),
       restKind: "on",
       sendoffSeconds: calculateSendoff(aerobicDist, restRatio, settings, aerobicStroke),
       ...(aerobicStroke === "Freestyle" && { breatheEvery: 3 }),
@@ -743,7 +762,7 @@ function generateMixedMainSet(
 
   sets.push(
     makeSet(thresholdReps, thresholdDist, thresholdStroke, {
-      intensityZone: "threshold",
+      intensityZone: resolvePace(settings, "threshold"),
       restKind: "with",
       sendoffSeconds: calculateAfterStop(thresholdDist <= 100 ? 30 : 35),
     })
@@ -751,17 +770,18 @@ function generateMixedMainSet(
 
   // Speed block, 25%, alternating fast rep with easier stroke
   const speedVolume = Math.floor(mainVolume * 0.25);
-  const speedReps = Math.min(8, Math.max(4, Math.round(speedVolume / 50)));
+  const shortDistance = settings.poolLength;
+  const speedReps = Math.min(8, Math.max(4, Math.round(speedVolume / (2 * shortDistance))));
   const fastStroke = pickStroke(settings, "Freestyle");
   const taperStroke = strokes.find((s) => s !== fastStroke) ?? fastStroke;
 
   sets.push(
     makeGroup(
       [
-        makeSet(1, 25, fastStroke, { intensityZone: "max", restKind: "in-out", inOutCount: 2, sendoffSeconds: 0 }),
-        makeSet(1, 25, taperStroke, { intensityZone: "endurance", restKind: "in-out", inOutCount: 2, sendoffSeconds: 0 }),
+        makeSet(1, shortDistance, fastStroke, { intensityZone: resolvePace(settings, "max"), restKind: "in-out", inOutCount: 2, sendoffSeconds: 0 }),
+        makeSet(1, shortDistance, taperStroke, { intensityZone: resolvePace(settings, "endurance"), restKind: "in-out", inOutCount: 2, sendoffSeconds: 0 }),
       ],
-      { repetitions: speedReps, description: "fast/easy alternating" }
+      { repetitions: speedReps, description: "alternating efforts" }
     )
   );
 
@@ -783,7 +803,7 @@ function generateCooldown(
   const stroke = pickStroke(settings, "Freestyle", ["Freestyle", "Backstroke"]);
   return [
     makeSet(1, roundToPool(cooldownVolume, settings.poolLength), stroke, {
-      intensityZone: "easy",
+      intensityZone: resolvePace(settings, "easy"),
       sendoffSeconds: 0,
     }),
   ];
@@ -894,9 +914,9 @@ function itemToLines(item: SwimItem, depth = 0): string {
 }
 
 /**
- * Main function to generate a week of swim sessions based on a target session length in metres
- * @param sessionLengthMetres target length in metres for each session in the generated week
- * @returns string representing the generated swim sessions in SwimDSL format
+ * Generate a dated training plan in the selected distance unit.
+ * @param settings schedule, training preferences, and baseline 100m time
+ * @returns one SwimDSL source string per session in date order
  */
 export function generateProgrammes(
   settings: GeneratorSettings
@@ -912,6 +932,9 @@ export function generateProgrammes(
     distanceUnit,
     pace,
   } = settings;
+
+  resolvePace(settings, "easy");
+  getStrokeDistribution(settings);
 
   // Calendar
   const trainingDates = getTrainingDates(
@@ -964,13 +987,9 @@ export function generateProgrammes(
       `set LengthUnit "${distanceUnit}"`,
       `set Title "Generated ${phase} ${plan.type} Session"`,
       `set Date "${sessionDate}"`,
-      `set Description "Generated ${phase} session. Target session length: ${distance}m"`,
+      `set Description "Generated ${phase} session. Target session length: ${distance} ${distanceUnit}"`,
       "",
-      `pace easy = ${pace.easy}%`,
-      `pace endurance = ${pace.endurance}%`,
-      `pace threshold = ${pace.threshold}%`,
-      `pace racePace = ${pace.racePace}%`,
-      `pace max = ${pace.max}%`,
+      ...PACE_ZONES.filter((zone) => pace[zone] > 0).map((zone) => `pace ${zone} = ${pace[zone]}%`),
       "",
     ];
 

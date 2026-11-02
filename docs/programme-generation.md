@@ -41,7 +41,7 @@ starts with these values; the evaluation runner has its own configuration.
 | `focus` | `mixed` | Chooses the repeating pattern of session types. Other choices are `speed` and `endurance`. |
 | `distance` | 3000 | Nominal session distance before phase, progression, and random scaling. |
 | `baselineTime` | `1:30` | Current 100m Freestyle time used to estimate sendoffs. |
-| `poolLength`, `distanceUnit` | 25, `metres` | Pool length for rounding and unit metadata for the output. |
+| `poolLength`, `distanceUnit` | 25, `metres` | Pool length for rounding and distance unit for output and timing conversion. |
 | `pace` | Easy 65%, endurance 72%, threshold 88%, race pace 95%, max 100% | Named efforts and numeric effort ranges. |
 | `strokes` | Freestyle 60%, Backstroke 20%, Breaststroke 15%, Butterfly 5% | Weights for stroke selection. |
 | `equipment` | Empty | Equipment available for relevant templates. |
@@ -130,9 +130,9 @@ equipment. The main-set builders use different structures:
 - `generateThresholdMainSet`: aerobic preparation, threshold repetitions,
   and a short aerobic finish.
 - `generateSpeedMainSet`: aerobic preparation and a repeated distance ladder
-  from 100 down to 25.
+  from 100 down to one pool length (template steps round to whole lengths).
 - `generateMixedMainSet`: aerobic and threshold work followed by alternating
-  fast/easy 25s.
+  stronger/easier swims of one pool length.
 
 `generateCooldown` adds an easy swim. Template distances and repetition
 counts are selected or rounded with minimum counts, so actual volume can
@@ -142,7 +142,7 @@ exceed the budget, especially for short sessions.
 
 `setToLine` serialises individual sets. `itemToLines` handles nested groups,
 indentation, and group modifiers. The output begins with pool settings,
-title, date, description, and all five named pace definitions, followed by
+title, date, description, and enabled named pace definitions, followed by
 the sets in warm-up → pull → main → cooldown order. These sections are not
 currently labelled with SwimDSL section headers.
 
@@ -160,6 +160,11 @@ Freestyle 1.0, Backstroke and Butterfly 1.15, and Breaststroke 1.5.
 strokeTimePer100 * (distance / 100) ^ exponent
 ```
 
+Distances in yards are converted to metres using 1 yard = 0.9144 metres
+before timing calculations. The baseline remains a time for 100 metres,
+including when generating yard sessions. Output distances and target labels
+use the selected unit.
+
 The exponent is 1.06 when the linear time estimate is at most 160 seconds,
 otherwise 1.025. `calculateSendoff` adds a template-specific rest ratio,
 rounds to the nearest five seconds, and enforces a 45-second minimum.
@@ -169,7 +174,9 @@ minimum. Effort percentages do not directly scale these swim-time estimates.
 `getStrokeDistribution` filters positive stroke weights for random selection.
 Some templates instead use `pickStroke`, which chooses a preferred stroke
 whenever its weight is positive, then tries a restricted fallback pool.
-These preferences mean the settings do not specify exact distance shares.
+If the restricted fallback pool is empty, selection uses all enabled strokes.
+Warm-ups also use enabled strokes. A 0% stroke is excluded, but positive
+weights do not specify exact distance shares.
 
 `pickEquipment` selects at most one available item from the relevant category:
 kick uses Kickboard or Fins; pull uses Pull Buoy, Paddles, or Snorkel. Speed
@@ -181,6 +188,24 @@ set a `Pull` stroke modifier.
 Random choices use `Math.random()` for templates, strokes, distances,
 equipment, and volume variation. There is no seed setting or guarantee that
 two runs with identical inputs return identical source.
+
+## Settings guarantees
+
+A pace set to 0% is omitted from definitions and is never used by a set or
+numeric effort range. A template that requests a disabled zone uses the
+nearest enabled zone in this order: easy, endurance, threshold, racePace, max.
+Ties prefer the lower zone. This is based on zone order, rather than the
+numerical gap between user-defined percentages. If only one zone is enabled,
+all efforts use that zone; an effort range may then have identical endpoints.
+The dialog requires at least one positive pace, and direct generator calls
+with no enabled pace or stroke throw an error.
+
+In the supported 25- and 50-length pools, every swim distance is a positive
+whole number of lengths. A 75-distance template step rounds to 100 in a
+50-length pool, while a 25-distance step becomes 50. The mixed main set uses
+one-length fast/easier swims and calculates repetitions using their combined
+distance. Rounding can change the shape of the ladder and actual session
+volume; the target remains approximate.
 
 ## Browser integration
 
@@ -203,19 +228,9 @@ select a saved session to reopen its stored content.
   repetitions can cause substantial deviations from the nominal target.
   Small budgets can leave little or negative main-set allocation, while
   templates still produce their minimum repetitions.
-- **Pool and unit handling:** some templates use fixed 25 or 75 distances,
-  including for 50-length pools. Selecting yards changes metadata but does
-  not convert the metre-based timing model. The description and target
-  distance buttons still use metre labels.
-- **Pace exclusion:** the dialog says 0% excludes a pace, but templates still
-  reference named zones or numeric effort values at 0%. There is no general
-  exclusion step in the generator.
-- **Stroke exclusion:** weighted selection filters 0% strokes, but standard
-  and build warm-ups use Freestyle explicitly. `pickStroke` can also return
-  its preferred stroke when the permitted fallback pool is empty.
 - **Input validation:** the form checks positive pool length, weeks and
   distance, a nonempty date and day selection, a time-shaped string, and a
-  stroke total of 100%. It does not fully validate calendar dates, integer
+  stroke total of 100%, and at least one positive pace. It does not fully validate calendar dates, integer
   weeks, time seconds below 60, a positive baseline time, or pace bounds.
   The generator does not provide a separate comprehensive validation layer.
 - **Output checks:** generation does not run a final parser/linter check or
@@ -250,3 +265,10 @@ The evaluation runner has independent settings and expected phase factors;
 review these when changing the generator's assumptions. Its load evaluator
 also uses fixed intensity weights. For reproducible automated regression
 tests, control the random source rather than comparing unseeded runs.
+
+Generator regression checks run with `npm run test -- --run`. They cover
+all nonempty combinations of enabled paces, tie-breaking, each stroke enabled
+alone across warm-up templates and session types, supported pool/unit options,
+yard sendoffs, and rejection of all-disabled settings. Random choices are
+controlled in these tests, and generated source is checked with the SwimDSL
+parser.

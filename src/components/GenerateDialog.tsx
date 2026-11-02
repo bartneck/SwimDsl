@@ -110,6 +110,7 @@ function GenerateDialog({
       trainingDays.length > 0 &&
       sessionLength > 0 &&
       /^\d{1,2}:\d{2}$/.test(baselineTime.trim()) &&
+      Object.values(paceValues).some((value) => value > 0) &&
       totalStrokePercentage === 100
     );
   }, [
@@ -120,6 +121,7 @@ function GenerateDialog({
     sessionLength,
     baselineTime,
     totalStrokePercentage,
+    paceValues,
   ]);
 
   function handleOpen(): void {
@@ -440,7 +442,7 @@ function GenerateDialog({
               (val) => (
                 <Chip
                   key={val}
-                  label={`${val} m`}
+                  label={`${val} ${distanceUnit === "metres" ? "m" : "yd"}`}
                   clickable
                   color={
                     sessionLength === val
@@ -496,7 +498,9 @@ function GenerateDialog({
             }}
           >
             Enter 0% to exclude a pace from the generated
-            programme
+            programme. At least one pace must be greater than 0%. Disabled
+            paces use the nearest enabled effort level, preferring the lower
+            level on a tie.
           </Typography>
 
           <Stack spacing={2} sx={{ mb: 3 }}>
@@ -555,7 +559,8 @@ function GenerateDialog({
             }}
           >
             Set the percentage of the programme for each
-            stroke
+            stroke. Set a stroke to 0% to exclude it; positive percentages
+            guide selection rather than guarantee an exact distance split.
           </Typography>
 
           <Stack spacing={2} sx={{ mb: 1 }}>
@@ -600,7 +605,8 @@ function GenerateDialog({
           <Typography
             variant="caption"
             color={
-              totalStrokePercentage === 100
+              Object.values(paceValues).some((value) => value > 0) &&
+      totalStrokePercentage === 100
                 ? "text.secondary"
                 : "error"
             }

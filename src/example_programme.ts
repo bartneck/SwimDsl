@@ -24,19 +24,24 @@ export const example_programme = `\
 # Base, Build, and Peak plans, and decreases through Taper plans. This setting
 # is disabled for a single week.
 
+# Distances use the selected pool unit and whole pool lengths.
 # Target Distance is an approximate session distance. Session lengths vary
 # with the phase, progression, and pool length. Under Starting Performance,
 # enter your current time for 100m Freestyle as minutes:seconds, such as 1:30.
+# This baseline stays in metres even when generating sessions in yards.
 # The generator uses this time to estimate sendoffs (the "on" times below).
 
 # Pace Definitions set the effort percentages for easy, endurance, threshold,
 # racePace, and max. Set a pace to 0% to exclude it from selection. Generated
-# programmes include named pace definitions, which you can edit afterwards.
+# programmes include only enabled pace definitions. Keep at least one pace
+# above 0%. Disabled paces use the nearest enabled effort level, preferring
+# the lower level on a tie. You can edit the definitions afterwards.
 
 # Set Stroke Distribution so the four percentages add up to 100%. These
 # values guide stroke selection; individual sessions may have a different
-# balance. Select the Equipment available to you. The generator may include
-# suitable equipment in some sets; you do not have to select any.
+# balance. A stroke set to 0% is excluded. Select the Equipment available
+# to you. The generator may include suitable equipment in some sets;
+# you do not have to select any.
 
 # To try it, use a 25-metre pool, four weeks, Monday/Wednesday/Friday, Base,
 # Mixed, and a target distance of 3000. Enter your own 100m Freestyle time,

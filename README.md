@@ -73,15 +73,19 @@ dialog:
    decrease it during a taper. This setting is disabled for a single week.
 4. Choose an approximate **Target Distance** per session and enter your
    current 100m Freestyle time in `mm:ss` format under **Starting Performance**.
-   The generator uses this time to estimate sendoffs (`on` times).
+   This baseline stays in metres even for yard sessions; yard distances are
+   converted when estimating sendoffs (`on` times).
 5. Configure the named pace percentages, set the stroke distribution to a
    total of 100%, and select any available equipment.
+   A 0% pace or stroke is excluded. Keep at least one pace enabled; disabled
+   paces use the nearest enabled effort level, preferring the lower level on a tie.
 6. Click **Generate Programmes** to create the sessions.
 
 For example, four weeks with Monday, Wednesday, and Friday selected produces
 12 sessions. Each session includes pool settings, a title, a date, named
 paces, and swim instructions covering warm-up, pull, main set, and cooldown.
 Distances vary with the training phase, weekly progression, and pool length;
+all swim distances are whole pool lengths in the selected unit. Positive
 stroke percentages guide selection rather than guarantee an exact split.
 
 Sessions are saved in your browser as **Generated Session 1**,
