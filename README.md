@@ -90,6 +90,25 @@ generating another plan keeps earlier sessions. Use the file selector to
 switch between sessions, review and edit their instructions, and export
 the programmes you want to keep.
 
+See the [programme generation guide](docs/programme-generation.md) for the
+implementation, design assumptions, limitations, and maintenance notes.
+
+## How can I run the generator evaluation?
+
+After installing the project dependencies, run this command from the repository
+root using Node.js 22.18.0 or later:
+
+```bash
+npx --no-install jiti scripts/runEvaluation.ts
+```
+
+The evaluation measures volume, intensity, progression, variation, training
+load, responsiveness, and periodisation. Results are saved to
+`evaluation-results/baseline-evaluation.json`, overwriting the previous run.
+
+See the [evaluation guide](docs/evaluation.md) for the experiment configuration,
+metric descriptions, and guidance on interpreting and reproducing results.
+
 ## How does SwimDSL work?
 
 The SwimDSL editor is powered by a JavaScript package called
