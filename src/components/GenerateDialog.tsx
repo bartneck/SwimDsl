@@ -25,7 +25,7 @@ import {
   GeneratorSettings,
 } from "../logic/sessionGenerator";
 
-import { newFile } from "../logic/filePersistence";
+import { handleSelectFile, saveGeneratedProgrammes } from "../logic/filePersistence";
 
 interface GenerateDialogProps {
   setSelectedFile: React.Dispatch<React.SetStateAction<string>>;
@@ -149,27 +149,11 @@ function GenerateDialog({
 
     const programmes = generateProgrammes(settings);
 
-    programmes.forEach((programme, index) => {
-      let counter = index + 1;
-      let fileName = `Generated Session ${counter}`;
-
-      while (localStorage.getItem(fileName)) {
-        counter++;
-        fileName = `Generated Session ${counter}`;
-      }
-
-      newFile(
-        fileName,
-        setSelectedFile,
-        fileName,
-        programme
-      );
-
-      if (index === 0) {
-        setSelectedFile(fileName);
-        setSwimdslProgramme(programme);
-      }
-    });
+    const firstFile = saveGeneratedProgrammes(programmes);
+    if (firstFile !== undefined) {
+      // All files are saved before selecting one, keeping filename and content together.
+      handleSelectFile(firstFile, "", "", setSelectedFile, setSwimdslProgramme, false);
+    }
 
     handleClose();
   }

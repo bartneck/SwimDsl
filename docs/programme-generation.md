@@ -189,11 +189,13 @@ It saves each returned string under an unused `Generated Session N` key in
 `localStorage`, skipping occupied names. These are browser-local records;
 the user can export source through the existing editor controls.
 
-The handler sets the editor content to the first generated session. However,
-`newFile` also updates the selected filename for every saved session. With
-multiple sessions, the final selected filename can therefore differ from
-the first session's editor content. This needs verification and correction
-before relying on immediate editing after generation.
+`saveGeneratedProgrammes` saves the entire batch without changing selection,
+then the handler opens the first saved session through `handleSelectFile`.
+The selected filename and editor content therefore refer to the same session.
+Existing keys, including empty sessions, are preserved. Editor changes are
+saved under the selected key, and switching files saves the outgoing content
+before loading the incoming session. Reloading resets the active selection;
+select a saved session to reopen its stored content.
 
 ## Current limitations
 
