@@ -1,4 +1,20 @@
+/** Saves a batch without changing the active file; returns the first new key. */
+function saveGeneratedProgrammes(programmes: string[]): string | undefined {
+  let firstFile: string | undefined;
+  let counter = 1;
 
+  for (const programme of programmes) {
+    while (localStorage.getItem(`Generated Session ${counter}`) !== null) {
+      counter++;
+    }
+    const key = `Generated Session ${counter}`;
+    localStorage.setItem(key, programme);
+    firstFile ??= key;
+    counter++;
+  }
+
+  return firstFile;
+}
 
 function newFile(selectedFile: string, setSelectedFile: (newFile: string)=>void, key: string, value: string): void {
   if (localStorage.getItem(key)) {
@@ -34,6 +50,7 @@ function handleSelectFile(
 }
 
 export {
+  saveGeneratedProgrammes,
   newFile,
   handleDelete,
   handleSelectFile,

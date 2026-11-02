@@ -1,12 +1,62 @@
 /**
- * The default swim programme loaded into the textbox when the page initially
- * loads.
+ * The tutorial programme displayed in the editor's help panel.
  */
 export const example_programme = `\
 ### Welcome ###################################################################
 
 # swimDSL is part of a larger project, swiML! Information about the swiML
 # project can be found online at https://swiml.org
+
+### Programme Generator #######################################################
+
+# To create programmes without writing every instruction yourself, click
+# Generate in the top toolbar. The Generate Programmes dialog lets you plan
+# sessions across multiple weeks. You can edit the results using the language
+# explained in the rest of this tutorial.
+
+# Start by choosing your Pool Size, Start Date, Number of Weeks, and Training
+# Days. Each selected day produces one session per week. For example, four
+# weeks with Monday, Wednesday, and Friday selected produces 12 programmes.
+
+# Choose a Training Phase (Base, Build, Peak, or Taper) and a Training Focus
+# (Speed, Endurance, or Mixed). The focus influences the mix of session types.
+# Weekly Progression adjusts volume across the plan: it increases through
+# Base, Build, and Peak plans, and decreases through Taper plans. This setting
+# is disabled for a single week.
+
+# Distances use the selected pool unit and whole pool lengths.
+# Target Distance is an approximate session distance. Session lengths vary
+# with the phase, progression, and pool length. Under Starting Performance,
+# enter your current time for 100m Freestyle as minutes:seconds, such as 1:30.
+# This baseline stays in metres even when generating sessions in yards.
+# The generator uses this time to estimate sendoffs (the "on" times below).
+
+# Pace Definitions set the effort percentages for easy, endurance, threshold,
+# racePace, and max. Set a pace to 0% to exclude it from selection. Generated
+# programmes include only enabled pace definitions. Keep at least one pace
+# above 0%. Disabled paces use the nearest enabled effort level, preferring
+# the lower level on a tie. You can edit the definitions afterwards.
+
+# Set Stroke Distribution so the four percentages add up to 100%. These
+# values guide stroke selection; individual sessions may have a different
+# balance. A stroke set to 0% is excluded. Select the Equipment available
+# to you. The generator may include suitable equipment in some sets;
+# you do not have to select any.
+
+# To try it, use a 25-metre pool, four weeks, Monday/Wednesday/Friday, Base,
+# Mixed, and a target distance of 3000. Enter your own 100m Freestyle time,
+# then adjust the paces, strokes, and equipment to suit your training.
+
+# Click Generate Programmes to create the sessions. Each session is saved as
+# a separate file named "Generated Session 1", "Generated Session 2", etc.
+# Existing filenames are skipped. The first session opens in the editor;
+# use the file selector to open the others. Sessions include a date, title,
+# pool settings, pace definitions, and swim instructions.
+
+# Review the distances, effort levels, and sendoffs, then edit any instruction
+# to suit your needs. Generating again creates additional files, so you can
+# keep earlier sessions while trying different settings.
+
 
 ### Basic Instructions ########################################################
 

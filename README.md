@@ -60,6 +60,59 @@ in the top right-hand corner of the screen. Reading through this tutorial
 should show you all you need to know about writing swim programmes with
 SwimDSL.
 
+## How can I generate swim programmes?
+
+Click **Generate** in the top toolbar to create a training plan with a
+separate SwimDSL programme for each session. In the **Generate Programmes**
+dialog:
+
+1. Choose your pool size, start date, number of weeks, and training days.
+2. Select a training phase (**Base**, **Build**, **Peak**, or **Taper**) and
+   focus (**Speed**, **Endurance**, or **Mixed**).
+3. Adjust **Weekly Progression** to increase volume across the plan, or
+   decrease it during a taper. This setting is disabled for a single week.
+4. Choose an approximate **Target Distance** per session and enter your
+   current 100m Freestyle time in `mm:ss` format under **Starting Performance**.
+   This baseline stays in metres even for yard sessions; yard distances are
+   converted when estimating sendoffs (`on` times).
+5. Configure the named pace percentages, set the stroke distribution to a
+   total of 100%, and select any available equipment.
+   A 0% pace or stroke is excluded. Keep at least one pace enabled; disabled
+   paces use the nearest enabled effort level, preferring the lower level on a tie.
+6. Click **Generate Programmes** to create the sessions.
+
+For example, four weeks with Monday, Wednesday, and Friday selected produces
+12 sessions. Each session includes pool settings, a title, a date, named
+paces, and swim instructions covering warm-up, pull, main set, and cooldown.
+Distances vary with the training phase, weekly progression, and pool length;
+all swim distances are whole pool lengths in the selected unit. Positive
+stroke percentages guide selection rather than guarantee an exact split.
+
+Sessions are saved in your browser as **Generated Session 1**,
+**Generated Session 2**, and so on. Existing filenames are skipped, so
+generating another plan keeps earlier sessions. Use the file selector to
+switch between sessions, review and edit their instructions, and export
+the programmes you want to keep.
+
+See the [programme generation guide](docs/programme-generation.md) for the
+implementation, design assumptions, limitations, and maintenance notes.
+
+## How can I run the generator evaluation?
+
+After installing the project dependencies, run this command from the repository
+root using Node.js 22.18.0 or later:
+
+```bash
+npx --no-install jiti scripts/runEvaluation.ts
+```
+
+The evaluation measures volume, intensity, progression, variation, training
+load, responsiveness, and periodisation. Results are saved to
+`evaluation-results/baseline-evaluation.json`, overwriting the previous run.
+
+See the [evaluation guide](docs/evaluation.md) for the experiment configuration,
+metric descriptions, and guidance on interpreting and reproducing results.
+
 ## How does SwimDSL work?
 
 The SwimDSL editor is powered by a JavaScript package called
@@ -97,6 +150,8 @@ grow as the project develops.
 - Auto-completion of some keywords and defined paces
 - Source file export
 - Source file import
+- Swim programme generation across multiple weeks, with configurable training
+  days, phase, focus, volume progression, paces, strokes, and equipment
 
 The linter highlights occurrences of the following issues to help prevent users
 from writing malformed programmes.
