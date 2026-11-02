@@ -222,17 +222,41 @@ saved under the selected key, and switching files saves the outgoing content
 before loading the incoming session. Reloading resets the active selection;
 select a saved session to reopen its stored content.
 
+## Input validation
+
+[`generatorValidation.ts`](../src/logic/generatorValidation.ts) provides the
+same validation rules to the dialog and `generateProgrammes`:
+
+- Weeks must be an integer from 1 to 12.
+- Baseline time must use `m:ss` or `mm:ss`, with seconds from 00 to 59 and a
+  total time greater than zero. For example, `1:30` is valid; `1:99` and
+  `0:00` are rejected. Surrounding whitespace is ignored.
+- Each pace must be a finite percentage from 0 to 100 inclusive. Decimal
+  percentages are accepted. At least one pace must be above zero.
+- The start date must be a real calendar date in `YYYY-MM-DD` form, and at
+  least one valid training weekday must be selected.
+- Stroke percentages must be finite values from 0 to 100 and total 100%.
+- Pool length and target distance must be finite and positive. Weekly
+  progression must be a finite value from 0 to 40%.
+
+The dialog retains raw text for week and pace inputs so clearing a field
+produces a validation error rather than silently becoming zero. It shows
+field-level messages for the date, weeks, baseline time, and individual
+paces, plus an error summary. Generate remains disabled until all errors
+are resolved, and the handler also checks validity before generating or
+saving anything. Direct generator calls throw an error containing the
+validation messages before planning sessions.
+
+Run `npm run test -- --run` for validation regression tests covering invalid
+inputs and accepted boundaries. These tests exercise both the shared
+validator and rejection by direct generator calls.
+
 ## Current limitations
 
 - **Approximate distances:** independent template rounding and minimum
   repetitions can cause substantial deviations from the nominal target.
   Small budgets can leave little or negative main-set allocation, while
   templates still produce their minimum repetitions.
-- **Input validation:** the form checks positive pool length, weeks and
-  distance, a nonempty date and day selection, a time-shaped string, and a
-  stroke total of 100%, and at least one positive pace. It does not fully validate calendar dates, integer
-  weeks, time seconds below 60, a positive baseline time, or pace bounds.
-  The generator does not provide a separate comprehensive validation layer.
 - **Output checks:** generation does not run a final parser/linter check or
   catch storage errors in the dialog. New templates should be checked in
   the editor as well as through the evaluation runner.
@@ -246,6 +270,7 @@ validate physiological effectiveness.
 | Change | Main location |
 | --- | --- |
 | Dialog defaults, controls, and validation | State initialisers, input controls, and `isFormValid` in `GenerateDialog.tsx` |
+| Shared input rules and error messages | `generatorValidation.ts` |
 | Dates and weekday rules | `getTrainingDates` |
 | Focus patterns and phase factors | `buildSessionPlan` and `getPhaseFactor` |
 | Weekly progression | `getWeekProgressionFactor` |

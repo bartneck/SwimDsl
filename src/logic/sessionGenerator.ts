@@ -1,3 +1,5 @@
+import { generatorValidationMessages, validateGeneratorSettings } from "./generatorValidation.ts";
+
 type SessionType = "volume" | "threshold" | "speed" | "mixed";
 
 export interface GeneratorSettings {
@@ -933,8 +935,8 @@ export function generateProgrammes(
     pace,
   } = settings;
 
-  resolvePace(settings, "easy");
-  getStrokeDistribution(settings);
+  const validationMessages = generatorValidationMessages(validateGeneratorSettings(settings));
+  if (validationMessages.length > 0) throw new Error(validationMessages.join(" "));
 
   // Calendar
   const trainingDates = getTrainingDates(

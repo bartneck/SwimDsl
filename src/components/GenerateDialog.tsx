@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import React from "react";
 
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Checkbox from "@mui/material/Checkbox";
@@ -27,6 +28,8 @@ import {
 
 import { handleSelectFile, saveGeneratedProgrammes } from "../logic/filePersistence";
 
+import { generatorValidationMessages, validateGeneratorSettings } from "../logic/generatorValidation";
+
 interface GenerateDialogProps {
   setSelectedFile: React.Dispatch<React.SetStateAction<string>>;
   setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
@@ -50,7 +53,8 @@ function GenerateDialog({
 
   const [startDate, setStartDate] = useState<string>(localToday);
 
-  const [weeks, setWeeks] = useState(4);
+  const [weeksInput, setWeeksInput] = useState("4");
+  const weeks = weeksInput.trim() === "" ? NaN : Number(weeksInput);
 
   const [trainingDays, setTrainingDays] = useState<string[]>([
     "monday",
@@ -68,13 +72,21 @@ function GenerateDialog({
 
   const [baselineTime, setBaselineTime] = useState("1:30");
 
-  const [paceValues, setPaceValues] = useState({
-    easy: 65,
-    endurance: 72,
-    threshold: 88,
-    racePace: 95,
-    max: 100,
+  const [paceInputs, setPaceInputs] = useState({
+    easy: "65",
+    endurance: "72",
+    threshold: "88",
+    racePace: "95",
+    max: "100",
   });
+  const paceValues = useMemo(() => {
+    const number = (value: string) => value.trim() === "" ? NaN : Number(value);
+    return {
+      easy: number(paceInputs.easy), endurance: number(paceInputs.endurance),
+      threshold: number(paceInputs.threshold), racePace: number(paceInputs.racePace),
+      max: number(paceInputs.max),
+    };
+  }, [paceInputs]);
 
   const strokes = [
     "Freestyle",
@@ -102,27 +114,14 @@ function GenerateDialog({
 
   const [weeklyRampPercent, setWeeklyRampPercent] = useState(16);
 
-  const isFormValid = useMemo(() => {
-    return (
-      poolLength > 0 &&
-      startDate.trim() !== "" &&
-      weeks > 0 &&
-      trainingDays.length > 0 &&
-      sessionLength > 0 &&
-      /^\d{1,2}:\d{2}$/.test(baselineTime.trim()) &&
-      Object.values(paceValues).some((value) => value > 0) &&
-      totalStrokePercentage === 100
-    );
-  }, [
-    poolLength,
-    startDate,
-    weeks,
-    trainingDays,
-    sessionLength,
-    baselineTime,
-    totalStrokePercentage,
-    paceValues,
-  ]);
+  const settings: GeneratorSettings = {
+    startDate, weeks, trainingDays, phase, focus, distance: sessionLength,
+    baselineTime, poolLength, distanceUnit, pace: paceValues,
+    strokes: strokePercentages, equipment: selectedEquipment, weeklyRampPercent,
+  };
+  const validation = validateGeneratorSettings(settings);
+  const validationMessages = generatorValidationMessages(validation);
+  const isFormValid = validationMessages.length === 0;
 
   function handleOpen(): void {
     setOpen(true);
@@ -133,21 +132,7 @@ function GenerateDialog({
   }
 
   function handleGenerate(): void {
-    const settings: GeneratorSettings = {
-      startDate,
-      weeks,
-      trainingDays,
-      phase,
-      focus,
-      distance: sessionLength,
-      baselineTime,
-      poolLength,
-      distanceUnit,
-      pace: paceValues,
-      strokes: strokePercentages,
-      equipment: selectedEquipment,
-      weeklyRampPercent,
-    };
+    if (!isFormValid) return;
 
     const programmes = generateProgrammes(settings);
 
@@ -225,6 +210,8 @@ function GenerateDialog({
             fullWidth
             type="date"
             value={startDate}
+            error={Boolean(validation.startDate)}
+            helperText={validation.startDate}
             onChange={(e) => {
               setStartDate(e.target.value);
             }}
@@ -244,14 +231,17 @@ function GenerateDialog({
           <TextField
             fullWidth
             type="number"
-            value={weeks}
+            value={weeksInput}
+            error={Boolean(validation.weeks)}
+            helperText={validation.weeks}
             onChange={(e) => {
-              setWeeks(Number(e.target.value));
+              setWeeksInput(e.target.value);
             }}
             slotProps={{
               htmlInput: {
                 min: 1,
                 max: 12,
+                step: 1,
               },
             }}
             sx={{ mb: 3 }}
@@ -308,7 +298,7 @@ function GenerateDialog({
           >
             {trainingDays.length} session
             {trainingDays.length !== 1 ? "s" : ""} per week ·{" "}
-            {trainingDays.length * weeks} total session
+            {trainingDays.length * (Number.isInteger(weeks) && weeks >= 1 && weeks <= 12 ? weeks : 0)} total session
             {trainingDays.length * weeks !== 1 ? "s" : ""}
           </Typography>
 
@@ -478,6 +468,8 @@ function GenerateDialog({
             fullWidth
             label="Current 100m Freestyle Time"
             value={baselineTime}
+            error={Boolean(validation.baselineTime)}
+            helperText={validation.baselineTime ?? "For example, 1:30 for 100 metres Freestyle."}
             onChange={(e) => {
               setBaselineTime(e.target.value);
             }}
@@ -516,17 +508,14 @@ function GenerateDialog({
                 label={pace.label}
                 type="number"
                 value={
-                  paceValues[
-                    pace.key as keyof typeof paceValues
+                  paceInputs[
+                    pace.key as keyof typeof paceInputs
                   ]
                 }
+                error={Boolean(validation.pace[pace.key as keyof typeof paceInputs])}
+                helperText={validation.pace[pace.key as keyof typeof paceInputs]}
                 onChange={(e) => {
-                  setPaceValues({
-                    ...paceValues,
-                    [pace.key]: Number(
-                      e.target.value
-                    ),
-                  });
+                  setPaceInputs({ ...paceInputs, [pace.key]: e.target.value });
                 }}
                 slotProps={{
                   input: {
@@ -539,6 +528,7 @@ function GenerateDialog({
                   htmlInput: {
                     min: 0,
                     max: 100,
+                    step: "any",
                   },
                 }}
               />
@@ -674,6 +664,14 @@ function GenerateDialog({
             ))}
           </FormGroup>
         </DialogContent>
+
+        {!isFormValid && (
+          <Alert severity="error" sx={{ mx: 3, mb: 2 }}>
+            <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+              {[...new Set(validationMessages)].map((message) => <li key={message}>{message}</li>)}
+            </ul>
+          </Alert>
+        )}
 
         <DialogActions>
           <Button onClick={handleClose}>
