@@ -984,11 +984,11 @@ export function generateProgrammes(
         ? generateSpeedMainSet(mainVolume, settings)
         : generateMixedMainSet(mainVolume, settings);
 
-    const allItems: SwimItem[] = [
-      ...generateWarmup(warmupVolume, settings),
-      ...generatePullSet(pullVolume, settings),
-      ...mainItems,
-      ...generateCooldown(cooldownVolume, settings),
+    const sections: { title: string; items: SwimItem[] }[] = [
+      { title: "Warm-up", items: generateWarmup(warmupVolume, settings) },
+      { title: "Pull", items: generatePullSet(pullVolume, settings) },
+      { title: "Main set", items: mainItems },
+      { title: "Cool-down", items: generateCooldown(cooldownVolume, settings) },
     ];
 
     // Render
@@ -1003,9 +1003,14 @@ export function generateProgrammes(
       "",
     ];
 
-    for (const item of allItems) lines.push(itemToLines(item));
+    for (const section of sections) {
+      if (section.items.length === 0) continue;
+      lines.push(`> ${section.title}`);
+      for (const item of section.items) lines.push(itemToLines(item));
+      lines.push("");
+    }
 
-    programmes.push(lines.join("\n"));
+    programmes.push(lines.join("\n").trimEnd());
   }
 
   return programmes;
