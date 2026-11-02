@@ -151,11 +151,11 @@ function GenerateDialog({
 
     programmes.forEach((programme, index) => {
       let counter = index + 1;
-      let fileName = `Generated Programme ${counter}`;
+      let fileName = `Generated Session ${counter}`;
 
       while (localStorage.getItem(fileName)) {
         counter++;
-        fileName = `Generated Programme ${counter}`;
+        fileName = `Generated Session ${counter}`;
       }
 
       newFile(
