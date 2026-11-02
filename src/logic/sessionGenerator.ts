@@ -282,6 +282,12 @@ function pickStroke(settings: GeneratorSettings, preferred: string, fallbackPool
 const KICK_EQUIPMENT = ["Kickboard", "Fins"];
 const PULL_EQUIPMENT = ["Pull Buoy", "Paddles", "Snorkel"];
 
+const EQUIPMENT_DSL_NAMES: Record<string, string> = {
+  "Pull Buoy": "PullBuoy",
+  Kickboard: "Board",
+  Paddles: "Pads",
+};
+
 function pickEquipment(category: string[], available: string[]): string[] {
   const matches = available.filter((e) => category.includes(e));
   return matches.length > 0 ? [pickRandom(matches)] : [];
@@ -877,7 +883,9 @@ function setToLine(s: SwimSet, insideGroup = false): string {
   const intensity = formatIntensity(s);
   const pace = intensity ? ` @ ${intensity}` : "";
   const rest = renderRest(s, insideGroup);
-  const equipment = s.equipment?.length ? ` + ${s.equipment.join(" ")}` : "";
+  const equipment = s.equipment?.length
+    ? ` + ${s.equipment.map((name) => EQUIPMENT_DSL_NAMES[name] ?? name).join(" ")}`
+    : "";
   const underwater = s.underwater ? " underwater" : "";
   const breathe = s.breatheEvery != null ? ` breathe ${s.breatheEvery}` : "";
   const desc = s.description ? ` -- "${s.description}"` : "";
