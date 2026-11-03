@@ -21,10 +21,11 @@ import { timeToSeconds } from "./swimTime.ts";
 /** The pool length assumed when a programme does not set one. */
 const DEFAULT_POOL_LENGTH = 25;
 
-// The optional repetition count an instruction or a block opens with. The
+// The optional repetition count an instruction or a block opens with. As in the
+// grammar, the `x` needs no spaces around it, so `4x100` and `2x{` count. The
 // separator is captured too, so that a rewritten head keeps the spacing of the
 // original.
-const REPETITIONS_PATTERN = String.raw`^(?:(\d+)(\s*x\s+))?`;
+const REPETITIONS_PATTERN = String.raw`^(?:(\d+)(\s*x\s*))?`;
 export const HEAD_PATTERN = new RegExp(
   REPETITIONS_PATTERN + String.raw`(\d+:\d+|\d+(?:\s+laps?)?)(\s+)(?=\S)`,
 );

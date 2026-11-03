@@ -208,11 +208,9 @@ describe("parseProgramme", () => {
       });
     });
 
-    // The grammar reads each of these as repetitions, as the Lezer parser
-    // confirms, but HEAD_PATTERN needs whitespace after the `x`. The first is
-    // left verbatim, so counts for nothing, and the second is read as a 4 m
-    // swim. Neither is listed under the known defects in the docs yet.
-    it.fails.each([["4x100 Freestyle"], ["4 x100 Freestyle"]])(
+    // The grammar reads each of these as repetitions. These were once left
+    // verbatim, counting for nothing, or read as a 4 m swim.
+    it.each([["4x100 Freestyle"], ["4 x100 Freestyle"], ["4x 100 Freestyle"]])(
       "reads the compact repetitions of %j",
       line => {
         expect(instructionOf(line)).toMatchObject({
@@ -407,9 +405,7 @@ describe("parseProgramme", () => {
       });
     });
 
-    // The same whitespace gap as the compact repetitions above. The first is
-    // not treated as a block at all, and the second is read as a 2 m swim.
-    it.fails.each([["2x{\n  50 Freestyle\n}"], ["2 x{\n  50 Freestyle\n}"]])(
+    it.each([["2x{\n  50 Freestyle\n}"], ["2 x{\n  50 Freestyle\n}"]])(
       "reads the compact block of %j",
       source => {
         expect(instructionOf(source)).toMatchObject({

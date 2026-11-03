@@ -214,6 +214,19 @@ set PoolLength 25
       expect(modified(source)).toContain("100 NumberOne\n5 x 100 Freestyle on 1:45");
     });
 
+    it("fits sets written with compact repetitions", () => {
+      const [version] = modifiedProgrammes(
+        "> Main Set\n4x100 Freestyle on 2:00\n2x{\n  50 Backstroke\n}\n",
+        parameters({ volume: "400" }),
+      );
+
+      expect(version?.source.split("\n").slice(1).join("\n")).toBe(
+        "> Main Set\n3x100 Freestyle on 1:45\n2x{\n  50 Backstroke\n}\n",
+      );
+      expect(version?.summary.totalMetres).toBe(400);
+      expect(syntaxErrors(version?.source ?? "")).toBe(0);
+    });
+
     it("does not lose the programme to a word in a description", () => {
       const source = '100 Freestyle Kick -- "Focus on pointed toes"\n200 Choice\n';
 

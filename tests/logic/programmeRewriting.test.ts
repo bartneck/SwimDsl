@@ -58,6 +58,17 @@ describe("rewriteHead", () => {
     expect(instruction.lines[0]).toBe("    3  x   75   Freestyle   on 1:45");
   });
 
+  it("keeps compact repetitions compact", () => {
+    const single = instructionOf("5x100 Freestyle");
+    const block = instructionOf("3x{\n  50 Freestyle\n}");
+
+    rewriteHead(single, 3, { kind: "distance", metres: 75 });
+    rewriteHead(block, 2, null);
+
+    expect(single.lines[0]).toBe("3x75 Freestyle");
+    expect(block.lines[0]).toBe("2x{");
+  });
+
   it("changes the laps, keeping how they were worded", () => {
     const instruction = instructionOf("4 laps Freestyle");
 
