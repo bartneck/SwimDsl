@@ -12,10 +12,12 @@ import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import Stack from "@mui/material/Stack";
 import TextField, {TextFieldProps} from "@mui/material/TextField";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
-// import {TextField} from "@mui/material";
 import {modifyProgram, ModificationParameters} from "../logic/programmeModification.ts";
 import {parseTarget} from "../logic/programmeAdjustment.ts";
+import {handleSelectFile} from "../logic/filePersistence.ts";
 import {FitGoal, FitMethod} from "../logic/programmeTypes.ts";
 
 /** A pace per 100m, written as `m:ss`. */
@@ -88,11 +90,22 @@ function targetError(value: string, scale: number, required: boolean): string {
   return parseTarget(value, scale) === null ? 'Must be greater than 0' : '';
 }
 
+/**
+ * Count programmes in words, such as `1 programme` or `3 programmes`.
+ *
+ * @param count How many programmes there are.
+ * @returns The count followed by the right form of "programme".
+ */
+function programmeCount(count: number): string {
+  return count === 1 ? '1 programme' : `${count} programmes`;
+}
+
 
 interface ModificationDialogProps {
   swimdslProgramme: string;
   selectedFile: string;
   setSelectedFile: React.Dispatch<React.SetStateAction<string>>;
+  setSwimdslProgramme: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default function ModificationDialog(
@@ -100,6 +113,7 @@ export default function ModificationDialog(
       swimdslProgramme,
       selectedFile,
     setSelectedFile,
+    setSwimdslProgramme,
  }: ModificationDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [modificationParameters, setModificationParameters] = useState<ModificationParameters>({
@@ -180,6 +194,16 @@ export default function ModificationDialog(
     />
   );
 
+  const paceCount = modificationParameters.paces.length;
+  const pacesMissing = submitAttempted && paceCount === 0;
+  const paceHelp = paceError !== '' ? paceError
+    : pacesMissing ? 'Add at least one pace'
+    : 'Type a pace and press Enter. One new programme is created per pace.';
+
+  // Confirms which programmes were created, as the dialog closes when they are.
+  const [notice, setNotice] = useState('');
+  const [noticeOpen, setNoticeOpen] = useState(false);
+
   const handleOpen = () => {
     setSubmitAttempted(false);
     setOpen(true);
@@ -189,16 +213,25 @@ export default function ModificationDialog(
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitAttempted(true);
-    if (modificationParameters.paces.length === 0) {
-      alert("Please add at least one pace");
-      return;
-    }
-    if (targetError(modificationParameters.duration, 60, !byDistance) !== ''
+    if (paceCount === 0
+      || targetError(modificationParameters.duration, 60, !byDistance) !== ''
       || targetError(modificationParameters.volume, 1, byDistance) !== '') {
       return;
     }
-    modifyProgram(swimdslProgramme, selectedFile, setSelectedFile, modificationParameters);
-    console.log(JSON.stringify(modificationParameters, null, 2));
+    const created = modifyProgram(swimdslProgramme, selectedFile, modificationParameters);
+    // Opening the first new programme shows the result, and refreshes the file list with it.
+    const [first] = created;
+    if (first !== undefined) {
+      handleSelectFile(first, selectedFile, swimdslProgramme, setSelectedFile, setSwimdslProgramme);
+    }
+    setNotice(`Created ${programmeCount(created.length)} from ${selectedFile}`);
+    setNoticeOpen(true);
+
+    // Start the next modification afresh, but keep how the session is fitted.
+    setModificationParameters(prev => ({ ...prev, paces: [], duration: '', volume: '' }));
+    setPaceInput('');
+    setPaceError('');
+    setDurationInput('');
     handleClose();
   }
 
@@ -210,7 +243,7 @@ export default function ModificationDialog(
       </Button>
 
       <Dialog open={open} onClose={handleClose} fullWidth={true} maxWidth={"md"}>
-        <DialogTitle>Modification Details</DialogTitle>
+        <DialogTitle>Modify Programme for Swimmers</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit} id="modification-form">
             {/* Stack resets its children's margins, so the gap below the title is padding here instead. */}
@@ -249,9 +282,9 @@ export default function ModificationDialog(
                     {...params as TextFieldProps}
                     label="Swimmer Paces (m:ss/100m)"
                     name="swimmerPaces"
-                    placeholder={modificationParameters.paces.length === 0 ? "e.g. 1:30, then press Enter" : ""}
-                    error={paceError !== ''}
-                    helperText={paceError}
+                    placeholder={paceCount === 0 ? "e.g. 1:30" : ""}
+                    error={paceError !== '' || pacesMissing}
+                    helperText={paceHelp}
                   />
                 )}
               />
@@ -270,8 +303,13 @@ export default function ModificationDialog(
                   <FormControlLabel value={'distance'} control={<Radio />} label="Distance"></FormControlLabel>
                 </RadioGroup>
               </FormControl>
+
+              {/* The target sits under the choice that decides it, followed by the optional limit. */}
+              {byDistance ? volumeField : durationField}
+              {byDistance ? durationField : volumeField}
+
               <FormControl>
-                <FormLabel id="fit-method-label">Fitting the session</FormLabel>
+                <FormLabel id="fit-method-label">How to reach the target</FormLabel>
                 <RadioGroup
                   row
                   aria-labelledby="fit-method-label"
@@ -284,29 +322,37 @@ export default function ModificationDialog(
                   <FormControlLabel
                     value={'rescale'}
                     control={<Radio />}
-                    label={byDistance ? "Adjust the sets to fit target distance" : "Adjust the sets to fit target duration"}
+                    label="Scale the sets to fit"
                   ></FormControlLabel>
                   <FormControlLabel
                     value={'trim'}
                     control={<Radio />}
-                    label={byDistance ? "Cut off remaining session when the distance is reached" : "Cut off remaining session when the duration is reached"}
+                    label={byDistance ? "Cut off once the distance is reached" : "Cut off once the time is up"}
                   ></FormControlLabel>
                 </RadioGroup>
               </FormControl>
-
-              {/* The field the session is fitted to comes first, and the other is an optional limit. */}
-              {byDistance ? volumeField : durationField}
-              {byDistance ? durationField : volumeField}
             </Stack>
           </form>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
           <Button type="submit" form="modification-form">
-            Submit
+            {paceCount === 0 ? 'Create Programmes' : `Create ${programmeCount(paceCount)}`}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={noticeOpen}
+        autoHideDuration={5000}
+        onClose={(_, reason) => {
+          if (reason !== 'clickaway') setNoticeOpen(false);
+        }}
+      >
+        <Alert severity="success" variant="filled" onClose={() => { setNoticeOpen(false); }}>
+          {notice}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

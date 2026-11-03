@@ -573,8 +573,11 @@ doesn't pile up comments.
 
 ## Compatibility
 
-- `modifyProgram(program, selectedFile, setSelectedFile, params)` keeps
-  its signature. Output files are still named `"<pace> (<file>)"`.
+- `modifyProgram(program, selectedFile, params)` no longer takes
+  `setSelectedFile`, and returns the names of the files it saved so the
+  dialog can open the first one. Output files are still named
+  `"<pace> (<file>)"`, numbered as `"<pace> (<file>) (2)"` when that name is
+  taken.
 - `ModificationParameters` and `SessionTargets` gain a required
   `goal: "duration" | "distance"`. The dialog defaults it to `duration`. At
   runtime, any value other than `"distance"` fits by duration. With
@@ -588,7 +591,7 @@ doesn't pile up comments.
 - `getIntervalTime` and `getRestTime` have been removed, along with the
   re-export from `programmeModification.ts`, because nothing called them.
 - Behaviour kept unchanged on purpose: `newFile` still won't overwrite an
-  existing file with the same name, `group` (Individual/Group) is still
+  existing file (it numbers the new one instead), `group` (Individual/Group) is still
   unused, and intervals still use the "endurance" rest of 15 s.
 - With no duration or volume entered, both methods only rewrite intervals.
 
