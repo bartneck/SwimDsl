@@ -1,4 +1,5 @@
 import React, {useState} from "react";
+import Autocomplete from "@mui/material/Autocomplete";
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
@@ -10,12 +11,14 @@ import FormLabel from "@mui/material/FormLabel";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
+import TextField, {TextFieldProps} from "@mui/material/TextField";
 
 // import {TextField} from "@mui/material";
 import {modifyProgram, ModificationParameters} from "../logic/programmeModification.ts";
 import {FitGoal, FitMethod} from "../logic/programmeTypes.ts";
 
+/** A pace per 100m, written as `m:ss`. */
+const PACE_PATTERN = /^\d+:[0-5]\d$/;
 
 
 interface ModificationDialogProps {
@@ -40,7 +43,27 @@ export default function ModificationDialog(
     fit: 'rescale',
   })
 
-  const [addPace, setAddPace] = useState('')
+  const [paceInput, setPaceInput] = useState('');
+  const [paceError, setPaceError] = useState('');
+
+  /**
+   * Replace the list of paces, keeping only well-formed, unique ones. Any
+   * malformed pace stays in the input box so it can be corrected.
+   */
+  const setPaces = (entries: string[]) => {
+    const paces: string[] = [];
+    const invalid: string[] = [];
+    for (const entry of entries.map(e => e.trim()).filter(e => e !== '')) {
+      if (!PACE_PATTERN.test(entry)) {
+        invalid.push(entry);
+      } else if (!paces.includes(entry)) {
+        paces.push(entry);
+      }
+    }
+    setModificationParameters(prev => ({ ...prev, paces }));
+    setPaceInput(invalid.join(' '));
+    setPaceError(invalid.length > 0 ? `"${invalid.join('", "')}" is not a pace in the form m:ss` : '');
+  };
 
   const byDistance = modificationParameters.goal === 'distance';
 
@@ -92,37 +115,47 @@ export default function ModificationDialog(
         <DialogTitle>Modification Details</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit} id="modification-form">
-            <Stack direction="column" spacing={2}>
-              <FormControl>
-                <Stack direction="row" spacing={2}>
+            {/* Stack resets its children's margins, so the gap below the title is padding here instead. */}
+            <Stack direction="column" spacing={2} sx={{ pt: 2 }}>
+              {/* Paces are typed in and become chips, like the recipients of an email. */}
+              <Autocomplete
+                multiple
+                freeSolo
+                autoSelect
+                options={[]}
+                value={modificationParameters.paces}
+                onChange={(_, value, reason) => {
+                  if (reason === 'removeOption' || reason === 'clear') {
+                    setModificationParameters(prev => ({ ...prev, paces: value }));
+                  } else {
+                    setPaces(value);
+                  }
+                }}
+                inputValue={paceInput}
+                onInputChange={(_, value, reason) => {
+                  // setPaces decides what is left in the input, so MUI's reset after a change is ignored.
+                  if (reason === 'reset') {
+                    return;
+                  }
+                  // Typing a comma or space finishes the current pace.
+                  if (reason === 'input' && /[,\s]/.test(value)) {
+                    setPaces([...modificationParameters.paces, ...value.split(/[,\s]+/)]);
+                    return;
+                  }
+                  setPaceInput(value);
+                  setPaceError('');
+                }}
+                renderInput={(params) => (
                   <TextField
-                    label="Add Pace"
-                    name="addPace"
-                    type="text"
-                    value={addPace}
-                    onChange = {(e) => {
-                      setAddPace(e.target.value);
-                    }}
+                    // MUI's input params don't satisfy exactOptionalPropertyTypes, though they are what TextField expects.
+                    {...params as TextFieldProps}
+                    label="Swimmer Paces (m:ss/100m)"
+                    name="swimmerPaces"
+                    placeholder={modificationParameters.paces.length === 0 ? "e.g. 1:30, then press Enter" : ""}
+                    error={paceError !== ''}
+                    helperText={paceError}
                   />
-                  <Button onClick={() => {
-                    // 1. Add the current text to the array
-                    setModificationParameters(prev => ({
-                      ...prev,
-                      paces: [...prev.paces, addPace]
-                    }));
-                    setAddPace('');
-                  }} color="inherit">
-                    Add Pace
-                  </Button>
-                </Stack>
-
-              </FormControl>
-              <TextField
-                label="Swimmer Paces (m:ss/100m)"
-                name="swimmerPaces"
-                type="text"
-                value={modificationParameters.paces.join(",")}
-                aria-readonly={true}
+                )}
               />
               <FormControl>
                 <FormLabel id="fit-goal-label">Fit the session by</FormLabel>
