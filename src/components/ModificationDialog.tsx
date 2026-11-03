@@ -15,10 +15,78 @@ import TextField, {TextFieldProps} from "@mui/material/TextField";
 
 // import {TextField} from "@mui/material";
 import {modifyProgram, ModificationParameters} from "../logic/programmeModification.ts";
+import {parseTarget} from "../logic/programmeAdjustment.ts";
 import {FitGoal, FitMethod} from "../logic/programmeTypes.ts";
 
 /** A pace per 100m, written as `m:ss`. */
 const PACE_PATTERN = /^\d+:[0-5]\d$/;
+
+/** What may be typed into the distance field: whole metres. */
+const METRES_PATTERN = /^\d*$/;
+
+/** The most digits a duration can have, enough for `hh:mm:ss`. */
+const DURATION_DIGITS = 6;
+
+/**
+ * Lay out the digits typed into the duration field, filling from the right as
+ * more digits are typed: one or two digits are minutes, three or four are
+ * `h:mm` and five or six are `h:mm:ss`.
+ *
+ * @param typed The raw field value, which may still hold old colons.
+ * @returns The duration written as `mm`, `h:mm` or `h:mm:ss`.
+ */
+function formatDuration(typed: string): string {
+  const digits = typed.replace(/\D/g, '').slice(0, DURATION_DIGITS);
+  if (digits.length <= 2) return digits;
+
+  const groups: string[] = [];
+  for (let end = digits.length; end > 0; end -= 2) {
+    groups.unshift(digits.slice(Math.max(0, end - 2), end));
+  }
+  return groups.join(':');
+}
+
+/**
+ * Turn a duration laid out by formatDuration into the form parseTarget reads,
+ * which takes a lone `h:mm` to be `m:ss`.
+ *
+ * @param duration The duration as shown in the field.
+ * @returns The duration as minutes or `h:mm:ss`.
+ */
+function durationTarget(duration: string): string {
+  return duration.split(':').length === 2 ? `${duration}:00` : duration;
+}
+
+/**
+ * Write a number of seconds out in words, such as `1 h 30 min`.
+ *
+ * @param total The duration in seconds.
+ * @returns The duration in hours, minutes and seconds, skipping any that are zero.
+ */
+function describeDuration(total: number): string {
+  const parts = [
+    [Math.floor(total / 3600), 'h'],
+    [Math.floor(total / 60) % 60, 'min'],
+    [total % 60, 's'],
+  ] as const;
+  return parts.filter(([amount]) => amount > 0).map(([amount, unit]) => `${amount} ${unit}`).join(' ');
+}
+
+/**
+ * Check a session target typed into the dialog.
+ *
+ * @param value The raw field value.
+ * @param scale What one unit of the field is worth, as for parseTarget.
+ * @param required Whether the field must be filled in.
+ * @returns Why the target can't be used, or an empty string when it is fine.
+ */
+function targetError(value: string, scale: number, required: boolean): string {
+  if (value === '') return required ? 'Required' : '';
+  if (value.split(':').slice(1).some(part => Number(part) >= 60)) {
+    return 'Minutes and seconds must be less than 60';
+  }
+  return parseTarget(value, scale) === null ? 'Must be greater than 0' : '';
+}
 
 
 interface ModificationDialogProps {
@@ -45,6 +113,8 @@ export default function ModificationDialog(
 
   const [paceInput, setPaceInput] = useState('');
   const [paceError, setPaceError] = useState('');
+  // The duration as shown, which differs from the one submitted when it is h:mm.
+  const [durationInput, setDurationInput] = useState('');
 
   /**
    * Replace the list of paces, keeping only well-formed, unique ones. Any
@@ -67,36 +137,64 @@ export default function ModificationDialog(
 
   const byDistance = modificationParameters.goal === 'distance';
 
+  // A missing target is only reported once the user has tried to submit.
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const durationError = targetError(modificationParameters.duration, 60, !byDistance && submitAttempted);
+  const volumeError = targetError(modificationParameters.volume, 1, byDistance && submitAttempted);
+
+  // Echo the duration back in words, so it is clear how the digits were read.
+  const durationSeconds = parseTarget(modificationParameters.duration, 60);
+  const durationHelp = durationError !== '' ? durationError
+    : durationSeconds !== null ? describeDuration(durationSeconds)
+    : 'e.g. 45 for 45 min, 130 for 1 h 30 min';
+
   const durationField = (
     <TextField
-      label={byDistance ? "Time Limit (mins, optional)" : "Session Duration (mins)"}
+      label={byDistance ? "Time Limit (h:mm:ss, optional)" : "Session Duration (h:mm:ss)"}
       name="sessionDuration"
-      type="number"
-      value={modificationParameters.duration}
+      value={durationInput}
       onChange={(e) => {
-        setModificationParameters(prev => ({ ...prev, duration: e.target.value }));
+        const duration = formatDuration(e.target.value);
+        setDurationInput(duration);
+        setModificationParameters(prev => ({ ...prev, duration: durationTarget(duration) }));
       }}
+      slotProps={{ htmlInput: { inputMode: 'numeric' } }}
+      error={durationError !== ''}
+      helperText={durationHelp}
     />
   );
   const volumeField = (
     <TextField
       label={byDistance ? "Session Distance (metres)" : "Distance Limit (metres, optional)"}
       name="sessionVolume"
-      type="number"
       value={modificationParameters.volume}
       onChange={(e) => {
-        setModificationParameters(prev => ({ ...prev, volume: e.target.value }));
+        const volume = e.target.value;
+        if (METRES_PATTERN.test(volume)) {
+          setModificationParameters(prev => ({ ...prev, volume }));
+        }
       }}
+      slotProps={{ htmlInput: { inputMode: 'numeric' } }}
+      error={volumeError !== ''}
+      helperText={volumeError}
     />
   );
 
-  const handleOpen = () => { setOpen(true); };
+  const handleOpen = () => {
+    setSubmitAttempted(false);
+    setOpen(true);
+  };
   const handleClose = () => { setOpen(false); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitAttempted(true);
     if (modificationParameters.paces.length === 0) {
       alert("Please add at least one pace");
+      return;
+    }
+    if (targetError(modificationParameters.duration, 60, !byDistance) !== ''
+      || targetError(modificationParameters.volume, 1, byDistance) !== '') {
       return;
     }
     modifyProgram(swimdslProgramme, selectedFile, setSelectedFile, modificationParameters);

@@ -56,7 +56,7 @@ import {
   type ResizeContext,
   type StepUp,
 } from "./setResizing.ts";
-import { secondsToTime, timeToSeconds } from "./swimTime.ts";
+import { secondsToTime } from "./swimTime.ts";
 
 /** A programme fitted to a set of targets for one swimmer's pace. */
 export interface FittedProgramme {
@@ -154,7 +154,8 @@ export function fitProgramme(
 /**
  * Read a session target typed into the modification dialog.
  *
- * @param value The raw field value.
+ * @param value The raw field value. A value written as `m:ss` or `h:mm:ss` is
+ *   read as a time in seconds, whatever the scale.
  * @param scale What one unit of the field is worth, such as 60 for minutes.
  * @returns The target, or null when the field was left empty or unusable.
  */
@@ -163,7 +164,7 @@ export function parseTarget(value: string, scale: number): number | null {
   if (trimmed === "") return null;
 
   const parsed = trimmed.includes(":")
-    ? timeToSeconds(trimmed)
+    ? trimmed.split(":").reduce((seconds, part) => seconds * 60 + Number(part), 0)
     : Number(trimmed) * scale;
 
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
