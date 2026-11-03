@@ -16,13 +16,14 @@ function saveGeneratedProgrammes(programmes: string[]): string | undefined {
   return firstFile;
 }
 
-function newFile(selectedFile: string, setSelectedFile: (newFile: string)=>void, key: string, value: string): void {
-  if (localStorage.getItem(key)) {
-    console.log(key, " already exist");
-  } else {
-    localStorage.setItem(key, value);
-    setSelectedFile(selectedFile);
+/** Saves a file without overwriting another, numbering the name if it is taken; returns the key used. */
+function newFile(key: string, value: string): string {
+  let name = key;
+  for (let copy = 2; localStorage.getItem(name) !== null; copy++) {
+    name = `${key} (${copy})`;
   }
+  localStorage.setItem(name, value);
+  return name;
 }
 
 function handleDelete(key: string, setSelectedFile: (newFile: string)=>void, setSwimdslProgramme:(swimdslProgramme: string)=>void):void {

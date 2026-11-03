@@ -150,6 +150,7 @@ function NavBar({
           swimdslProgramme={swimdslProgramme}
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
+          setSwimdslProgramme={setSwimdslProgramme}
         />
 
         <GenerateDialog

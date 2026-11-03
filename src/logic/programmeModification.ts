@@ -92,25 +92,21 @@ export function modifiedProgrammes(
 
 /**
  * Rewrite a programme for each of the given paces and save the results as
- * new files.
+ * new files. Existing files are never overwritten: a name that is taken is
+ * numbered instead.
  *
  * @param program The SwimDSL source of the original programme.
  * @param selectedFile The file the original programme was loaded from.
- * @param setSelectedFile Selects a file in the editor.
  * @param modificationParams The details collected by the modification dialog.
+ * @returns The names the new files were saved under, in the order the paces
+ *   were given.
  */
 export function modifyProgram(
   program: string,
   selectedFile: string,
-  setSelectedFile: (selectedFile: string) => void,
   modificationParams: ModificationParameters,
-): void {
-  for (const modified of modifiedProgrammes(program, modificationParams)) {
-    newFile(
-      selectedFile,
-      setSelectedFile,
-      `${modified.pace} (${selectedFile})`,
-      modified.source,
-    );
-  }
+): string[] {
+  return modifiedProgrammes(program, modificationParams).map(modified =>
+    newFile(`${modified.pace} (${selectedFile})`, modified.source),
+  );
 }

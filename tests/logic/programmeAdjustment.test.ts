@@ -39,6 +39,10 @@ describe("parseTarget", () => {
     expect(parseTarget("1:30", 60)).toBe(90);
   });
 
+  it("reads h:mm:ss as a time", () => {
+    expect(parseTarget("1:30:15", 60)).toBe(5415);
+  });
+
   it.each([[""], ["   "], ["abc"], ["0"], ["-5"], ["0:00"], ["Infinity"]])(
     "has no target for %j",
     value => {

@@ -439,12 +439,11 @@ describe("modifyProgram", () => {
   });
 
   it("saves a file for each pace, named after the pace and the original", () => {
-    const setSelectedFile = vi.fn();
+    vi.mocked(newFile).mockImplementation(key => key);
 
-    modifyProgram(
+    const created = modifyProgram(
       EXAMPLE_SESSION,
       "Tuesday",
-      setSelectedFile,
       parameters({ paces: ["1:10", "2:15"], duration: "30" }),
     );
 
@@ -454,34 +453,38 @@ describe("modifyProgram", () => {
     );
 
     expect(vi.mocked(newFile).mock.calls).toEqual([
-      ["Tuesday", setSelectedFile, "1:10 (Tuesday)", slower?.source],
-      ["Tuesday", setSelectedFile, "2:15 (Tuesday)", faster?.source],
+      ["1:10 (Tuesday)", slower?.source],
+      ["2:15 (Tuesday)", faster?.source],
     ]);
+    expect(created).toEqual(["1:10 (Tuesday)", "2:15 (Tuesday)"]);
   });
 
   it("saves nothing for no paces", () => {
-    modifyProgram(EXAMPLE_SESSION, "Tuesday", vi.fn(), parameters({ paces: [] }));
-
+    expect(modifyProgram(EXAMPLE_SESSION, "Tuesday", parameters({ paces: [] }))).toEqual([]);
     expect(newFile).not.toHaveBeenCalled();
   });
 
-  it("does not overwrite a file that already exists", async () => {
+  it("numbers the name rather than overwriting a file that already exists", async () => {
     const { newFile: realNewFile } = await vi.importActual<
       typeof import("../../src/logic/filePersistence.ts")
     >("../../src/logic/filePersistence.ts");
-    const stored = new Map([["1:30 (Tuesday)", "the coach's edits"]]);
+    const stored = new Map([
+      ["1:30 (Tuesday)", "the coach's edits"],
+      ["1:30 (Tuesday) (2)", "an earlier copy"],
+    ]);
 
     vi.mocked(newFile).mockImplementation(realNewFile);
     vi.stubGlobal("localStorage", {
       getItem: (key: string) => stored.get(key) ?? null,
       setItem: (key: string, value: string) => stored.set(key, value),
     });
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
 
-    const setSelectedFile = vi.fn();
-    modifyProgram(EXAMPLE_SESSION, "Tuesday", setSelectedFile, parameters());
+    const created = modifyProgram(EXAMPLE_SESSION, "Tuesday", parameters());
+    const [version] = modifiedProgrammes(EXAMPLE_SESSION, parameters());
 
+    expect(created).toEqual(["1:30 (Tuesday) (3)"]);
     expect(stored.get("1:30 (Tuesday)")).toBe("the coach's edits");
-    expect(setSelectedFile).not.toHaveBeenCalled();
+    expect(stored.get("1:30 (Tuesday) (2)")).toBe("an earlier copy");
+    expect(stored.get("1:30 (Tuesday) (3)")).toBe(version?.source);
   });
 });
