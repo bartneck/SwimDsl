@@ -143,8 +143,9 @@ exceed the budget, especially for short sessions.
 `setToLine` serialises individual sets. `itemToLines` handles nested groups,
 indentation, and group modifiers. The output begins with pool settings,
 title, date, description, and enabled named pace definitions, followed by
-the sets in warm-up → pull → main → cooldown order. These sections are not
-currently labelled with SwimDSL section headers.
+the sets in warm-up → pull → main → cooldown order. Each nonempty section
+starts with a SwimDSL message heading (`> Warm-up`, `> Pull`, `> Main set`,
+or `> Cool-down`), with a blank line between sections.
 
 `renderRest` writes fixed rest as `with`, swimmer-count rest as `in-out`, and
 sendoffs as `on`. A positive sendoff is emitted for repeated sets or sets
