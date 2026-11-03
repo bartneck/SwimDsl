@@ -1,8 +1,8 @@
 # Programme adjustment
 
 This note covers the rework of the **Modify Programme** feature on the
-`feat/set-duration-adjustment` branch: what changed, how it works now, and why
-it was built this way.
+`feat/set-duration-adjustment` branch, and the later overhaul of its dialog
+(#81): what changed, how it works now, and why it was built this way.
 
 The feature takes one SwimDSL programme and writes out a version of it for
 each swimmer pace entered in the modification dialog. Each version gets
@@ -11,10 +11,10 @@ session is fitted **by duration** (every swimmer fills the same time) or **by
 distance** (every swimmer swims the same distance), and the other of the two
 can be given as a limit. Fitting works one of two ways:
 
-- **Adjust the sets to fit** (`rescale`, the default). Sets are resized, down
+- **Scale the sets to fit** (`rescale`, the default). Sets are resized, down
   or up. The main set is protected, later sets change before earlier ones,
   and extra volume goes mostly to repeated sets.
-- **Stop when the time runs out** / **Stop when the distance is reached**
+- **Cut off once the time is up** / **Cut off once the distance is reached**
   (`trim`). Sets are kept exactly as written, and the programme ends at the
   point where the session runs out.
 
@@ -30,7 +30,7 @@ sets and only the intervals differ.
 3. [Architecture](#architecture)
 4. [How a programme is timed](#how-a-programme-is-timed)
 5. [Rescale: fitting by resizing sets](#rescale-fitting-by-resizing-sets)
-6. [Trim: stopping when the time runs out](#trim-stopping-when-the-time-runs-out)
+6. [Trim: cutting off once the time is up](#trim-cutting-off-once-the-time-is-up)
 7. [Fitting by distance](#fitting-by-distance)
 8. [Training load across paces](#training-load-across-paces)
 9. [The summary comment](#the-summary-comment)
@@ -50,15 +50,21 @@ sets and only the intervals differ.
 | `src/logic/programmeTiming.ts` | New | Timing model: how long a programme takes and how far it goes at a pace. |
 | `src/logic/intervalRatios.ts` | New | Measures how each written interval compares with the average for its distance. |
 | `src/logic/setResizing.ts` | New | Resizes a single set, by repetitions or by pool lengths. |
-| `src/logic/programmeAdjustment.ts` | New | Fits a programme to its targets: the duration and distance goals, the `rescale` method, and choosing between `rescale` and `trim`. |
+| `src/logic/programmeAdjustment.ts` | New | Fits a programme to its targets: the duration and distance goals, the `rescale` method, and choosing between `rescale` and `trim`. Also reads the dialog's targets (`parseTarget`), including durations written as `h:mm:ss`. |
 | `src/logic/programmeTrim.ts` | New | The `trim` method. |
 | `src/logic/adjustmentSummary.ts` | New | The summary comment. |
-| `src/logic/programmeModification.ts` | Rewritten | Runs the steps above once per pace and saves the results. `modifyProgram` keeps its signature. |
-| `src/components/ModificationDialog.tsx` | Modified | Adds the "Fit the session by" choice between duration and distance, and the "Fitting the session" choice between the two methods. |
+| `src/logic/programmeModification.ts` | Rewritten | Runs the steps above once per pace and saves the results. `modifyProgram` returns the names of the files it saved. |
+| `src/logic/filePersistence.ts` | Modified | `newFile` numbers the name of a new file when it is taken, rather than skipping it, and returns the name it saved under. |
+| `src/components/ModificationDialog.tsx` | Modified | Reworked: paces entered as tags, the "Fit the session by" and "How to reach the target" choices, an `h:mm:ss` duration field, inline validation, and confirmation of the files created (see [below](#modificationdialogtsx)). |
+| `src/components/NavBar.tsx` | Modified | Passes `setSwimdslProgramme` to the dialog, so it can open the first new programme. |
+| `tests/logic/*.test.ts` | New | Vitest unit tests, one file for each of the eleven logic modules above. `filePersistence.ts` is tested through `programmeModification.test.ts`, and the two components have no tests (see [Verification](#verification)). |
+| `tests/logic/testFixtures.ts` | New | Programmes and helpers shared by the tests. |
+| `package.json` | Modified | Adds Vitest and the `npm test` script. |
+| `tsconfig.app.json` | Modified | Includes `tests`, so the tests are type-checked with the rest of the app. |
 
 The original `programmeModification.ts` was one 268-line file doing string
-manipulation. The new code is split into eleven modules of about 1,840 lines,
-about 1,060 of them code and the rest comments and blank lines.
+manipulation. The new code is split into eleven modules of about 1,910 lines,
+about 1,090 of them code and the rest comments and blank lines.
 
 ## Why the modifier was rewritten
 
@@ -159,7 +165,8 @@ flowchart TD
     RS --> I[rewriteIntervals]
     TR --> I
     I --> O[renderProgramme + describeAdjustment]
-    O --> N["newFile, saved as pace (file)"]
+    O --> N["newFile, saved as pace (file),<br/>numbered when the name is taken"]
+    N --> E[ModificationDialog opens the first new programme]
 ```
 
 ### `swimTime.ts`
@@ -194,8 +201,9 @@ Design points:
   on the masked line and all edits use positions in the original line. This
   fixes the `on`-inside-a-description class of bugs.
 - **Grammar-aligned patterns.** The instruction head pattern follows the
-  grammar: optional `N x`, then a length written as `100`, `4 laps`, or
-  `5:00`. `NumberOne` can no longer look like a rest.
+  grammar: optional `N x`, with or without spaces around the `x` (`5 x 100`
+  or `5x100`), then a length written as `100`, `4 laps`, or `5:00`.
+  `NumberOne` can no longer look like a rest.
 - **Blocks.** Blocks are gathered by counting braces, so nested blocks work.
   The lines inside a block are recorded with the product of their enclosing
   repetition counts, so timing stays correct. Unbalanced braces leave the rest
@@ -222,7 +230,13 @@ with the parser.
 - `rewriteHead` changes only the repetition count or the length token, keeping
   the original spacing and laps wording. A missing `N x` is never added,
   because that would change how the instruction reads.
-- `rewriteOnInterval` changes only the duration after `on` on a given line.
+- `rewriteOnInterval` changes only the duration after an `on`. Given the
+  index of one of a block's lines, it rewrites the interval of the
+  instruction on that line, and leaves out any braces sharing the line.
+  Without one, it rewrites the instruction's own interval, which for a block
+  is the one after its closing brace. So in
+  `2 x { 50 Freestyle on 1:00 } on 2:30` each interval is rewritten
+  separately.
 
 ### `programmeTiming.ts`
 
@@ -251,7 +265,10 @@ intervals, and summarises the result. Every parsed instruction becomes a
 unit. Instructions that cannot be resized (time-based lengths, blocks with no
 `N x`) are still units, so their time counts towards the session. This file
 also holds all of `rescale` except the resizing itself (the tiers, passes and
-`settleOnDistance`), and `parseTarget` for the dialog fields.
+`settleOnDistance`), and `parseTarget` for the dialog fields. `parseTarget`
+reads a plain number in the field's unit (minutes or metres), or a time
+written as `m:ss` or `h:mm:ss`, and gives no target for an empty, unreadable
+or zero value.
 
 ### `programmeTrim.ts`
 
@@ -268,21 +285,89 @@ programme asks of the swimmer.
 Now only runs the other modules. It adds a pure function,
 `modifiedProgrammes(programme, parameters)`, which returns the rewritten
 source and summary for each pace without touching `localStorage`, so it can
-be tested directly. `modifyProgram` keeps its signature and saves each result
-through `newFile`, as before.
+be tested directly. `modifyProgram` saves each result through `newFile` as
+`"<pace> (<file>)"` and returns the names the files were saved under, in the
+order the paces were given.
+
+### `filePersistence.ts`
+
+`newFile(key, value)` never overwrites an existing file. When the name is
+taken, it tries `key (2)`, `key (3)` and so on, saves under the first free
+name, and returns it. It used to skip the save silently, logging only to the
+console. That meant re-running the same pace on the same programme created
+nothing.
 
 ### `ModificationDialog.tsx`
 
-Adds two labelled radio groups:
+The dialog, titled **Modify Programme for Swimmers**, has these fields from
+top to bottom.
 
+- **Swimmer Paces (m:ss/100m)**: paces become tags in the field, like the
+  recipients of an email (an MUI `Autocomplete` with `multiple` and
+  `freeSolo`). Pressing Enter, typing a comma or space, or leaving the field
+  turns the typed pace into a tag. Pasting `1:30, 1:45 2:00` adds all three.
+  A tag is removed with its delete icon, or by pressing Backspace in an empty
+  field, and the field's clear button removes them all. Only `m:ss` paces are
+  accepted, and duplicates are dropped. Anything else stays in the field with
+  an error so it can be corrected. The field shows `e.g. 1:30` until a pace
+  is added, and the text under it reads "Type a pace and press Enter. One new
+  programme is created per pace." Stored as `paces`.
 - **Fit the session by**: **Duration** (selected by default) or **Distance**,
-  stored as `goal` on `ModificationParameters`. The field for the chosen goal
-  is shown first. The other is relabelled as an optional limit: "Distance
-  Limit (metres, optional)" when fitting by duration, and "Time Limit (mins,
-  optional)" when fitting by distance.
-- **Fitting the session**: **Adjust the sets to fit** (`rescale`, selected by
-  default) or **Stop when the time runs out** (`trim`), which reads **Stop
-  when the distance is reached** when fitting by distance. Stored as `fit`.
+  stored as `goal`.
+- **The target**, directly under that choice: "Target Session Duration
+  (h:mm:ss)" or "Target Session Distance (metres)". It is required.
+- **The limit**, under the target: the other of the two, relabelled as
+  optional, "Distance Limit (metres, optional)" or "Time Limit (h:mm:ss,
+  optional)".
+- **How to reach the target**: **Scale the sets to fit** (`rescale`, selected
+  by default) or **Cut off once the time is up** (`trim`), which reads **Cut
+  off once the distance is reached** when fitting by distance. Stored as
+  `fit`.
+
+The duration field takes only digits and lays them out as they are typed,
+filling from the right:
+
+| Typed | Shown | Read as | Stored as `duration` |
+| --- | --- | --- | --- |
+| `45` | `45` | 45 min | `45` |
+| `130` | `1:30` | 1 h 30 min | `1:30:00` |
+| `1230` | `12:30` | 12 h 30 min | `12:30:00` |
+| `13000` | `1:30:00` | 1 h 30 min | `1:30:00` |
+
+One or two digits are minutes, three or four are `h:mm`, and five or six are
+`h:mm:ss`. Because `parseTarget` reads a two-part time as `m:ss`, the dialog
+keeps the text shown separately from the value it stores, and adds `:00` to
+an `h:mm` duration. The helper text under the field repeats the duration in
+words (for example "1 h 30 min"), so it is clear how the digits were read.
+While the field is empty it reads "e.g. 45 for 45 min, 130 for 1 h 30 min".
+The distance field takes only digits.
+
+Validation is shown on the fields rather than in an alert:
+
+- a pace that isn't `m:ss`: shown as soon as it is entered;
+- a duration written as `h:mm` or `h:mm:ss` with minutes or seconds of 60 or
+  more ("Minutes and seconds must be less than 60"), or a target of 0 ("Must
+  be greater than 0"): shown as soon as it is typed. One or two digits are
+  read as minutes and are not limited, so `75` is 75 minutes;
+- no paces ("Add at least one pace"), or an empty target ("Required"): shown
+  once **Create** has been pressed, and reset each time the dialog opens.
+
+The submit button names the number of programmes it will create, as in
+**Create 3 programmes**, and reads **Create Programmes** until a pace has
+been added. On success, the dialog:
+
+1. saves one programme per pace through `modifyProgram`;
+2. opens the first new programme with `handleSelectFile`. This first saves
+   the programme in the editor under its own file, as switching files always
+   does, and also refreshes the file list (the list is read from
+   `localStorage` whenever it renders);
+3. shows a confirmation, such as "Created 3 programmes from Tuesday", for
+   5 seconds, or until its close button is pressed. Clicking elsewhere does
+   not dismiss it;
+4. clears the paces, duration and distance, but keeps the two radio choices
+   for the next modification.
+
+Cancel closes the dialog without clearing anything.
 
 ## How a programme is timed
 
@@ -376,12 +461,13 @@ A set changes in one of two ways, and only ever in whole units:
   time-based lengths. A repetition never drops below one pool length.
 
 When **cutting**, removing repetitions is preferred because it keeps the set
-distance the coach wrote. Shortening wins only if it fits the needed cut
-more than twice as closely. Near the end of a cut, the remaining amount is
-often smaller than any single step. The algorithm then takes one step in the
-*current* tier, going slightly past the target, rather than moving on to a
-tier the session can less afford to lose. If both options overshoot, it takes
-the smaller one.
+distance the coach wrote. When both fit within the needed cut, shortening
+wins only if it removes more than twice as much. Near the end of a cut, the
+remaining amount is often smaller than any single step. The algorithm then
+takes one step in the *current* tier, going slightly past the target, rather
+than moving on to a tier the session can less afford to lose. If only one
+option fits within the cut, it takes that one. If both overshoot, it takes the
+smaller one.
 
 When **growing**, a repetition is added whenever one fits. Adding volume
 never takes the session past its target.
@@ -438,7 +524,7 @@ The warm up and warm down stay unchanged in all four. Before the
 repeated-set weighting was added, a 60-minute target turned the single `400`
 into an `1100`, and a 90-minute target into a `1700`.
 
-## Trim: stopping when the time runs out
+## Trim: cutting off once the time is up
 
 This replaces the original `capInstructionsToDuration`, with the same rule:
 sets are swum as written until one would take the session past its target.
@@ -527,7 +613,7 @@ the sets differ between paces again.
 
 ### Trim
 
-**Stop when the distance is reached** uses `cutToTargets` unchanged. Sets
+**Cut off once the distance is reached** uses `cutToTargets` unchanged. Sets
 are kept as written until one would pass the distance. That set is reduced
 to the whole repetitions that still fit, and the programme ends there. Trim
 never goes over the distance and never adds volume.
@@ -578,6 +664,18 @@ doesn't pile up comments.
   dialog can open the first one. Output files are still named
   `"<pace> (<file>)"`, numbered as `"<pace> (<file>) (2)"` when that name is
   taken.
+- `newFile(key, value)` no longer takes `selectedFile` and `setSelectedFile`,
+  and returns the name it saved under. Its old call to `setSelectedFile`, with
+  the file already selected, never re-rendered, so the file list didn't show
+  the new files. It used to skip a name that was taken. It now numbers it
+  instead. A name is now taken whenever a file exists, including an empty
+  one, which it used to overwrite.
+- `parseTarget` reads `h:mm:ss` as well as `m:ss`. A time with an unreadable
+  part, such as `1:xx`, now gives no target rather than treating that part as
+  0. `parseTarget` no longer calls `timeToSeconds`, which is unchanged. It
+  still reads only `m:ss`, which is all that programmes and paces contain.
+- The dialog's duration field no longer accepts fractional minutes such as
+  `52.5`. `parseTarget` still reads them.
 - `ModificationParameters` and `SessionTargets` gain a required
   `goal: "duration" | "distance"`. The dialog defaults it to `duration`. At
   runtime, any value other than `"distance"` fits by duration. With
@@ -588,12 +686,11 @@ doesn't pile up comments.
   dialog defaults it to `rescale`. At runtime, any value other than `"trim"`
   is treated as `rescale`, so a missing value adjusts rather than silently
   cutting.
-- `getIntervalTime` and `getRestTime` have been removed, along with the
-  re-export from `programmeModification.ts`, because nothing called them.
 - Behaviour kept unchanged on purpose: `newFile` still won't overwrite an
-  existing file (it numbers the new one instead), `group` (Individual/Group) is still
-  unused, and intervals still use the "endurance" rest of 15 s.
-- With no duration or volume entered, both methods only rewrite intervals.
+  existing file, and intervals still use the "endurance" rest of 15 s.
+- With no duration or volume, both methods only rewrite intervals. The
+  dialog now requires the target, so this only happens when
+  `modifiedProgrammes` or `modifyProgram` is called directly.
 
 ## Verification
 
@@ -604,44 +701,55 @@ doesn't pile up comments.
   `codemirror-swimdsl/src/buildAst.ts` when the submodule is on `201aa1b`,
   which is behind the commit this repository records (`d853cae`). A full build
   has not been confirmed with the submodule on `d853cae`.
-- Splitting the modification code into the current modules changed no
-  behaviour: `modifiedProgrammes` gave byte-identical output before and after
-  across 64,064 generated programmes.
-- The Vitest suite in `tests/logic` (`npm test`) covers every module above
-  except `ModificationDialog.tsx`. It includes the worked examples in this
-  document, and parses generated programmes with the real SwimDSL grammar
-  (the Lezer parser from `codemirror-lang-swimdsl`). Known limitations it
-  cannot yet meet are kept as `it.fails` tests, which turn red once the
-  limitation is lifted. Among other things, it checks that:
-  - every generated programme parses with no errors, and the tutorial
-    programme gains no new errors;
+- The Vitest suite in `tests/logic` (`npm test`, or `npx vitest run` for a
+  single run) covers every logic module above, with one test file per module.
+  `newFile` is tested through `modifyProgram`, including numbering a name that
+  is taken. `ModificationDialog.tsx` and `NavBar.tsx` have no automated tests.
+  The suite has 440 tests. 438 pass, and the other two are `it.fails` tests
+  for limitations 13 and 14 under
+  [Known limitations](#known-limitations-and-assumptions). Those two are
+  expected to fail, and turn red once the limitation is lifted. The suite
+  includes the worked examples in this document, and parses generated
+  programmes with the real SwimDSL grammar (the Lezer parser from
+  `codemirror-lang-swimdsl`). Among other things, it checks that:
+  - every generated programme parses with no errors;
   - every rescaled or trimmed version of the example session stays within
     its duration and volume targets, cutting and growing, at several paces
     and with both targets set;
   - cuts touch warm up and warm down before the main set, and later sets
     before earlier ones (see the tables above);
-  - training load across four paces varies by less than 15% (actual: 7.2%);
+  - training load across four paces at 45 minutes varies by 7.2%, against
+    48.1% without adjustment;
   - re-running on an already fitted programme leaves exactly one summary
     comment;
-  - fitting by duration gives the same programme as the version before
-    distance fitting was added. This was checked for every combination
-    tested of no duration or 12 to 60 minutes with no volume or 1000 to
-    5000 m, at three paces, with both methods;
-  - fitting by distance gives the same sets at every pace, never lands
-    further from the distance than treating it as a limit would, stays
-    within the time limit whenever that limit is reachable, and never goes
-    over the distance with `trim`. Checked on the example session and on a
-    50 m pool programme made only of repeated sets and a block;
+  - `parseTarget` reads plain numbers, `m:ss` and `h:mm:ss`, and gives no
+    target for an empty, unreadable, zero or negative value;
+  - fitting the example session by distance gives the same sets at every
+    pace, never lands further from the distance than treating it as a limit
+    would, and lets a time limit win when it is the stricter. With `trim`,
+    it never goes over the distance;
   - an edge-case programme (nested and single-line blocks, laps, a
     time-based length, `with` / `in-out` rests, `on` inside a description
-    and inside a trailing comment) and a programme with no headers produce
-    valid SwimDSL for both methods at three paces and five targets.
-    Descriptions and comments come through untouched, and a block with
-    unbalanced braces is left as it was;
+    and inside a trailing comment), a programme with no headers and a
+    one-set programme in a 50 m pool produce valid SwimDSL for both methods at three paces,
+    for every combination of seven durations (none, or 5 to 120 minutes) and
+    five volumes (none, or 500 to 5000 m). Descriptions and comments come
+    through untouched, and a block with unbalanced braces is left as it was;
   - the programme with no headers stays within every duration target.
-- Rescaling the tutorial programme to a short target can't get under it.
-  This is expected; see the first entry under
-  [Known limitations](#known-limitations-and-assumptions).
+- Checked once, outside the suite:
+  - Splitting the modification code into the current modules changed no
+    behaviour: `modifiedProgrammes` gave byte-identical output before and
+    after across 64,064 generated programmes.
+  - Fitting by duration gives the same programme as the version before
+    distance fitting was added, for every combination of no duration or 12
+    to 60 minutes with no volume or 1000 to 5000 m, at three paces, with both
+    methods.
+  - The tutorial programme parses with no errors, and so does every version
+    of it generated at three paces, with both goals and both methods, for
+    durations of none to 300 minutes and volumes of none to 5000 m.
+  - Rescaling the tutorial programme to a short target can't get under it.
+    This is expected; see the first entry under
+    [Known limitations](#known-limitations-and-assumptions).
 
 ## Known limitations and assumptions
 
@@ -701,6 +809,9 @@ doesn't pile up comments.
     `3 x { 50 Freestyle } on 5:00` sits inside another block, the `on 5:00`
     after its closing brace is neither timed nor rewritten. Only the
     outermost block's own rest is read.
+15. **Modifying with no file open.** The dialog can be submitted when no file
+    is selected. The new files are then named after the pace alone, as in
+    `1:30 ()`, and the confirmation reads "Created 1 programme from ".
 
 ## Tunable constants
 

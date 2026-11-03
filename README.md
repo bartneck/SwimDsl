@@ -113,6 +113,15 @@ load, responsiveness, and periodisation. Results are saved to
 See the [evaluation guide](docs/evaluation.md) for the experiment configuration,
 metric descriptions, and guidance on interpreting and reproducing results.
 
+## How can I automatically modify existing swim programmes in SwimDSL?
+
+From an existing programme, simply click the **Modify Programme** button in the top bar.
+From there a dialog will show with options for swimmer paces, desired distance or duration, and an optional additional distance or duration limit. Once these fields have
+been filled you can click the **Create Programmes** button in the bottom right and a new programme will be made for each pace given. These programmes will adjust the existing original programme to fit the given pace and target distance/duration as specified by the user.
+
+More in-depth instructions can be found in the swimDSL tutorial swim programme.
+Futher details on the implementation, design, and limitations see the [programme adjustment guide](docs/programme-adjustment.md)
+
 ## How does SwimDSL work?
 
 The SwimDSL editor is powered by a JavaScript package called
@@ -152,6 +161,9 @@ grow as the project develops.
 - Source file import
 - Swim programme generation across multiple weeks, with configurable training
   days, phase, focus, volume progression, paces, strokes, and equipment
+- Modification of swim sessions to suit different swimmer paces and desired 
+  distances and durations
+- Saving and browser storage of SwimDSL programmes.
 
 The linter highlights occurrences of the following issues to help prevent users
 from writing malformed programmes.

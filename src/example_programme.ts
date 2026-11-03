@@ -354,5 +354,30 @@ set LayoutWidth 50
 # Finally, you should have noticed already, any text preceeded by a
 # hash symbol (#) is a comment, and completely ignored when rendering.
 
+
+### Programme Modification ##########################################################
+
+# Now that you understand SwimDSL basics, you can start to play around with some of the
+# more exiting features. The first of which being the swim session modification.
+
+# This may be of high interest to coaches with multiple lanes or athletes that are trying
+# to make a session their own.
+
+# To do this you simply need to open up any SwimDSL session and then click on the 
+# "Modify Programme" button at the top of your screen, then in the pop up fill out the 
+# average pace of you or your swimmers, decide whether you want the session to be adjusted
+# to fit a certain duration or time, then fill in with either the duration or the distance.
+# Then once you have filled in the form simply click the "Create Programmes" button in the 
+# lower right corner and SwimDSL will modify the original programme to suit each of the paces
+# you identified while fitting it to your desired volume. 
+
+# Once you have created your new programmes, SwimDSL will save a new program for each pace,
+# e.g. if you create a 2:00 pace and a 1:40 pace modification then they will appear as
+# 2:00 (Original Session) and 1:40 (Original Session) in your saved programs.
+
+
+
+# Now that you have learnt all that SwimDSL can offer you are ready use it to its full capabilities
+
 # Go fourth!
 `;
