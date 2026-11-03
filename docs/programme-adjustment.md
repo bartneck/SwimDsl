@@ -36,9 +36,8 @@ sets and only the intervals differ.
 9. [The summary comment](#the-summary-comment)
 10. [Compatibility](#compatibility)
 11. [Verification](#verification)
-12. [Known defects](#known-defects)
-13. [Known limitations and assumptions](#known-limitations-and-assumptions)
-14. [Tunable constants](#tunable-constants)
+12. [Known limitations and assumptions](#known-limitations-and-assumptions)
+13. [Tunable constants](#tunable-constants)
 
 ## Summary of changes
 
@@ -200,8 +199,12 @@ Design points:
 - **Blocks.** Blocks are gathered by counting braces, so nested blocks work.
   The lines inside a block are recorded with the product of their enclosing
   repetition counts, so timing stays correct. Unbalanced braces leave the rest
-  of the programme verbatim. Blocks written on a single line are not yet
-  handled correctly (see [defect 2](#known-defects)).
+  of the programme verbatim. Each line of a block is read as the braces it
+  opens, then at most one instruction, then the braces it closes
+  (`splitBlockLine`), so a block written on one line,
+  `2 x { 50 Freestyle on 1:00 }`, or with an instruction on the line of a
+  brace, reads the same as one written over several. A block's own modifiers
+  are read from after its closing brace.
 - **Section classification.** Header text is lower-cased and reduced to
   letters. It is a warm up if it contains `warmup`, a warm down if it contains
   `warmdown`, `cooldown` or `swimdown`, and the main set if it contains
@@ -292,7 +295,7 @@ Everything is calculated from a single pace, *p* seconds per 100 m.
 | `with m:ss` | `swim + rest` |
 | `in-out N` | `swim + 5 s × N` (an assumption, see below) |
 | No rest | `swim` |
-| Block | Sum of the lines inside it, each with its own rest and nesting multiplier. An `on` on the closing line covers the whole block instead, but its interval currently ignores rests inside the block (see [defect 3](#known-defects)). |
+| Block | Sum of the lines inside it, each with its own rest and nesting multiplier. An `on` after the closing brace covers the whole block instead, and its interval is worked out from that sum, rests inside the block included. |
 
 The **interval ratio** is carried over from the original code. For each `on`
 interval, the ratio is its written interval divided by the average written
@@ -300,7 +303,11 @@ interval for the same distance anywhere in the programme. Ratios are taken
 once from the programme as written, so a set the coach wrote with a tight
 interval stays tight at every pace. Intervals are recalculated after
 resizing, so a shortened set gets a matching shorter interval. Intervals
-inside blocks are now rewritten as well.
+inside blocks are now rewritten as well. `measureIntervalRatios` gives each
+instruction one ratio for its own interval and one for each instruction
+inside it, so the two intervals of `2 x { 50 Freestyle on 1:00 } on 2:30`
+stay apart. A block's own interval is compared with others of the same
+distance as one pass through the block.
 
 **Training load** is volume × pace, which works out to the time spent
 swimming, not counting rest.
@@ -597,10 +604,12 @@ doesn't pile up comments.
 - Splitting the modification code into the current modules changed no
   behaviour: `modifiedProgrammes` gave byte-identical output before and after
   across 64,064 generated programmes.
-- The project has no test runner, so behaviour was checked with scripts that
-  call `modifiedProgrammes` directly and parse every output with the real
-  SwimDSL grammar (the Lezer parser from `codemirror-lang-swimdsl`). They
-  check that:
+- The Vitest suite in `tests/logic` (`npm test`) covers every module above
+  except `ModificationDialog.tsx`. It includes the worked examples in this
+  document, and parses generated programmes with the real SwimDSL grammar
+  (the Lezer parser from `codemirror-lang-swimdsl`). Known limitations it
+  cannot yet meet are kept as `it.fails` tests, which turn red once the
+  limitation is lifted. Among other things, it checks that:
   - every generated programme parses with no errors, and the tutorial
     programme gains no new errors;
   - every rescaled or trimmed version of the example session stays within
@@ -627,51 +636,9 @@ doesn't pile up comments.
     Descriptions and comments come through untouched, and a block with
     unbalanced braces is left as it was;
   - the programme with no headers stays within every duration target.
-- Two things did not pass:
-  - Rescaling the edge-case programme at a 2:15 pace to 20 minutes stops
-    at 21:23, although it can reach 16:38. The same checks also exposed two
-    timing errors that don't fail an assertion. All three are listed under
-    [Known defects](#known-defects).
-  - Rescaling the tutorial programme to a short target can't get under it.
-    This is expected; see the first entry under
-    [Known limitations](#known-limitations-and-assumptions).
-
-Moving these scripts into a proper test suite (for example Vitest, which fits
-the existing Vite setup) is a recommended follow-up.
-
-## Known defects
-
-These three bugs in the new code were found while checking the claims in
-this document. They are not fixed yet. Each fix is small and local.
-
-1. **A cut can stop above a target it could reach.** Near the end of a cut,
-   `shrinkUnit` has to choose between a forced repetition step and a length
-   step. The branch meant to "take the one that fits" returns
-   `!repetitionForced`, which is false whenever the length option has no
-   step at all. So a set that can only give up whole repetitions (a block,
-   or `N x 25` in a 25 m pool) never takes that last step. *Example:* the
-   edge-case programme at 2:15 with a 20-minute target stops at 21:23 with
-   its main block still at `2 x`, although 16:38 is reachable. *Fix:* when
-   only one of the two options has a step, take it, and keep the current
-   comparison for when both do.
-2. **Blocks written on one line are mis-read.** `parseBlockContents` only
-   reads the lines *between* a block's opening and closing lines, and the
-   block's rest is read from the closing line. For
-   `2 x { 50 Freestyle on 1:00 }` those are the same line, so the inner
-   instruction is never read (the block counts as 0 m) and its `on 1:00` is
-   taken as the block's own interval, then rewritten to `on 0:15`. The
-   output still parses, but the interval is wrong and the volume is too
-   low (the edge-case programme is reported as 1700 m instead of 1800 m).
-   *Fix:* split a one-line block into its inner text before parsing it.
-3. **A block's own `on` interval ignores rests inside the block.** For
-   `3 x { 100 Freestyle on 1:50 / 2 x { 50 Butterfly with 0:10 } } on 7:00`
-   at 1:30, the block's interval is based on its 180 s of swimming plus
-   15 s, which gives `on 3:15`. The lines inside take 3:35 (105 s + 2 ×
-   55 s), so the interval can't be swum, and the session time is
-   under-counted by 20 s per repetition. *Fix:* base the interval on the
-   block's full content time (`contentSeconds`) instead of its swim time.
-   Nothing changes for single instructions or for blocks with no inner
-   rests, such as the tutorial's `{ 25 Butterfly … } on 2:00`.
+- Rescaling the tutorial programme to a short target can't get under it.
+  This is expected; see the first entry under
+  [Known limitations](#known-limitations-and-assumptions).
 
 ## Known limitations and assumptions
 
@@ -722,6 +689,15 @@ this document. They are not fixed yet. Each fix is small and local.
     that can't shrink (limitation 1) also stop a short distance from being
     reached. The 50 m pool programme can't get below 1050 m, so a 1000 m
     target gives 1050 m.
+13. **One instruction per line.** The grammar allows several instructions on
+    one line, as in `2 x { 50 Freestyle 50 Backstroke }`, but the modifier
+    reads a line as one instruction at most, so only the first of these
+    counts. Reading them all would need the real parser rather than the
+    line-oriented one.
+14. **A nested block's own modifiers are ignored.** When
+    `3 x { 50 Freestyle } on 5:00` sits inside another block, the `on 5:00`
+    after its closing brace is neither timed nor rewritten. Only the
+    outermost block's own rest is read.
 
 ## Tunable constants
 

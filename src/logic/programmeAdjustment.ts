@@ -29,6 +29,7 @@
  */
 
 import { summarise, type AdjustmentSummary } from "./adjustmentSummary.ts";
+import type { IntervalRatios } from "./intervalRatios.ts";
 import { lengthFixedSeconds, lengthMetres } from "./programmeParsing.ts";
 import { renderProgramme, rewriteOnInterval } from "./programmeRewriting.ts";
 import {
@@ -120,7 +121,7 @@ interface FitContext extends ResizeContext {
  */
 export function fitProgramme(
   elements: ProgrammeElement[],
-  intervalRatios: number[][],
+  intervalRatios: IntervalRatios[],
   paceSecondsPer100: number,
   targets: SessionTargets,
   poolLength: number,
@@ -178,22 +179,22 @@ export function parseTarget(value: string, scale: number): number | null {
  */
 function buildUnits(
   elements: ProgrammeElement[],
-  intervalRatios: number[][],
+  intervalRatios: IntervalRatios[],
 ): AdjustableUnit[] {
   return elements.flatMap((element, index): AdjustableUnit[] => {
     if (element.kind !== "instruction") return [];
 
     const length = element.length;
     const metres = lengthMetres(length);
-    const ratios = intervalRatios[index] ?? [];
+    const ratios = intervalRatios[index];
 
     return [
       {
         instruction: element,
-        intervalRatio: ratios[element.lines.length - 1] ?? 1,
-        innerModels: element.inner.map(inner => ({
+        intervalRatio: ratios?.own ?? 1,
+        innerModels: element.inner.map((inner, innerIndex) => ({
           inner,
-          intervalRatio: ratios[inner.lineIndex] ?? 1,
+          intervalRatio: ratios?.inner[innerIndex] ?? 1,
         })),
         perRepetitionMetres: metres,
         perRepetitionFixedSeconds: lengthFixedSeconds(length),
