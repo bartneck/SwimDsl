@@ -120,10 +120,7 @@ describe("unitSeconds", () => {
     ).toBe(2 * 105);
   });
 
-  // Known defect 3: the block's interval comes from its 180 s of swimming, not
-  // the 215 s its lines take, so it cannot be swum and the session is
-  // under-counted.
-  it.fails("gives a block's own interval room for the rests inside it", () => {
+  it("gives a block's own interval room for the rests inside it", () => {
     const block = unitOf(`3 x {
   100 Freestyle on 1:50
   2 x {
@@ -131,7 +128,15 @@ describe("unitSeconds", () => {
   }
 } on 7:00`);
 
-    expect(intervalSeconds(block, PACE)).toBeGreaterThanOrEqual(215);
+    // The lines take 105 + 2 × 55 = 215 s, and the interval adds its 15 s.
+    expect(intervalSeconds(block, PACE)).toBe(230);
+    expect(unitSeconds(block, PACE)).toBe(3 * 230);
+  });
+
+  it("gives a block's own interval room for the intervals inside it", () => {
+    const block = unitOf("2 x {\n  2 x 50 Freestyle on 1:00\n} on 5:00");
+
+    expect(intervalSeconds(block, PACE)).toBe(2 * 60 + 15);
   });
 });
 

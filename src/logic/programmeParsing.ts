@@ -128,9 +128,8 @@ export function lengthFixedSeconds(length: InstructionLength): number {
 /**
  * Read the rest specification of an instruction, if it has one.
  *
- * @param line The line carrying the instruction's modifiers. The modifiers of
- *   a `{ ... }` block sit on its closing line, so this is always the last
- *   line of the instruction.
+ * @param line The text carrying the instruction's modifiers. The modifiers of
+ *   a `{ ... }` block follow the brace that closes it.
  * @returns The rest the instruction specifies.
  */
 function parseRest(line: string): InstructionRest {
@@ -159,13 +158,59 @@ function braceDepthChange(masked: string): number {
   return masked.split("{").length - masked.split("}").length;
 }
 
+/** The parts of a line inside a block. */
+interface BlockLine {
+  /** The repetition count written before each brace the line opens. */
+  openings: (string | undefined)[];
+  /** Where the instruction the line carries starts. */
+  from: number;
+  /** Where that instruction ends, which is where the line closes a block. */
+  to: number;
+}
+
+/**
+ * Pick out the parts of a line inside a block: the blocks it opens, then the
+ * instruction it carries, then the blocks it closes. The instruction sits
+ * between the last brace opened and the first one closed after it, so a block
+ * written on a single line, such as `2 x { 50 Freestyle }`, reads the same as
+ * one written over several. A line is taken to carry one instruction at most.
+ *
+ * @param masked A line of a block, masked by {@link maskLine}.
+ * @returns The parts of the line, as positions in it.
+ */
+export function splitBlockLine(masked: string): BlockLine {
+  const openings: (string | undefined)[] = [];
+  let from = 0;
+
+  for (;;) {
+    const rest = masked.slice(from);
+    const indent = /^\s*/.exec(rest)?.[0].length ?? 0;
+    const opening = BLOCK_OPEN_PATTERN.exec(rest.slice(indent));
+    if (!opening) break;
+
+    openings.push(opening[1]);
+    from += indent + opening[0].length;
+  }
+
+  const closing = masked.indexOf("}", from);
+  return { openings, from, to: closing === -1 ? masked.length : closing };
+}
+
+/**
+ * Where a block's own modifiers start on its closing line: after the brace
+ * that closes it.
+ */
+export function blockModifiersStart(closingLine: string): number {
+  return maskLine(closingLine).lastIndexOf("}") + 1;
+}
+
 /**
  * Read the instructions inside a `{ ... }` block, keeping track of how far
  * the nested repetitions around each line multiply it up.
  *
  * @param lines All of the block's lines, opening and closing lines included.
  * @param poolLength The pool length the programme is written for.
- * @returns One entry per instruction line inside the block.
+ * @returns One entry per instruction inside the block.
  */
 function parseBlockContents(
   lines: string[],
@@ -174,37 +219,39 @@ function parseBlockContents(
   const contents: InnerInstruction[] = [];
   const multipliers: number[] = [1];
 
-  for (let lineIndex = 1; lineIndex < lines.length - 1; lineIndex++) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
     const line = lines[lineIndex] ?? "";
-    const masked = maskLine(line).trim();
-    if (masked === "" || masked.startsWith(">")) continue;
+    const masked = maskLine(line);
+    if (masked.trim().startsWith(">")) continue;
 
-    const multiplier = multipliers[multipliers.length - 1] ?? 1;
+    const { openings, from, to } = splitBlockLine(masked);
 
-    const opening = BLOCK_OPEN_PATTERN.exec(masked);
-    if (opening) {
-      multipliers.push(multiplier * parseRepetitions(opening[1]));
-      continue;
+    // The first brace of the first line opens the block itself, whose
+    // repetitions belong to the block rather than to the lines inside it.
+    for (const count of lineIndex === 0 ? openings.slice(1) : openings) {
+      const outer = multipliers[multipliers.length - 1] ?? 1;
+      multipliers.push(outer * parseRepetitions(count));
     }
 
-    if (masked.startsWith("}")) {
-      if (multipliers.length > 1) multipliers.pop();
-      continue;
+    const head = HEAD_PATTERN.exec(masked.slice(from, to).trimStart());
+    if (head?.[3] !== undefined) {
+      const length = parseLengthToken(head[3], poolLength);
+
+      contents.push({
+        lineIndex,
+        multiplier: multipliers[multipliers.length - 1] ?? 1,
+        repetitions: parseRepetitions(head[1]),
+        metres: lengthMetres(length),
+        fixedSeconds: lengthFixedSeconds(length),
+        rest: parseRest(line.slice(from, to)),
+      });
     }
 
-    const head = HEAD_PATTERN.exec(masked);
-    if (head?.[3] === undefined) continue;
-
-    const length = parseLengthToken(head[3], poolLength);
-
-    contents.push({
-      lineIndex,
-      multiplier,
-      repetitions: parseRepetitions(head[1]),
-      metres: lengthMetres(length),
-      fixedSeconds: lengthFixedSeconds(length),
-      rest: parseRest(line),
-    });
+    // The brace that closes the block itself has nothing left to pop.
+    const closings = masked.slice(to).split("}").length - 1;
+    for (let closed = 0; closed < closings && multipliers.length > 1; closed++) {
+      multipliers.pop();
+    }
   }
 
   return contents;
@@ -272,6 +319,7 @@ export function parseProgramme(
       }
 
       const contents = parseBlockContents(blockLines, poolLength);
+      const closingLine = blockLines[blockLines.length - 1] ?? "";
       elements.push({
         kind: "instruction",
         lines: blockLines,
@@ -279,7 +327,7 @@ export function parseProgramme(
         repetitions: parseRepetitions(opening[1]),
         hasRepetitionOperator: opening[1] !== undefined,
         length: { kind: "block", ...measureBlockContents(contents) },
-        rest: parseRest(blockLines[blockLines.length - 1] ?? ""),
+        rest: parseRest(closingLine.slice(blockModifiersStart(closingLine))),
         inner: contents,
       });
       continue;

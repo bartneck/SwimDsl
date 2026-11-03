@@ -209,14 +209,19 @@ describe("shrinkUnit", () => {
       expect(unit.instruction.lines[0]).toBe("1 x 50 Freestyle");
     });
 
-    // Known defect 1: with no length step on offer, the branch meant to take
-    // the step that fits returns false, so these sets never take the last step
-    // of a cut.
-    it.fails.each([
-      ["a block", BLOCK],
-      ["repetitions of one pool length", "8 x 25 Freestyle"],
-    ])("drops a repetition of %s", (_name, source) => {
-      expect(shrinkUnit(context(), unitOf(source), 10, true)).toBeGreaterThan(0);
+    it.each([
+      ["a block", BLOCK, 100, "2 x {"],
+      ["repetitions of one pool length", "8 x 25 Freestyle", 25, "7 x 25 Freestyle"],
+    ])("drops a repetition of %s, which cannot be shortened", (_name, source, metres, head) => {
+      const unit = unitOf(source);
+
+      expect(shrinkUnit(context(), unit, 10, true)).toBe(metres);
+
+      expect(unit.instruction.lines[0]).toBe(head);
+    });
+
+    it("still takes nothing from them without overshooting", () => {
+      expect(shrinkUnit(context(), unitOf("8 x 25 Freestyle"), 10, false)).toBe(0);
     });
   });
 

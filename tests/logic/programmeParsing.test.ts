@@ -396,12 +396,131 @@ describe("parseProgramme", () => {
       });
     });
 
-    // Known defect 2: the lines between the opening and closing lines are all
-    // that gets read, and on a single line there are none.
-    it.fails("reads a block written on one line", () => {
-      expect(instructionOf("2 x { 50 Freestyle on 1:00 }")).toMatchObject({
-        length: { kind: "block", metres: 50 },
-        rest: { kind: "none" },
+    describe("written on one line", () => {
+      it("reads the instruction between the braces", () => {
+        expect(instructionOf("2 x { 50 Freestyle on 1:00 }")).toMatchObject({
+          repetitions: 2,
+          length: { kind: "block", metres: 50 },
+          rest: { kind: "none" },
+          inner: [
+            {
+              lineIndex: 0,
+              multiplier: 1,
+              repetitions: 1,
+              metres: 50,
+              rest: { kind: "sinceStart", seconds: 60 },
+            },
+          ],
+        });
+      });
+
+      it("reads the block's own rest from after the closing brace", () => {
+        expect(instructionOf("2 x { 50 Freestyle on 1:00 } on 2:30")).toMatchObject({
+          rest: { kind: "sinceStart", seconds: 150 },
+          inner: [{ rest: { kind: "sinceStart", seconds: 60 } }],
+        });
+      });
+
+      it("does not give the instruction inside the block's own rest", () => {
+        expect(instructionOf("2 x { 50 Freestyle } on 2:00")).toMatchObject({
+          rest: { kind: "sinceStart", seconds: 120 },
+          inner: [{ rest: { kind: "none" } }],
+        });
+      });
+
+      it("does not take a brace in a description after the block for its end", () => {
+        expect(instructionOf('2 x { 50 Freestyle } on 2:00 -- "end }"')).toMatchObject({
+          rest: { kind: "sinceStart", seconds: 120 },
+        });
+        expect(
+          instructionOf('2 x {\n  50 Freestyle\n} on 2:00 -- "end }"').rest,
+        ).toEqual({ kind: "sinceStart", seconds: 120 });
+      });
+
+      it("reads repetitions inside the braces", () => {
+        expect(instructionOf("2 x { 4 x 25 Butterfly }")).toMatchObject({
+          length: { kind: "block", metres: 100 },
+          inner: [{ repetitions: 4, metres: 25 }],
+        });
+      });
+
+      it("reads blocks nested on the one line", () => {
+        expect(instructionOf("2 x { 3 x { 25 Freestyle } }")).toMatchObject({
+          length: { kind: "block", metres: 75 },
+          inner: [{ multiplier: 3, metres: 25 }],
+        });
+      });
+
+      it("does not take a brace inside a description for the end of the block", () => {
+        expect(instructionOf('2 x { 50 Freestyle -- "}" on 1:00 }')).toMatchObject({
+          inner: [{ rest: { kind: "sinceStart", seconds: 60 } }],
+        });
+      });
+
+      // The grammar allows any number of instructions on a line, but the
+      // modifier reads a line as one instruction at most, and only the first
+      // of these is read.
+      it.fails("reads every instruction on the line", () => {
+        expect(instructionOf("2 x { 50 Freestyle 50 Backstroke }")).toMatchObject({
+          length: { kind: "block", metres: 100 },
+        });
+      });
+    });
+
+    describe("with instructions on the lines of its braces", () => {
+      it("reads an instruction after the opening brace", () => {
+        expect(instructionOf("2 x { 50 Freestyle\n  50 Backstroke\n}")).toMatchObject({
+          length: { kind: "block", metres: 100 },
+          inner: [{ lineIndex: 0 }, { lineIndex: 1 }],
+        });
+      });
+
+      it("reads an instruction before the closing brace, keeping their rests apart", () => {
+        expect(
+          instructionOf("2 x {\n  50 Freestyle\n  50 Backstroke on 1:00 } on 3:00"),
+        ).toMatchObject({
+          length: { kind: "block", metres: 100 },
+          rest: { kind: "sinceStart", seconds: 180 },
+          inner: [
+            { lineIndex: 1, rest: { kind: "none" } },
+            { lineIndex: 2, rest: { kind: "sinceStart", seconds: 60 } },
+          ],
+        });
+      });
+
+      it("closes a nested block where its brace ends a line", () => {
+        const block = instructionOf(`2 x {
+  3 x {
+    25 Freestyle }
+  50 Backstroke
+}`);
+
+        expect(block.inner.map(line => line.multiplier)).toEqual([3, 1]);
+        expect(block.length).toMatchObject({ metres: 125 });
+      });
+
+      it("closes every nested block whose brace ends a line", () => {
+        const block = instructionOf(`2 x {
+  3 x {
+    4 x {
+      25 Freestyle } }
+  50 Backstroke
+}`);
+
+        expect(block.inner.map(line => line.multiplier)).toEqual([12, 1]);
+      });
+
+      it("opens a nested block written on one line within the block", () => {
+        const block = instructionOf(`2 x {
+  2 x { 50 Butterfly on 1:00 }
+  100 Freestyle
+}`);
+
+        expect(block.inner.map(line => [line.lineIndex, line.multiplier])).toEqual([
+          [1, 2],
+          [2, 1],
+        ]);
+        expect(block.length).toMatchObject({ metres: 200 });
       });
     });
 

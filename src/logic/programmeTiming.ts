@@ -89,9 +89,13 @@ function restedSeconds(
   }
 }
 
-/** The interval a unit written with an `on` rest should be given at a pace. */
+/**
+ * The interval a unit written with an `on` rest should be given at a pace. A
+ * block's interval has to leave room for the rests inside it as well as the
+ * swimming, or it could not be swum.
+ */
 export function intervalSeconds(unit: AdjustableUnit, pace: number): number {
-  return intervalFor(unitSwimmingSeconds(unit, pace), unit.intervalRatio);
+  return intervalFor(contentSeconds(unit, pace), unit.intervalRatio);
 }
 
 /**
@@ -119,8 +123,8 @@ export function unitSeconds(unit: AdjustableUnit, pace: number): number {
   const rest = unit.instruction.rest;
 
   // An `on` interval covers everything the instruction contains, inner rests
-  // included, so it is calculated from the swim alone. Every other kind of
-  // rest is added on top of the time the instruction's contents take.
+  // included, so it takes the place of the time the contents take. Every other
+  // kind of rest is added on top of that time.
   const perRepetition =
     rest.kind === "sinceStart"
       ? intervalSeconds(unit, pace)

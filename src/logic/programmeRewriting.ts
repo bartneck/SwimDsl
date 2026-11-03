@@ -6,9 +6,11 @@
 
 import {
   BLOCK_OPEN_PATTERN,
+  blockModifiersStart,
   HEAD_PATTERN,
   maskLine,
   restDurationPattern,
+  splitBlockLine,
 } from "./programmeParsing.ts";
 import type {
   InstructionElement,
@@ -78,20 +80,34 @@ export function rewriteHead(
  *
  * @param instruction The instruction to rewrite, modified in place.
  * @param duration The new duration, written as `m:ss`.
- * @param lineIndex Which of the instruction's lines to rewrite. The modifiers
- *   of a block sit on its closing line, so the last line is the default.
+ * @param lineIndex Which of a block's lines holds the instruction whose
+ *   interval is rewritten. Left out, the instruction's own interval is
+ *   rewritten, which for a block follows the brace that closes it.
  */
 export function rewriteOnInterval(
   instruction: InstructionElement,
   duration: string,
-  lineIndex = instruction.lines.length - 1,
+  lineIndex?: number,
 ): void {
-  const line = instruction.lines[lineIndex] ?? "";
-  const match = restDurationPattern("on").exec(maskLine(line));
+  const index = lineIndex ?? instruction.lines.length - 1;
+  const line = instruction.lines[index] ?? "";
+  const masked = maskLine(line);
+
+  // A line of a block can share its text with the braces around it, so only
+  // the part of it the interval belongs to is searched.
+  const isBlock = instruction.length.kind === "block";
+  const { from, to } =
+    !isBlock
+      ? { from: 0, to: line.length }
+      : lineIndex === undefined
+        ? { from: blockModifiersStart(line), to: line.length }
+        : splitBlockLine(masked);
+
+  const match = restDurationPattern("on").exec(masked.slice(from, to));
   if (match?.[1] === undefined) return;
 
-  const end = match.index + match[0].length;
+  const end = from + match.index + match[0].length;
 
-  instruction.lines[lineIndex] =
+  instruction.lines[index] =
     line.slice(0, end - match[1].length) + duration + line.slice(end);
 }

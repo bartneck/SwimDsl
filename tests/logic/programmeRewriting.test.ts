@@ -210,6 +210,47 @@ describe("rewriteOnInterval", () => {
     expect(instruction.lines).toEqual(["2 x {", "  50 Freestyle on 0:50", "} on 3:00"]);
   });
 
+  it("rewrites a block's own interval after its closing brace", () => {
+    const instruction = instructionOf("2 x {\n  50 Freestyle on 1:00 } on 3:00");
+
+    rewriteOnInterval(instruction, "2:30");
+
+    expect(instruction.lines[1]).toBe("  50 Freestyle on 1:00 } on 2:30");
+  });
+
+  it("rewrites the instruction before a closing brace, not the block", () => {
+    const instruction = instructionOf("2 x {\n  50 Freestyle on 1:00 } on 3:00");
+
+    rewriteOnInterval(instruction, "0:50", 1);
+
+    expect(instruction.lines[1]).toBe("  50 Freestyle on 0:50 } on 3:00");
+  });
+
+  it("keeps the two intervals of a block written on one line apart", () => {
+    const instruction = instructionOf("2 x { 50 Freestyle on 1:00 } on 3:00");
+
+    rewriteOnInterval(instruction, "2:30");
+    rewriteOnInterval(instruction, "0:50", 0);
+
+    expect(instruction.lines).toEqual(["2 x { 50 Freestyle on 0:50 } on 2:30"]);
+  });
+
+  it("does not take a block's own interval for the one inside it", () => {
+    const instruction = instructionOf("2 x { 50 Freestyle } on 3:00");
+
+    rewriteOnInterval(instruction, "0:50", 0);
+
+    expect(instruction.lines).toEqual(["2 x { 50 Freestyle } on 3:00"]);
+  });
+
+  it("leaves a block written on one line with no interval of its own alone", () => {
+    const instruction = instructionOf("2 x { 50 Freestyle on 1:00 }");
+
+    rewriteOnInterval(instruction, "2:30");
+
+    expect(instruction.lines).toEqual(["2 x { 50 Freestyle on 1:00 }"]);
+  });
+
   it("does nothing for a line that does not exist", () => {
     const instruction = instructionOf("100 Freestyle on 1:45");
 

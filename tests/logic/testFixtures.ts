@@ -50,6 +50,7 @@ export const EDGE_CASE_SESSION = `set PoolLength 25
 
 > Drills
 4 x 50 Choice in-out 2 -- "on feel"
+2 x { 25 Butterfly on 0:40 } on 1:30
 
 > Main Set
 2 x {
@@ -84,15 +85,15 @@ export function parsed(source: string): ParsedProgramme {
     if (element.kind !== "instruction") return [];
 
     const metres = lengthMetres(element.length);
-    const elementRatios = ratios[index] ?? [];
+    const elementRatios = ratios[index];
 
     return [
       {
         instruction: element,
-        intervalRatio: elementRatios[element.lines.length - 1] ?? 1,
-        innerModels: element.inner.map(inner => ({
+        intervalRatio: elementRatios?.own ?? 1,
+        innerModels: element.inner.map((inner, innerIndex) => ({
           inner,
-          intervalRatio: elementRatios[inner.lineIndex] ?? 1,
+          intervalRatio: elementRatios?.inner[innerIndex] ?? 1,
         })),
         perRepetitionMetres: metres,
         perRepetitionFixedSeconds: lengthFixedSeconds(element.length),

@@ -118,16 +118,19 @@ export function shrinkUnit(
 
   const takeRepetitions =
     repetitionDelta > 0 &&
-    (repetitionForced === lengthForced
-      ? // Neither step overshoots, or both do. Dropping a repetition leaves
-        // the distance of the set as the coach wrote it, so it is preferred
-        // unless shortening the swim is clearly the better fit; when both
-        // steps overshoot, the smaller of the two wastes less.
-        repetitionForced
-        ? repetitionDelta <= lengthDelta || lengthDelta === 0
-        : repetitionDelta * 2 >= lengthDelta
-      : // One of the two fits inside what was asked for. Take that one.
-        !repetitionForced);
+    // Shortening the swim may not be possible at all, as for a block or a set
+    // of single lengths. Dropping a repetition is then the only step there is.
+    (lengthDelta === 0 ||
+      (repetitionForced === lengthForced
+        ? // Neither step overshoots, or both do. Dropping a repetition leaves
+          // the distance of the set as the coach wrote it, so it is preferred
+          // unless shortening the swim is clearly the better fit; when both
+          // steps overshoot, the smaller of the two wastes less.
+          repetitionForced
+          ? repetitionDelta <= lengthDelta
+          : repetitionDelta * 2 >= lengthDelta
+        : // One of the two fits inside what was asked for. Take that one.
+          !repetitionForced));
 
   if (takeRepetitions) {
     resizeUnit(unit, repetitions - repetitionSteps, perRepetition, poolLength);

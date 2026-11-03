@@ -214,6 +214,45 @@ set PoolLength 25
       expect(modified(source)).toContain("100 NumberOne\n5 x 100 Freestyle on 1:45");
     });
 
+    it("times and rewrites blocks written on one line, and their own intervals", () => {
+      const [version] = modifiedProgrammes(
+        `> Main Set
+2 x { 2 x 25 Freestyle on 0:40 } on 2:00
+3 x {
+  100 Freestyle on 1:50
+  2 x {
+    50 Butterfly with 0:10
+  }
+} on 7:00
+`,
+        parameters(),
+      );
+
+      // Each block's interval covers what is inside it: 2 × 0:38 and
+      // 1:45 + 2 × 0:55, each with 15 s on top.
+      expect(version?.source.split("\n").slice(1).join("\n")).toBe(`> Main Set
+2 x { 2 x 25 Freestyle on 0:38 } on 1:31
+3 x {
+  100 Freestyle on 1:45
+  2 x {
+    50 Butterfly with 0:10
+  }
+} on 3:50
+`);
+      expect(version?.summary).toMatchObject({
+        totalMetres: 700,
+        totalSeconds: 2 * 91 + 3 * 230,
+      });
+    });
+
+    // Only the outermost block's own rest is read, so the inner block's
+    // `on 5:00` is left out of the timing and never rewritten.
+    it.fails("times and rewrites a nested block's own interval", () => {
+      const source = modified("2 x {\n  3 x {\n    50 Freestyle\n  } on 5:00\n}\n");
+
+      expect(source).not.toContain("} on 5:00");
+    });
+
     it("fits sets written with compact repetitions", () => {
       const [version] = modifiedProgrammes(
         "> Main Set\n4x100 Freestyle on 2:00\n2x{\n  50 Backstroke\n}\n",

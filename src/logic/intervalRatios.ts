@@ -4,15 +4,25 @@
  */
 
 import { lengthMetres } from "./programmeParsing.ts";
-import type { InstructionElement, ProgrammeElement } from "./programmeTypes.ts";
+import type {
+  InstructionElement,
+  InstructionRest,
+  ProgrammeElement,
+} from "./programmeTypes.ts";
 
-/** An `on` interval as the programme wrote it. */
-interface WrittenInterval {
-  /** Which of the instruction's lines the interval sits on. */
-  lineIndex: number;
+/** The interval ratios of one element of a programme. */
+export interface IntervalRatios {
+  /** The ratio of the instruction's own interval. */
+  own: number;
+  /** The ratio of each instruction inside a block, in the order of `inner`. */
+  inner: number[];
+}
+
+/** A distance and the rest it is swum with. */
+interface Interval {
   /** The distance the interval covers, in metres. */
   metres: number;
-  seconds: number;
+  rest: InstructionRest;
 }
 
 /**
@@ -23,55 +33,49 @@ interface WrittenInterval {
  * pace it is rewritten for keeps the same shape.
  *
  * @param elements The parsed programme.
- * @returns For each element, the interval ratio of each of its lines,
- *   indexed as the elements and their lines are. Lines without an interval
- *   are left at one.
+ * @returns For each element, the interval ratio of the instruction itself and
+ *   of each instruction inside it. Anything without an `on` interval is left
+ *   at one.
  */
-export function measureIntervalRatios(elements: ProgrammeElement[]): number[][] {
+export function measureIntervalRatios(
+  elements: ProgrammeElement[],
+): IntervalRatios[] {
   const intervalsByDistance = new Map<number, number[]>();
 
   for (const element of elements) {
     if (element.kind !== "instruction") continue;
 
-    for (const { metres, seconds } of writtenIntervals(element)) {
+    for (const { metres, rest } of intervalsOf(element)) {
+      if (rest.kind !== "sinceStart") continue;
+
       const intervals = intervalsByDistance.get(metres) ?? [];
-      intervals.push(seconds);
+      intervals.push(rest.seconds);
       intervalsByDistance.set(metres, intervals);
     }
   }
 
-  const ratioOf = (metres: number, seconds: number): number => {
+  const ratioOf = ({ metres, rest }: Interval): number => {
+    if (rest.kind !== "sinceStart") return 1;
+
     const intervals = intervalsByDistance.get(metres) ?? [];
     const average =
       intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-    return average > 0 ? seconds / average : 1;
+    return average > 0 ? rest.seconds / average : 1;
   };
 
-  return elements.map(element => {
-    if (element.kind !== "instruction") return [];
-
-    const ratios = new Array<number>(element.lines.length).fill(1);
-
-    for (const { lineIndex, metres, seconds } of writtenIntervals(element)) {
-      ratios[lineIndex] = ratioOf(metres, seconds);
-    }
-
-    return ratios;
-  });
+  return elements.map(element =>
+    element.kind === "instruction"
+      ? { own: ratioOf(ownInterval(element)), inner: element.inner.map(ratioOf) }
+      : { own: 1, inner: [] },
+  );
 }
 
-/**
- * Find the `on` intervals written on an instruction's own closing line and on
- * the lines inside it, the instruction's own first.
- */
-function writtenIntervals(element: InstructionElement): WrittenInterval[] {
-  const ownLine = {
-    lineIndex: element.lines.length - 1,
-    metres: lengthMetres(element.length),
-    rest: element.rest,
-  };
+/** The distance an instruction's own rest covers. */
+function ownInterval(element: InstructionElement): Interval {
+  return { metres: lengthMetres(element.length), rest: element.rest };
+}
 
-  return [ownLine, ...element.inner].flatMap(({ lineIndex, metres, rest }) =>
-    rest.kind === "sinceStart" ? [{ lineIndex, metres, seconds: rest.seconds }] : [],
-  );
+/** The intervals of an instruction, its own first, then those inside it. */
+function intervalsOf(element: InstructionElement): Interval[] {
+  return [ownInterval(element), ...element.inner];
 }

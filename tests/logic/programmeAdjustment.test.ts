@@ -147,6 +147,18 @@ describe("fitProgramme", () => {
       expect(source).toBe("2 x {\n  50 Backstroke\n} on 1:00\n");
     });
 
+    it("keeps how hard each interval inside a block was written", () => {
+      // The two 25s average out at 0:30, so they are 2/3 and 4/3 of it.
+      const { source } = fit(
+        "25 Freestyle on 0:20\n2 x {\n  2 x 25 Backstroke on 0:40\n} on 2:00\n",
+        "1:30",
+      );
+
+      expect(source).toBe(
+        "25 Freestyle on 0:25\n2 x {\n  2 x 25 Backstroke on 0:50\n} on 1:55\n",
+      );
+    });
+
     it("leaves other kinds of rest alone", () => {
       const source = "100 Freestyle with 0:10\n100 Freestyle in-out 2\n";
 
@@ -337,9 +349,7 @@ describe("fitProgramme", () => {
       ]);
     });
 
-    // Known defect 1: the last step of the cut is never taken, so the session
-    // stops at 15:00 although two repetitions take 10:00.
-    it.fails("reaches a target a block only reaches in whole repetitions", () => {
+    it("reaches a target a block only reaches in whole repetitions", () => {
       const source = `> Main Set
 3 x {
   100 Freestyle on 1:50
@@ -347,9 +357,22 @@ describe("fitProgramme", () => {
 }
 `;
 
-      expect(
-        fit(source, "2:15", { durationSeconds: 12 * MINUTE }).summary.totalSeconds,
-      ).toBeLessThanOrEqual(12 * MINUTE);
+      // Each pass through the block takes 5:00 at this pace.
+      const { source: fitted, summary } = fit(source, "2:15", {
+        durationSeconds: 12 * MINUTE,
+      });
+
+      expect(sets(fitted)).toEqual(["2 x"]);
+      expect(summary.totalSeconds).toBe(10 * MINUTE);
+    });
+
+    it("reaches a target sets of single lengths only reach in whole repetitions", () => {
+      const { source, summary } = fit("> Main Set\n8 x 25 Freestyle on 0:40\n", "2:15", {
+        durationSeconds: 2 * MINUTE,
+      });
+
+      expect(sets(source)).toEqual(["2 x 25"]);
+      expect(summary.totalSeconds).toBeLessThanOrEqual(2 * MINUTE);
     });
   });
 
