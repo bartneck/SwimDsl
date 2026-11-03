@@ -92,59 +92,6 @@ export default function ModificationDialog(
         <DialogTitle>Modification Details</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit} id="modification-form">
-            <FormControl>
-              <RadioGroup
-                row
-                aria-label="Basic RadioGroup"
-                name="GroupSize"
-                value={modificationParameters.group}
-                defaultValue={'group'}
-                onChange={(e) => {
-                  setModificationParameters(prev => ({ ...prev, group: e.target.value }));
-                }}
-              >
-                <FormControlLabel value={'individual'} control={<Radio />} label="Individual"></FormControlLabel>
-                <FormControlLabel value={'group'} control={<Radio />} label="Group"></FormControlLabel>
-              </RadioGroup>
-            </FormControl>
-            <FormControl>
-              <FormLabel id="fit-goal-label">Fit the session by</FormLabel>
-              <RadioGroup
-                row
-                aria-labelledby="fit-goal-label"
-                name="FitGoal"
-                value={modificationParameters.goal}
-                onChange={(e) => {
-                  setModificationParameters(prev => ({ ...prev, goal: e.target.value as FitGoal }));
-                }}
-              >
-                <FormControlLabel value={'duration'} control={<Radio />} label="Duration"></FormControlLabel>
-                <FormControlLabel value={'distance'} control={<Radio />} label="Distance"></FormControlLabel>
-              </RadioGroup>
-            </FormControl>
-            <FormControl>
-              <FormLabel id="fit-method-label">Fitting the session</FormLabel>
-              <RadioGroup
-                row
-                aria-labelledby="fit-method-label"
-                name="FitMethod"
-                value={modificationParameters.fit}
-                onChange={(e) => {
-                  setModificationParameters(prev => ({ ...prev, fit: e.target.value as FitMethod }));
-                }}
-              >
-                <FormControlLabel
-                  value={'rescale'}
-                  control={<Radio />}
-                  label="Adjust the sets to fit"
-                ></FormControlLabel>
-                <FormControlLabel
-                  value={'trim'}
-                  control={<Radio />}
-                  label={byDistance ? "Stop when the distance is reached" : "Stop when the time runs out"}
-                ></FormControlLabel>
-              </RadioGroup>
-            </FormControl>
             <Stack direction="column" spacing={2}>
               <FormControl>
                 <Stack direction="row" spacing={2}>
@@ -177,6 +124,44 @@ export default function ModificationDialog(
                 value={modificationParameters.paces.join(",")}
                 aria-readonly={true}
               />
+              <FormControl>
+                <FormLabel id="fit-goal-label">Fit the session by</FormLabel>
+                <RadioGroup
+                  row
+                  aria-labelledby="fit-goal-label"
+                  name="FitGoal"
+                  value={modificationParameters.goal}
+                  onChange={(e) => {
+                    setModificationParameters(prev => ({ ...prev, goal: e.target.value as FitGoal }));
+                  }}
+                >
+                  <FormControlLabel value={'duration'} control={<Radio />} label="Duration"></FormControlLabel>
+                  <FormControlLabel value={'distance'} control={<Radio />} label="Distance"></FormControlLabel>
+                </RadioGroup>
+              </FormControl>
+              <FormControl>
+                <FormLabel id="fit-method-label">Fitting the session</FormLabel>
+                <RadioGroup
+                  row
+                  aria-labelledby="fit-method-label"
+                  name="FitMethod"
+                  value={modificationParameters.fit}
+                  onChange={(e) => {
+                    setModificationParameters(prev => ({ ...prev, fit: e.target.value as FitMethod }));
+                  }}
+                >
+                  <FormControlLabel
+                    value={'rescale'}
+                    control={<Radio />}
+                    label="Adjust the sets to fit"
+                  ></FormControlLabel>
+                  <FormControlLabel
+                    value={'trim'}
+                    control={<Radio />}
+                    label={byDistance ? "Stop when the distance is reached" : "Stop when the time runs out"}
+                  ></FormControlLabel>
+                </RadioGroup>
+              </FormControl>
 
               {/* The field the session is fitted to comes first, and the other is an optional limit. */}
               {byDistance ? volumeField : durationField}
