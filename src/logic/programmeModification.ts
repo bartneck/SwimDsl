@@ -29,7 +29,10 @@ export interface ModificationParameters {
    * distance. The other of the two, when given, is kept as a limit.
    */
   goal: FitGoal;
-  /** The session duration in minutes, as typed. Empty when unconstrained. */
+  /**
+   * The session duration, as minutes or as `m:ss` or `h:mm:ss`. Empty when
+   * unconstrained.
+   */
   duration: string;
   /** The session volume in metres, as typed. Empty when unconstrained. */
   volume: string;
