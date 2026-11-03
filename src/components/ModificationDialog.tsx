@@ -150,7 +150,7 @@ export default function ModificationDialog(
 
   const durationField = (
     <TextField
-      label={byDistance ? "Time Limit (h:mm:ss, optional)" : "Session Duration (h:mm:ss)"}
+      label={byDistance ? "Time Limit (h:mm:ss, optional)" : "Target Session Duration (h:mm:ss)"}
       name="sessionDuration"
       value={durationInput}
       onChange={(e) => {
@@ -165,7 +165,7 @@ export default function ModificationDialog(
   );
   const volumeField = (
     <TextField
-      label={byDistance ? "Session Distance (metres)" : "Distance Limit (metres, optional)"}
+      label={byDistance ? "Target Session Distance (metres)" : "Distance Limit (metres, optional)"}
       name="sessionVolume"
       value={modificationParameters.volume}
       onChange={(e) => {
@@ -284,12 +284,12 @@ export default function ModificationDialog(
                   <FormControlLabel
                     value={'rescale'}
                     control={<Radio />}
-                    label="Adjust the sets to fit"
+                    label={byDistance ? "Adjust the sets to fit target distance" : "Adjust the sets to fit target duration"}
                   ></FormControlLabel>
                   <FormControlLabel
                     value={'trim'}
                     control={<Radio />}
-                    label={byDistance ? "Stop when the distance is reached" : "Stop when the time runs out"}
+                    label={byDistance ? "Cut off remaining session when the distance is reached" : "Cut off remaining session when the duration is reached"}
                   ></FormControlLabel>
                 </RadioGroup>
               </FormControl>
